@@ -1,0 +1,7 @@
+[run]
+source= lsstdesc_diffsky/
+
+omit =
+    lsstdesc_diffsky/__init__.py
+    lsstdesc_diffsky/_version.py
+    lsstdesc_diffsky/tests/*.py
