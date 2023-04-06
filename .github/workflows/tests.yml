@@ -2,6 +2,9 @@ name: tests
 
 on:
   workflow_dispatch: null
+  schedule:
+    # Runs "weekly at minute 01 past midnight Thursday"
+    - cron: '01 0 * * 4'
   push:
     branches:
       - main
