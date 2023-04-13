@@ -37,7 +37,8 @@ jobs:
           mamba install -y -q \
             flake8 \
             pytest \
-            pytest-xdist
+            pytest-xdist \
+            pytest-cov
 
       - name: lint
         shell: bash -l {0}
@@ -47,4 +48,7 @@ jobs:
       - name: test
         shell: bash -l {0}
         run: |
-          pytest -vv lsstdesc_diffsky
+          pytest -v lsstdesc_diffsky --cov --cov-report=xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
