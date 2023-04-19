@@ -1,2 +1,12 @@
 numpy
 jax
+numba
+mpi4py
+scipy
+h5py
+astropy
+healpy
+halotools
+lsstdesc-galsampler
+diffmah
+diffstar

@@ -1,0 +1,6 @@
+description: 'Config file for producing diffsky mock catalog'
+
+dust_parameters:
+    - pscan_dirname: 'parameter_tune'
+      pscan_filename: 'color_scan_pct_4000_0_colors.ascii'
+      pscan_rownumber: 3765
