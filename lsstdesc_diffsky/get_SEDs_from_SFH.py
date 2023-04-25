@@ -3,8 +3,8 @@ import time
 import re
 from astropy.table import Table, vstack
 from jax import numpy as jnp
-from lsstdesc_diffsky.photometry_interpolation import get_interpolated_photometry
-
+from diffsky.experimental.photometry_interpolation import get_interpolated_photometry
+from dsps.cosmology import flat_wcdm
 
 def get_filter_wave_trans(filter_data):
     wave_keys = [k for k in filter_data.dtype.names if "wave" in k]
@@ -46,59 +46,67 @@ def add_colors(mags, minmax=True):
 
 
 def get_mag_sed_pars(
-    t_obs,
-    z_obs,
-    SED_params,
-    lg_met_mean,
-    lg_met_scatt,
-    log_sm,
-    logsm_table,
-    attenuation_factors=None,
-    skip_mags=False,
-):
+        SED_params,
+        gal_t_table,
+        gal_z_obs,
+        gal_log_sm,
+        gal_sfr_table,
+        gal_lg_met_mean,
+        gal_lg_met_scatt,
+        cosmology, w0, wa,
+        dust_trans_factors_obs=1.0,
+        dust_trans_factors_rest=1.0,
+        skip_mags=False):
 
     print(
-        ".....Evaluating colors for {:.2f} <= t <= {:.2f} Gyr".format(
+        ".....Evaluating mags & colors for {:.2f} <= t <= {:.2f} Gyr".format(
             np.min(t_obs), np.max(t_obs)
         )
     )
 
     # setup arguments for computing magnitudes
     mags = Table()
-    seds = np.asarray([])
+    mags_nodust = Table()
+
+    cosmo_params = flat_wcdm.CosmoParams(cosmology.Om0, w0, wa,
+                                         cosmology.H0.value/100)
 
     if not skip_mags:
         args = (
             SED_params["ssp_z_table"],
             SED_params["ssp_restmag_table"],
             SED_params["ssp_obsmag_table"],
-            SED_params["lgZsun_bin_mids"],
-            SED_params["log_age_gyr"],
-            SED_params["lgt_table"],
-            z_obs,
-            t_obs,
-            log_sm,
-            logsm_table,
-            lg_met_mean,
-            lg_met_scatt,
-            SED_params["LGT0"],
+            SED_params["ssp_lgZsun_bin_mids"],
+            SED_params["ssp_log_age_gyr"],
+            gal_t_table,
+            gal_z_obs,
+            gal_log_sm,
+            gal_sfr_table,
+            gal_lg_met_mean,
+            gal_lg_met_scatt,
+            cosmo_params,
         )
 
         start = time.time()
         _res = get_interpolated_photometry(
-            *args, attenuation_factors=attenuation_factors
+            *args,
+            dust_trans_factors_obs=dust_trans_factors_obs,
+            dust_trans_factors_rest=dust_trans_factors_rest,
         )
-        gal_obsmags, gal_restmags = _res
+        gal_obsmags, gal_restmags, gal_obsmags_nodust, gal_restmags_nodust = _res
 
-        # add values to table
-        for fr, vals in zip(["rest", "obs"], [gal_restmags, gal_obsmags]):
-            for k in SED_params["filter_keys"]:
-                filt = k.split("_")[0]
-                band = k.split("_")[1]
-                band = band.upper() if fr == "rest" else band
-                colname = "{}_{}_{}".format(filt, fr, band)
-                column = SED_params["filter_keys"].index(k)
-                mags[colname] = vals[:, column]
+        # add values to tables
+        for  table, results in zip([mags, mags_nodust],
+                             [[gal_restmags, gal_obsmags],
+                              [gal_restmags_nodust, gal_obsmags_nodust]]):
+            for fr, vals in zip(["rest", "obs"], results):
+                for k in SED_params["filter_keys"]:
+                    filt = k.split("_")[0]
+                    band = k.split("_")[1]
+                    band = band.upper() if fr == "rest" else band
+                    colname = "{}_{}_{}".format(filt, fr, band)
+                    column = SED_params["filter_keys"].index(k)
+                    table[colname] = vals[:, column]
 
         end = time.time()
         print(
@@ -107,4 +115,4 @@ def get_mag_sed_pars(
             )
         )
 
-    return mags, seds
+    return mags, mags_nodust

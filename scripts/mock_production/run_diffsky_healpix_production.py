@@ -11,6 +11,7 @@ import sys
 import os
 import glob
 import argparse
+import yaml
 import numpy as np
 from os.path import expanduser
 import subprocess
@@ -50,6 +51,12 @@ parser.add_argument("-input_master_dirname",
 parser.add_argument("-healpix_cutout_dirname",
                     help="Directory name (relative to input_master_dirname) storing healpix cutout files",
                     default='healpix_cutouts')
+parser.add_argument("-config_dirname",
+                    help="Directory name storing link to production config yaml file",
+                    default='production')
+parser.add_argument("-config_filename",
+                    help="filename for production config yaml file",
+                    default='diffsky_config.yaml')
 parser.add_argument("-um_sfr_catalogs_dirname",
                     help="Directory name (relative to input_master_dirname) storing um input sfr catalogs",
                     default='smdpl_value_added_replaced_nofit_catalogs')
@@ -125,14 +132,21 @@ parser.add_argument("-versionMinorMinor",
                     type=int, default=0)
 args = parser.parse_args()
 
-# setup directory names
+# setup directory names; read yaml configuration
 input_master_dirname = os.path.join(home, args.input_master_dirname)
+yaml_dir = os.path.join(input_master_dirname, args.config_dirname)
+yaml_fn = os.path.join(yaml_dir, args.config_filename.format(args.versionMajor, args.versionMinor,
+                                                                   args.versionMinorMinor))
+inputs = yaml.safe_load(yaml_fn)
+print(inputs)
+
 pkldirname = os.path.join(home, args.pkldirname)
 healpix_cutout_dirname = os.path.join(input_master_dirname, args.healpix_cutout_dirname)
 output_mock_dirname = os.path.join(input_master_dirname,
                                    args.output_mock_dirname.format(args.versionMajor, args.versionMinor,
                                                                    args.versionMinorMinor))
 shape_dir = os.path.join(input_master_dirname, args.shape_dirname)
+
 
 print('Setting master directory to {}'.format(input_master_dirname))
 print('Reading inputs from {}'.format(healpix_cutout_dirname))

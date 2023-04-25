@@ -31,9 +31,9 @@ from dsps.metallicity.mzr import mzr_model, DEFAULT_MZR_PARAMS
 from lsstdesc_diffsky.dustpop import mc_generate_dust_params
 from lsstdesc_diffsky.get_SFH_from_params import get_log_safe_ssfr
 from lsstdesc_diffsky.get_SFH_from_params import get_logsm_sfr_from_params
-from lsstdesc_diffsky.photometry_interpolation import precompute_dust_attenuation
-from lsstdesc_diffsky.photometry_interpolation import precompute_ssp_obsmags_on_z_table
-from lsstdesc_diffsky.photometry_interpolation import precompute_ssp_restmags
+from lsstdesc_diffsky.precompute_ssp_tables import precompute_dust_attenuation
+from lsstdesc_diffsky.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
+from lsstdesc_diffsky.precompute_ssp_tables import precompute_ssp_restmags
 from lsstdesc_diffsky.load_fsps_data import load_filter_data
 from lsstdesc_diffsky.load_fsps_data import load_sps_data
 from lsstdesc_diffsky.get_SEDs_from_SFH import get_filter_wave_trans
@@ -192,8 +192,12 @@ def write_umachine_healpix_mock_to_disk(
     H0 = cosmological_params['H0']
     OmegaM = cosmological_params['OmegaM']
     OmegaB = cosmological_params['OmegaB']
+    w0 = cosmological_params['w0']
+    wa = cosmological_params['wa']
     print("Cosmology Parameters:\n",
-          "H0: {:.2g}, OmegaM: {:.3g}, OmegaB: {:.3g}".format(H0, OmegaM, OmegaB))
+          "H0: {:.2g}, OmegaM: {:.3g}, OmegaB: {:.3g}\n".format(H0, OmegaM, OmegaB),
+          "w0: {:.1g} wa: {:.1g}".format(w0, wa))
+
     cosmology = FlatLambdaCDM(H0=H0, Om0=OmegaM, Ob0=OmegaB)
 
     #  determine number of healpix cutout to use as offset for galaxy ids
@@ -440,9 +444,9 @@ def write_umachine_healpix_mock_to_disk(
         print("\n...Building output snapshot mock for snapshot {}".format(snapshot))
         output_mock[snapshot] = build_output_snapshot_mock(float(redshift),
                                                            mock, target_halos, gs_results, galaxy_id_offset,
-                                                           synthetic_dict, Nside_sky, cutout_number_true, float(
-                                                               previous_redshift),
-                                                           cosmology, volume_minx=volume_minx, SED_params=SED_params,
+                                                           synthetic_dict, Nside_sky, cutout_number_true,
+                                                           float(previous_redshift), cosmology, w0, wa,
+                                                           volume_minx=volume_minx, SED_params=SED_params,
                                                            volume_miny=volume_miny, volume_maxz=volume_maxz, seed=seed,
                                                            use_diffmah_pop=use_diffmah_pop,
                                                            add_dummy_shears=add_dummy_shears,
@@ -638,7 +642,7 @@ def add_low_mass_synthetic_galaxies(mock, seed, synthetic_halo_minimum_mass, red
 def build_output_snapshot_mock(
         snapshot_redshift, umachine, target_halos, gs_results, galaxy_id_offset,
         synthetic_dict, Nside, cutout_number_true, previous_redshift,
-        cosmology, volume_minx=0., volume_miny=0., volume_maxz=0.,
+        cosmology, w0, wa, volume_minx=0., volume_miny=0., volume_maxz=0.,
         SED_params={}, seed=41,
         add_dummy_shears=False, use_diffmah_pop=False,
         mah_keys='mah_keys', ms_keys='ms_keys', q_keys='q_keys',
@@ -1097,9 +1101,11 @@ def generate_SEDs(dc2, SED_params, cosmology, seed, snapshot_redshift,
         print('.....Not using dust attenuation factors')
         attenuation_factors = None
 
-    mags, seds = get_mag_sed_pars(times, dc2['redshift'], SED_params,
-                                  lg_met_mean, lg_met_scatt, log_sm, logsm_table,
-                                  attenuation_factors=attenuation_factors,
+    mags, seds = get_mag_sed_pars(SED_params,
+                                  gal_t_table, z_obs, log_sm, sfr_table
+                                  lg_met_mean, lg_met_scatt,
+                                  cosmology, w0, wa,
+                                  dust_trans_factors_obs=attenuation_factors,
                                  )
     # save to output
     if len(seds) > 0:
