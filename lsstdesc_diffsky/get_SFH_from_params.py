@@ -1,6 +1,6 @@
 import numpy as np
 from diffstar.stars import calculate_histories_batch
-import lsstdesc_diffsky.photometry_interpolation_kernels as pik
+from .photometry import photometry_interpolation_kernels as pik
 from dsps.utils import _jax_get_dt_array
 
 
@@ -116,4 +116,4 @@ def get_logsm_sfr_from_params(lgt_table, lgt0, t_obs, mah_params, ms_params, q_p
     logsm_obs = pik._interp_vmap(t_obs, lgt_table, logsm_table)
     sfr_obs = pik._interp_vmap(t_obs, lgt_table, gal_sfh)
 
-    return logsm_obs, sfr_obs, logsm_table, gal_sfh
+    return logsm_obs, sfr_obs, gal_sfh

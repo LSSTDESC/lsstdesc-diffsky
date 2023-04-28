@@ -47,7 +47,6 @@ def add_colors(mags, minmax=True):
 
 def get_mag_sed_pars(
         SED_params,
-        gal_t_table,
         gal_z_obs,
         gal_log_sm,
         gal_sfr_table,
@@ -58,18 +57,19 @@ def get_mag_sed_pars(
         dust_trans_factors_rest=1.0,
         skip_mags=False):
 
-    print(
-        ".....Evaluating mags & colors for {:.2f} <= t <= {:.2f} Gyr".format(
-            np.min(t_obs), np.max(t_obs)
-        )
-    )
-
     # setup arguments for computing magnitudes
     mags = Table()
     mags_nodust = Table()
 
     cosmo_params = flat_wcdm.CosmoParams(cosmology.Om0, w0, wa,
                                          cosmology.H0.value/100)
+    gal_t_table = SED_params['lgt_table']
+    print(
+        ".....Evaluating mags & colors for {:.4f} <= z <= {:.4f}".format(
+            np.min(gal_z_obs), np.max(gal_z_obs)
+        )
+    )
+
 
     if not skip_mags:
         args = (
@@ -111,7 +111,7 @@ def get_mag_sed_pars(
         end = time.time()
         print(
             ".......runtime to compute {} galaxies = {:.2f} seconds".format(
-                len(z_obs), end - start
+                len(gal_z_obs), end - start
             )
         )
 

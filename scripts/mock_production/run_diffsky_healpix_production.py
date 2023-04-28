@@ -48,105 +48,44 @@ parser.add_argument("healpix_fname",
 parser.add_argument("-input_master_dirname",
                     help="Directory name (relative to home) storing sub-directories of input files",
                     default='Catalog_5000/OR_5000')
-parser.add_argument("-healpix_cutout_dirname",
-                    help="Directory name (relative to input_master_dirname) storing healpix cutout files",
-                    default='healpix_cutouts')
 parser.add_argument("-config_dirname",
                     help="Directory name storing link to production config yaml file",
                     default='production')
 parser.add_argument("-config_filename",
                     help="filename for production config yaml file",
                     default='diffsky_config.yaml')
-parser.add_argument("-um_sfr_catalogs_dirname",
-                    help="Directory name (relative to input_master_dirname) storing um input sfr catalogs",
-                    default='smdpl_value_added_replaced_nofit_catalogs')
-parser.add_argument("-um_parse_filename",
-                    help="String on which to split um sfr catalog filename to extract scale parameter",
-                    default='.diffstar_fits')
-parser.add_argument("-output_mock_dirname",
-                    help="Directory name (relative to input_master_dirname) storing output mock healpix files",
-                    default='diffsky_v{}.{}.{}')
-parser.add_argument("-shape_dirname",
-                    help="Directory name (relative to input_master_dirname) storing halo shape files",
-                    default='OR_haloshapes')
-parser.add_argument("-dsps_data_dirname",
-                    help="Directory name (relative to input_master_dirname) storing dsps data",
-                    default='dsps_data/FSPS_ssp_data')
-parser.add_argument("-pkldirname",
-                    help="Directory name (relative to home) storing pkl file with snapshot <-> redshift correspondence",
-                    default='cosmology/lsstdesc-diffsky/lsstdesc_diffsky')
 parser.add_argument("-zrange_value",
                     help="z-range to run",
                     choices=['0', '1', '2', 'all'],
                     default='all')
-parser.add_argument("-synthetic_mass_min",
-                    help="Value of minimum halo mass for synthetic halos",
-                    type=float, default=9.8)
-parser.add_argument("-use_satellites",
-                    help="Use satellite synthetic low-mass galaxies",
-                    action='store_true', default=False)
 parser.add_argument("-verbose",
                     help="Turn on extra printing",
                     action='store_true', default=False)
-parser.add_argument("-skip_synthetics",
-                    help="Skip low mass synthetic galaxies",
-                    action='store_true', default=False)
-parser.add_argument("-dust",
-                    help="Include dust attenuation",
-                    action='store_false', default=True)
-parser.add_argument("-use_diffmah_pop",
-                    help="Use diffmah_pop for resampled 'no-fit' galaxies",
-                    action='store_false', default=True)
-parser.add_argument("-nside",
-                    help="Nside used to create healpixels",
-                    type=int, default=32)
-parser.add_argument("-dz",
-                    help="Value of dz interval for SSP interpolation",
-                    type=float, default=0.02)
 parser.add_argument("-ndebug_snaps",
                     help="Number of debug snapshots to save",
                     type=int, default=-1)
-parser.add_argument("-H0",
-                    help="Hubble constant",
-                    type=float, default=71.0)
-parser.add_argument("-OmegaM",
-                    help="OmegaM",
-                    type=float, default=0.2648)
-parser.add_argument("-OmegaB",
-                    help="OmegaB",
-                    type=float, default=0.0448)
-parser.add_argument("-w0",
-                    help="w0",
-                    type=float, default=-1.0)
-parser.add_argument("-wa",
-                    help="wa",
-                    type=float, default=0.0)
-parser.add_argument("-versionMajor",
-                    help="Major version number",
-                    type=int, default=0)
-parser.add_argument("-versionMinor",
-                    help="Minor version number",
-                    type=int, default=1)
-parser.add_argument("-versionMinorMinor",
-                    help="MinorMinor version number",
-                    type=int, default=0)
 args = parser.parse_args()
 
 # setup directory names; read yaml configuration
 input_master_dirname = os.path.join(home, args.input_master_dirname)
 yaml_dir = os.path.join(input_master_dirname, args.config_dirname)
-yaml_fn = os.path.join(yaml_dir, args.config_filename.format(args.versionMajor, args.versionMinor,
-                                                                   args.versionMinorMinor))
-inputs = yaml.safe_load(yaml_fn)
-print(inputs)
+yaml_fn = os.path.join(yaml_dir, args.config_filename)
+with open(os.path.join(yaml_dir, yaml_fn), 'r') as fh:
+    inputs = yaml.safe_load(fh)
 
-pkldirname = os.path.join(home, args.pkldirname)
-healpix_cutout_dirname = os.path.join(input_master_dirname, args.healpix_cutout_dirname)
-output_mock_dirname = os.path.join(input_master_dirname,
-                                   args.output_mock_dirname.format(args.versionMajor, args.versionMinor,
-                                                                   args.versionMinorMinor))
-shape_dir = os.path.join(input_master_dirname, args.shape_dirname)
+versionMajor = inputs['version']['versionMajor']
+versionMinor = inputs['version']['versionMinor']
+versionMinorMinor = inputs['version']['versionMinorMinor']
 
+healpix_cutout_dirname = os.path.join(input_master_dirname,
+                                      inputs['file_dirs']['healpix_cutout_dirname'])
+output_mock_dirname = os.path.join(
+    input_master_dirname,
+    inputs['file_dirs']['output_mock_dirname'].format(versionMajor, versionMinor, versionMinorMinor))
+shape_dir = os.path.join(input_master_dirname, inputs['file_dirs']['shape_dirname'])
+pkldirname = os.path.join(input_master_dirname, inputs['file_dirs']['pkldirname'])
+
+SED_pars = {}
 
 print('Setting master directory to {}'.format(input_master_dirname))
 print('Reading inputs from {}'.format(healpix_cutout_dirname))
@@ -154,9 +93,7 @@ print('Writing outputs to {}'.format(output_mock_dirname))
 
 commit_hash = retrieve_commit_hash(path_to_lsstdesc_diffsky)[0:7]
 print('Using commit hash {}'.format(commit_hash))
-synthetic_halo_minimum_mass = args.synthetic_mass_min
-use_centrals = not (args.use_satellites)
-SED_pars = {}
+
 if args.verbose:
     print("paths=", home, path_to_lsstdesc_diffsky, sys.path)
 
@@ -172,7 +109,7 @@ else:
 
 
 for zdir in z_range_dirs:
-
+                         
     # get list of snapshots
     healpix_cutout_fname = os.path.join(
         healpix_cutout_dirname, zdir, args.healpix_fname)
@@ -190,11 +127,11 @@ for zdir in z_range_dirs:
 
     if len(snapshots) > 0:
         umachine_mstar_ssfr_mock_dirname = (
-            os.path.join(input_master_dirname, args.um_sfr_catalogs_dirname))
+            os.path.join(input_master_dirname, inputs['file_dirs']['um_sfr_catalogs_dirname']))
         sfr_files = sorted([os.path.basename(f) for f in glob.glob(
             umachine_mstar_ssfr_mock_dirname + '/sfr*.h*')])
         um_expansion_factors = np.asarray(
-            [float(f.split('sfr_catalog_')[-1].split(args.um_parse_filename)[0]) for f in sfr_files])
+            [float(f.split('sfr_catalog_')[-1].split(inputs['parse_str']['um_split_fname'])[0]) for f in sfr_files])
         closest_snapshots = [np.abs(um_expansion_factors - a).argmin()
                              for a in expansion_factors]
         if (args.verbose):
@@ -211,7 +148,7 @@ for zdir in z_range_dirs:
 
         healpix_basename = os.path.basename(args.healpix_fname)
         output_mock_basename = '_'.join(
-            [args.output_mock_dirname.split('_')[0], zdir, healpix_basename])
+            [inputs['file_dirs']['output_mock_dirname'].split('_')[0], zdir, healpix_basename])
         output_healpix_mock_fname = os.path.join(
             output_mock_dirname, output_mock_basename)
         # if(args.verbose):
@@ -219,31 +156,33 @@ for zdir in z_range_dirs:
 
         redshift_list = [float(z) for z in redshift_strings]
 
-        argsdict = vars(args)
-        for par in ['dsps_data_dirname', 'dust']:
-            if 'dirname' in par :
-                SED_pars[par] = os.path.join(input_master_dirname, argsdict[par])
-            else:
-                SED_pars[par] = argsdict[par]
-            print('Assigning {} to {}'.format(par, SED_pars[par]))
+        for k, v in inputs.items():
+            if k in ['dust_parameters', 'SEDs', 'empirical_models']:
+                for par, vv in v.items():
+                    if 'dirname' in par:
+                        SED_pars[par] = os.path.join(input_master_dirname, vv)
+                    else:
+                        SED_pars[par] = vv
+                    print('Assigning {} to {}'.format(par, SED_pars[par]))
 
-        cosmological_params = {'H0': args.H0,
-                               'OmegaM': args.OmegaM,
-                               'OmegaB': args.OmegaB,
-                               'w0': args.w0,
-                               'wa': args.wa,
+        cosmological_params = {'H0': inputs['cosmology']['H0'],
+                               'OmegaM': inputs['cosmology']['OmegaM'],
+                               'OmegaB': inputs['cosmology']['OmegaB'],
+                               'w0': inputs['cosmology']['w0'],
+                               'wa': inputs['cosmology']['wa'],
                               }
+        print()
 
         write_umachine_healpix_mock_to_disk(
             umachine_mstar_ssfr_mock_fname_list,
             healpix_data, snapshots, output_healpix_mock_fname, shape_dir,
-            redshift_list, commit_hash, skip_synthetics=args.skip_synthetics,
-            dz=args.dz, versionMajor=args.versionMajor, versionMinor=args.versionMinor,
-            versionMinorMinor=args.versionMinorMinor, SED_pars=SED_pars,
-            synthetic_halo_minimum_mass=synthetic_halo_minimum_mass,
-            use_centrals=use_centrals,
-            Nside=args.nside, z2ts=z2ts, cosmological_params=cosmological_params,
-            use_diffmah_pop=args.use_diffmah_pop,
+            redshift_list, commit_hash,
+            versionMajor=versionMajor, versionMinor=versionMinor,
+            versionMinorMinor=versionMinorMinor,
+            SED_pars=SED_pars,
+            synthetic_params=inputs['synthetic_ultra_faints'],
+            shear_params=inputs['shears'],
+            Nside=inputs['nside'], z2ts=z2ts, cosmological_params=cosmological_params,
             )
     else:
         print('Skipping empty healpix-cutout file {}'.format(args.healpix_fname))

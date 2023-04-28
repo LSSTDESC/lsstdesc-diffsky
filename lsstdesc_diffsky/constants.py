@@ -18,3 +18,15 @@ Q_U_PNAMES = [
     "diffstar_u_q_drop",
     "diffstar_u_q_rejuv",
 ]
+SED_params = {
+    'mah_keys': MAH_PNAMES,
+    'ms_keys': MS_U_PNAMES,
+    'q_keys': Q_U_PNAMES,
+    'sfh_keys': ['mstar', 'sfr', 'fstar', 'dmhdt', 'log_mah'],
+    'z0': 0.,
+    't_start': .05,
+    'N_t': 100,
+    'xkeys': ['ssp_z_table', 'ssp_restmag_table', 'ssp_obsmag_table',
+              'ssp_lgZsun_bin_mids', 'ssp_log_age_gyr', 'filter_keys',
+              'filter_waves', 'filter_trans', 'met_params'],
+}

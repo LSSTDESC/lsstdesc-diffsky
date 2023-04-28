@@ -130,65 +130,6 @@ def map_mstar_onto_lowmass_extension(corrected_mpeak, obs_sm_orig, mpeak_extensi
     return new_mstar_real, new_mstar_synthetic
 
 
-def create_synthetic_lowmass_mock_with_satellites(
-        mock, healpix_mock, synthetic_dict):
-    """
-    """
-    mstar_max = min(10**8., 10.**(np.log10(np.max(synthetic_dict['mpeak']))+1))
-    mock_sample_mask = mock['obs_sm'] < mstar_max
-    num_sample = np.count_nonzero(mock_sample_mask)
-    selection_indices = np.random.randint(0, num_sample, len(synthetic_dict['mpeak']))
-
-    gals = Table()
-    #  populate gals table with selected galaxies
-    for key in mock.keys():
-        if key in list(synthetic_dict.keys()):
-            gals[key] = synthetic_dict[key]
-        else:
-            gals[key] = mock[key][mock_sample_mask][selection_indices]
-    ngals = len(gals)
-
-    gals['_obs_sm_orig_um_snap'] = gals['obs_sm']
-
-    host_mask = healpix_mock['upid'] == -1
-    host_indices = np.arange(len(healpix_mock))[host_mask]
-    selected_host_indices = np.random.choice(host_indices, ngals, replace=True)
-    gals['target_halo_x'] = healpix_mock['target_halo_x'][selected_host_indices]
-    gals['target_halo_y'] = healpix_mock['target_halo_y'][selected_host_indices]
-    gals['target_halo_z'] = healpix_mock['target_halo_z'][selected_host_indices]
-    gals['target_halo_mass'] = healpix_mock['target_halo_mass'][selected_host_indices]
-    gals['upid'] = healpix_mock['target_halo_id'][selected_host_indices]
-    gals['target_halo_redshift'] = healpix_mock['target_halo_redshift'][selected_host_indices]
-    gals['target_halo_vx'] = healpix_mock['target_halo_vx'][selected_host_indices]
-    gals['target_halo_vy'] = healpix_mock['target_halo_vy'][selected_host_indices]
-    gals['target_halo_vz'] = healpix_mock['target_halo_vz'][selected_host_indices]
-    gals['target_halo_id'] = healpix_mock['target_halo_id'][selected_host_indices]
-    gals['host_halo_mvir'] = gals['target_halo_mass']
-
-    nfw = NFWPhaseSpace()
-    nfw_sats = nfw.mc_generate_nfw_phase_space_points(
-        mass=gals['target_halo_mass'])
-    gals['host_centric_x'] = nfw_sats['x']
-    gals['host_centric_y'] = nfw_sats['y']
-    gals['host_centric_z'] = nfw_sats['z']
-    gals['x'] = gals['host_centric_x'] + gals['target_halo_x']
-    gals['y'] = gals['host_centric_y'] + gals['target_halo_y']
-    gals['z'] = gals['host_centric_z'] + gals['target_halo_z']
-
-    gals['vx'] = np.random.uniform(-100, 100, ngals) + gals['target_halo_vx']
-    gals['vy'] = np.random.uniform(-100, 100, ngals) + gals['target_halo_vy']
-    gals['vz'] = np.random.uniform(-100, 100, ngals) + gals['target_halo_vz']
-
-    gals['sfr_percentile'] = np.random.uniform(0, 1, ngals)
-    ssfr = 10**norm.isf(1 - gals['sfr_percentile'], loc=-10, scale=0.5)
-    gals['obs_sfr'] = ssfr*gals['obs_sm']
-
-    gals['lightcone_id'] = -10
-    gals['halo_id'] = -10
-
-    return gals
-
-
 def get_comoving_distances(zmin, zmax, cosmology, H0=71.0):
     rmin = (cosmology.comoving_distance(zmin)*H0/100.).value  # Mpc/h
     rmax = (cosmology.comoving_distance(zmax)*H0/100.).value
