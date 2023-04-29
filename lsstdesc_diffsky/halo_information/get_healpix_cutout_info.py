@@ -21,7 +21,7 @@ def get_healpix_cutout_info(
             for key in sorted(z2ts.keys())
             if (key <= max(redshifts) and key >= min(redshifts))
         ]
-        missing_snapshots = [s for s in available_snapshots if not s in snapshots]
+        missing_snapshots = [s for s in available_snapshots if s not in snapshots]
         if missing_snapshots:
             print(
                 "{} is missing snapshots {}".format(
@@ -37,7 +37,7 @@ def get_healpix_cutout_info(
 def get_snap_redshift_min(z2ts, snapshots):
     assert len(z2ts) > 0, "z2ts data NOT supplied"
     all_snapshots = sorted([v for v in z2ts.values()])[::-1]
-    # find redshift of preceding snapshot (499 is at index 0 and is never in snapshots list)
+    # z of preceding snapshot (499 is at index 0 and is never in snapshots list)
     previous_snap = all_snapshots[all_snapshots.index(int(max(snapshots))) - 1]
     previous_redshift = list(z2ts.keys())[list(z2ts.values()).index(previous_snap)]
 

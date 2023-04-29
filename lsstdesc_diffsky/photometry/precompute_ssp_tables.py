@@ -1,8 +1,8 @@
 """
 """
 import numpy as np
-from jax import numpy as jnp
 from . import photometry_interpolation_kernels as pik
+
 
 def precompute_ssp_obsmags_on_z_table(
     ssp_wave,

@@ -1,10 +1,11 @@
 import numpy as np
 import time
 import re
-from astropy.table import Table, vstack
+from astropy.table import Table
 from jax import numpy as jnp
 from diffsky.experimental.photometry_interpolation import get_interpolated_photometry
 from dsps.cosmology import flat_wcdm
+
 
 def get_filter_wave_trans(filter_data):
     wave_keys = [k for k in filter_data.dtype.names if "wave" in k]
@@ -70,7 +71,6 @@ def get_mag_sed_pars(
         )
     )
 
-
     if not skip_mags:
         args = (
             SED_params["ssp_z_table"],
@@ -96,9 +96,9 @@ def get_mag_sed_pars(
         gal_obsmags, gal_restmags, gal_obsmags_nodust, gal_restmags_nodust = _res
 
         # add values to tables
-        for  table, results in zip([mags, mags_nodust],
-                             [[gal_restmags, gal_obsmags],
-                              [gal_restmags_nodust, gal_obsmags_nodust]]):
+        for table, results in zip([mags, mags_nodust],
+                                  [[gal_restmags, gal_obsmags],
+                                   [gal_restmags_nodust, gal_obsmags_nodust]]):
             for fr, vals in zip(["rest", "obs"], results):
                 for k in SED_params["filter_keys"]:
                     filt = k.split("_")[0]

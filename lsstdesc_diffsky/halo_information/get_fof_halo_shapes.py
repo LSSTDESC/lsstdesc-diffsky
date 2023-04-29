@@ -35,7 +35,7 @@ def get_halo_shapes(snapshot, hpx_fof_tags, hpx_reps, shape_dir, debug=True):
                 reps = fh['replication']
                 mask &= np.in1d(reps, hpx_reps)  # duplicates possible
                 # check foftag/replication pairs to verify they are matched
-                mask_locations = np.where(mask == True)[0]
+                mask_locations = np.where(mask is True)[0]
                 for mloc, foftag, rep in zip(
                         mask_locations, fof_tags[mask], reps[mask]):
                     locs = np.where(hpx_fof_tags == foftag)[0]
@@ -43,13 +43,12 @@ def get_halo_shapes(snapshot, hpx_fof_tags, hpx_reps, shape_dir, debug=True):
                     n = 0
                     while not found and n < len(locs):
                         found = (hpx_reps[locs[n]] == rep)
-                        # print(mloc, foftag, rep, hpx_fof_tags[locs[n]], hpx_reps[locs[n]], n, found, locs[n])
                         n += 1
 
                     mask[mloc] = found
 
-                print('...Matched {} fof & replication tags (/{} fof tags) for snapshot {}'.format(
-                    np.count_nonzero(mask), nfof, snapshot))
+                msg = '...Matched {} fof & replication tags (/{} fof tags) for snapshot {}'
+                print(msg.format(np.count_nonzero(mask), nfof, snapshot))
                 for k, v in fh.items():
                     if 'RIT' not in k and k[-3:] != 'SIT':
                         shapes[k] = v[mask]
@@ -60,12 +59,20 @@ def get_halo_shapes(snapshot, hpx_fof_tags, hpx_reps, shape_dir, debug=True):
     return shapes
 
 def get_locations(shapes, fof_halo_tags, replications):
-    # searchsorted returns location of first occurrence and fails for multiple occurrences
-    # orig_indices = target_halos['fof_halo_id'].argsort()
-    # insertions = np.searchsorted(target_halos['fof_halo_id'][orig_indices], shapes['fof_halo_tag'])
-    # locations = orig_indices[insertions]
+    """
+    find position of fof_halo_tags in target_halo array
+    Parameters
+    ----------
 
-    # find position of fof_halo_tags in target_halo array
+    Returns
+    -------
+    searchsorted returns location of first occurrence and fails for multiple occurrences
+    orig_indices = target_halos['fof_halo_id'].argsort()
+    insertions = np.searchsorted(target_halos['fof_halo_id'][orig_indices],
+                                 shapes['fof_halo_tag'])
+    locations = orig_indices[insertions]
+
+    """
     locations = []
     for foftag, rep in zip(shapes['fof_halo_tag'], shapes['replication']):
         loc = np.where(fof_halo_tags == foftag)[0]

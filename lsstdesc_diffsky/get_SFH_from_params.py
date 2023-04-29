@@ -31,8 +31,6 @@ def get_log_safe_ssfr(mstar, sfr, loc=-11.8):  # assumes mstar and sfr are 1-d v
     # print(ssfr_random[0:10])
     ssfr = sfr / mstar
     msk_bad = (ssfr <= 0) | ~np.isfinite(ssfr)
-    # if np.count_nonzero(msk_bad) > 0:
-    #    print('.......removing {} zero, -ve or inf ssfr values'.format(np.count_nonzero(msk_bad)))
     log_safe_ssfr = np.where(msk_bad, ssfr_random, ssfr)
     return np.log10(log_safe_ssfr)
 

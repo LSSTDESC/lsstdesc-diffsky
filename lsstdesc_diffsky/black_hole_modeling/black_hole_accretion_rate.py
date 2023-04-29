@@ -124,8 +124,9 @@ def monte_carlo_bh_acc_rate(redshift, black_hole_mass, sfr_percentile):
     >>> ngals = int(1e4)
     >>> sfr_percentile = np.random.uniform(0, 1, ngals)
     >>> black_hole_mass = 10**np.random.uniform(6, 11, ngals)
-    >>> edd_ratio, acc_rate = monte_carlo_bh_acc_rate(redshift, black_hole_mass, sfr_percentile)
-
+    >>> edd_ratio, acc_rate = monte_carlo_bh_acc_rate(redshift,
+                                                      black_hole_mass,
+                                                      sfr_percentile)
     """
     redshift = np.atleast_1d(redshift)
     msg = ("monte_carlo_bh_acc_rate only accepts "

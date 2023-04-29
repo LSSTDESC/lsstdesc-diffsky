@@ -34,4 +34,3 @@ def test3():
     r3 = nfw_profile_realization(conc, seed=44)
     assert np.allclose(r, r2)
     assert not np.allclose(r, r3)
-

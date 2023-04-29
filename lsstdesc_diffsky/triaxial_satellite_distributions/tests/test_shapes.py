@@ -9,7 +9,8 @@ def _enforce_constraints(b_to_a, c_to_a, e, p):
     assert np.all(c_to_a > 0), "All elements of c_to_a must be strictly positive"
     assert np.all(b_to_a <= 1), "No element of b_to_a can exceed unity"
     assert np.all(c_to_a <= 1), "No element of c_to_a can exceed unity"
-    assert np.all(b_to_a >= c_to_a), "No element in c_to_a can exceed the corresponding b_to_a"
+    assert np.all(
+        b_to_a >= c_to_a), "No element in c_to_a can exceed the corresponding b_to_a"
     assert np.all(e <= 0.5), "No element of ellipticity can exceed 0.5"
     assert np.all(p <= 0.5), "No element of prolaticity can exceed 0.5"
     assert np.all(e >= 0.), "ellipticity must be non-negative"

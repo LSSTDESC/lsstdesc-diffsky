@@ -5,8 +5,6 @@ import healpy as hp
 from halotools.utils import unsorting_indices
 from astropy.table import Table
 from scipy.stats import norm
-from halotools.empirical_models import NFWPhaseSpace
-from astropy.cosmology import FlatLambdaCDM
 import warnings
 warnings.filterwarnings("error")
 
@@ -14,7 +12,7 @@ default_mpeak_mstar_fit_low_mpeak, default_mpeak_mstar_fit_high_mpeak = 11, 11.5
 default_desired_logm_completeness = 9.75
 
 __all__ = ('model_extended_mpeak', 'map_mstar_onto_lowmass_extension',
-           'create_synthetic_lowmass_mock_with_satellites', 'create_synthetic_lowmass_mock_with_centrals')
+           'create_synthetic_lowmass_mock_with_centrals')
 
 
 def model_extended_mpeak(mpeak, num_galsampled_gals, desired_logm_completeness=default_desired_logm_completeness,

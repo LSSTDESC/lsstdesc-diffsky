@@ -45,6 +45,7 @@ dust_parameters:
 empirical_models:
     size_model_mag: 'SDSS_rest_R'
     ellipticity_model_mag: 'SDSS_rest_R'
+    black_hole_modeling: False
 
 synthetic_ultra_faints:
     skip_synthetics: True

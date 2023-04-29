@@ -6,16 +6,14 @@ import psutil
 import numpy as np
 import h5py
 import re
-import healpy as hp
 import gc
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 from time import time
 from jax import numpy as jnp
 from jax import random as jran
 from astropy.utils.misc import NumpyRNGContext
 from astropy.cosmology import FlatLambdaCDM, WMAP7
-from astropy.table import Table, vstack, join
+from astropy.table import Table, vstack
 # Halo shapes
 from .halo_information.get_fof_halo_shapes import get_matched_shapes
 from .halo_information.get_fof_halo_shapes import get_halo_shapes
@@ -36,15 +34,14 @@ from .photometry.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
 from .photometry.precompute_ssp_tables import precompute_ssp_restmags
 from .load_fsps_data import load_filter_data, load_sps_data
 from .get_SEDs_from_SFH import get_filter_wave_trans
-from .get_SFH_from_params import get_params, get_sfh_from_params
+from .get_SFH_from_params import get_params
 from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
-from .synthetic_subhalos import synthetic_logmpeak
-from .synthetic_subhalos import model_synthetic_cluster_satellites
-from .synthetic_subhalos import create_synthetic_lowmass_mock_with_satellites
-from .synthetic_subhalos import create_synthetic_lowmass_mock_with_centrals
-from .synthetic_subhalos import map_mstar_onto_lowmass_extension
+from .synthetic_subhalos.synthetic_lowmass_subhalos import synthetic_logmpeak
+from .synthetic_subhalos.synthetic_cluster_satellites import model_synthetic_cluster_satellites
+from .synthetic_subhalos.extend_subhalo_mpeak_range import create_synthetic_lowmass_mock_with_centrals
+from .synthetic_subhalos.extend_subhalo_mpeak_range import map_mstar_onto_lowmass_extension
 # Galsampler
 from halotools.utils.value_added_halo_table_functions import compute_uber_hostid
 from galsampler import crossmatch
@@ -53,9 +50,6 @@ from galsampler.galmatch import galsample
 from .size_modeling import mc_size_vs_luminosity_late_type, mc_size_vs_luminosity_early_type
 from .black_hole_modeling import monte_carlo_bh_acc_rate, bh_mass_from_bulge_mass, monte_carlo_black_hole_mass
 from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
-# Globals
-from .constants import MAH_PNAMES, MS_U_PNAMES, Q_U_PNAMES
-from .constants import SED_params
 
 fof_halo_mass = 'fof_halo_mass'
 # fof halo mass in healpix cutouts
@@ -85,6 +79,9 @@ snapshot_min = 121
 volume_minx = 0.
 volume_miny = 0.
 volume_maxz = 0.
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 
 def write_umachine_healpix_mock_to_disk(
         umachine_mstar_ssfr_mock_fname_list,
@@ -169,7 +166,7 @@ def write_umachine_healpix_mock_to_disk(
 
     """
 
-    global SED_params
+    from .constants import SED_params
     output_mock = {}
     gen = zip(
         umachine_mstar_ssfr_mock_fname_list,
@@ -249,9 +246,12 @@ def write_umachine_healpix_mock_to_disk(
             SED_params[k] = v
 
     # check for alt_dustpop_params
-    if 'use_alt_dustpop_params' in SED_params.keys() and SED_params['use_alt_dustpop_params']:
+    if 'use_alt_dustpop_params' in SED_params.keys(
+    ) and SED_params['use_alt_dustpop_params']:
         SED_params = get_alt_dustpop_params(SED_params)
-        print("\nUsing alt dustpop parameters:\n{}".format(SED_params['alt_dustpop_params']))
+        print(
+            "\nUsing alt dustpop parameters:\n{}".format(
+                SED_params['alt_dustpop_params']))
     else:
         print("\nUsing default dustpop parameters")
 
@@ -282,8 +282,8 @@ def write_umachine_healpix_mock_to_disk(
     ssp_restmag_table = precompute_ssp_restmags(
         ssp_wave, ssp_flux, filter_waves, filter_trans)
     ssp_obsmag_table = precompute_ssp_obsmags_on_z_table(ssp_wave, ssp_flux, filter_waves, filter_trans,
-                                                         ssp_z_table, OmegaM, 
-                                                         cosmological_params['w0'],cosmological_params['wa'],
+                                                         ssp_z_table, OmegaM,
+                                                         cosmological_params['w0'], cosmological_params['wa'],
                                                          H0/100.)
 
     # save in SED_params for passing to other modules
@@ -439,7 +439,8 @@ def write_umachine_healpix_mock_to_disk(
         output_mock[snapshot] = build_output_snapshot_mock(float(redshift),
                                                            mock, target_halos, gs_results, galaxy_id_offset,
                                                            synthetic_dict, Nside_sky, cutout_number_true,
-                                                           float(previous_redshift), cosmology, w0, wa,
+                                                           float(
+                                                               previous_redshift), cosmology, w0, wa,
                                                            volume_minx=volume_minx, SED_params=SED_params,
                                                            volume_miny=volume_miny, volume_maxz=volume_maxz, seed=seed,
                                                            shear_params=shear_params,
@@ -557,7 +558,8 @@ def get_astropy_table(table_data, halo_unique_id=0, check=False, cosmology=None)
     if check and cosmology is not None:
         #  compute comoving distance from z and from position
         r = np.sqrt(t['x']*t['x'] + t['y']*t['y'] + t['z']*t['z'])
-        comoving_distance = cosmology.comoving_distance(t['halo_redshift'])*cosmology.H0.value/100.
+        comoving_distance = cosmology.comoving_distance(
+            t['halo_redshift'])*cosmology.H0.value/100.
         print('r == comoving_distance(z) is {}', np.isclose(r, comoving_distance))
 
     print('...Number of target halos to populate with galaxies: {}'.format(
@@ -600,10 +602,6 @@ def add_low_mass_synthetic_galaxies(mock, seed, synthetic_halo_minimum_mass, red
     #  Assign diffstar parameters to synthetic low-mass galaxies
     print("TBD: get diffstar parameters for synthetic galaxies")
 
-    with NumpyRNGContext(seed):
-        synthetic_sfr_percentile = np.random.uniform(0, 1, len(synthetic_upid))
-
-
     #  Now downsample the synthetic galaxies to adjust for volume of lightcone shell
     #  desired number = synthetic_number*comoving_vol(snapshot)/comoving_vol(healpixel)
     volume_factor = get_volume_factor(redshift, previous_redshift, Vtotal, cosmology)
@@ -626,8 +624,8 @@ def add_low_mass_synthetic_galaxies(mock, seed, synthetic_halo_minimum_mass, red
     mstar_synthetic = mstar_synthetic[mstar_mask]
     mpeak_synthetic = mpeak_synthetic_snapshot[selected_synthetic_indices][mstar_mask]
     synthetic_dict = dict(
-        mpeak=mpeak_synthetic, obs_sm=mstar_synthetic, 
-        )
+        mpeak=mpeak_synthetic, obs_sm=mstar_synthetic,
+    )
 
     return mock, synthetic_dict
 
@@ -878,7 +876,7 @@ def build_output_snapshot_mock(
                         seed, snapshot_redshift,
                         mah_keys, ms_keys, q_keys, Ngals,
                         mah_pars=mah_pars, ms_pars=ms_pars, q_pars=q_pars,
-                       )
+                        )
 
     # Add low-mass synthetic galaxies
     if synthetic_dict and len(synthetic_dict['mp']) > 0:
@@ -966,6 +964,16 @@ def build_output_snapshot_mock(
             # dc2['spheroidSersicIndex'] = srsc_indx_sphere
             # dc2['totalSersicIndex'] = srsc_indx_tot
 
+    if SED_params['black_hole_model']:
+        bulge_to_total_i = np.array([0.5]*Ngals)  # need a model here
+        percentile_sfr = dc2['obs_sfr']  # TBD check this  or use sfr from SED
+        bulge_mass = dc2['obs_sm']*bulge_to_total_i  # check this or use log_sm from SED
+        dc2['blackHoleMass'] = monte_carlo_black_hole_mass(bulge_mass)
+        eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(dc2['redshift'],
+                                                               dc2['blackHoleMass'], percentile_sfr)
+        dc2['blackHoleAccretionRate'] = bh_acc_rate*1e9
+        dc2['blackHoleEddingtonRatio'] = eddington_ratio
+
     # Add column for redshifts including peculiar velocities
     _, z_obs, v_pec, _, _, _, _ = pecZ(dc2['x'], dc2['y'], dc2['z'], dc2['vx'], dc2['vy'], dc2['vz'],
                                        dc2['redshift'])
@@ -1012,11 +1020,11 @@ def generate_SEDs(dc2, SED_params, cosmology, w0, wa,
         n_replace = np.count_nonzero(nofit_replace)
         if n_replace > 0:
             print('.....Replacing {} diffmah/diffstar fit failures with {} resampled UM fit successes'.format(nfail,
-                                                                                                                  n_replace))
+                                                                                                              n_replace))
         else:
             print(
                 '.....No replacements required; {} fit failures, {} replacements'.format(
-                        nfail, n_replace))
+                    nfail, n_replace))
         nmissed = nfail - n_replace
     if nmissed > 0 or (nmissed < 0 and nfail > 0) or (
             use_diffmah_pop and nfail > 0):
@@ -1060,10 +1068,11 @@ def generate_SEDs(dc2, SED_params, cosmology, w0, wa,
 
     # generate metallicities
     lg_met_mean = mzr_model(log_sm, times, *SED_params['met_params'])
-    #lg_met_scatt = np.random.uniform(low=SED_params['lgmet_scatter_min'],
+    # lg_met_scatt = np.random.uniform(low=SED_params['lgmet_scatter_min'],
     #                                 high=SED_params['lgmet_scatter_max'],
     #                                 size=Ngals)
-    lg_met_scatt = (float(SED_params['lgmet_scatter_min']) + float(SED_params['lgmet_scatter_max']))/2
+    lg_met_scatt = (float(SED_params['lgmet_scatter_min']) +
+                    float(SED_params['lgmet_scatter_max']))/2
     dc2['lg_met_mean'] = lg_met_mean
     dc2['lg_met_scatter'] = np.array([lg_met_scatt]*Ngals)
 
@@ -1075,7 +1084,7 @@ def generate_SEDs(dc2, SED_params, cosmology, w0, wa,
             alt_dustpop_params = SED_params['alt_dustpop_params']
             print('.......with alt_dustpop_parameters')
             dust_params = mc_generate_dust_params(ran_key, log_sm, log_ssfr, dc2['redshift'],
-                                                      tau_pdict=alt_dustpop_params)
+                                                  tau_pdict=alt_dustpop_params)
         else:
             dust_params = mc_generate_dust_params(
                 ran_key, log_sm, log_ssfr, dc2['redshift'])
@@ -1092,19 +1101,19 @@ def generate_SEDs(dc2, SED_params, cosmology, w0, wa,
         print('.....Not using dust attenuation factors')
         attenuation_factors = None
 
-    mags, seds = get_mag_sed_pars(SED_params, 
+    mags, seds = get_mag_sed_pars(SED_params,
                                   dc2['redshift'], log_sm, gal_sfh,
                                   lg_met_mean, lg_met_scatt,
                                   cosmology, w0, wa,
                                   dust_trans_factors_obs=attenuation_factors,
-                                 )
+                                  )
     # save to output
     if len(seds) > 0:
         dc2['SEDs'] = seds
     for col in mags.colnames:
         dc2[col] = mags[col]
     # print('Catalog colnames: ',dc2.colnames)
-        
+
     return dc2
 
 

@@ -1,8 +1,7 @@
 import numpy as np
 from astropy.table import Table
 from astropy.utils.misc import NumpyRNGContext
-from halotools.empirical_models import NFWPhaseSpace, Moster13SmHm
-from scipy.stats import powerlaw
+from halotools.empirical_models import NFWPhaseSpace
 from ..triaxial_satellite_distributions.monte_carlo_triaxial_profile import generate_triaxial_satellite_distribution
 
 __all__ = ('calculate_synthetic_richness', 'model_synthetic_cluster_satellites')
@@ -222,10 +221,10 @@ def model_synthetic_cluster_satellites(mock, Lbox=256.,
         nonzeros = (synthetic_richness > 0)
         print(
             '.......adding SFH information for {} synthetic satellites'.format(
-            np.count_nonzero(nonzeros)))
+                np.count_nonzero(nonzeros)))
         print('.........using random resampling of existing satellites')
         for ns, halo_id in zip(
-            synthetic_richness[nonzeros], target_halo_id[nonzeros]):
+                synthetic_richness[nonzeros], target_halo_id[nonzeros]):
             # identify existing satellites
             maskm = (
                 mock['target_halo_id'] == halo_id) & (
@@ -237,7 +236,6 @@ def model_synthetic_cluster_satellites(mock, Lbox=256.,
                     ns), "Mismatch in number of expected synthetic staellites"
             for k in keys:
                 sats[k][masks] = mock[k][indexes]
-
 
         #  It is important to insure that `sats` the `dc2` mock have the exact same columns,
         # since these two get combined by a call to `astropy.table.vstack`. Here

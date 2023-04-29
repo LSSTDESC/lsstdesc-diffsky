@@ -1,5 +1,6 @@
 import os
-from astropy.table import Table
+import glob
+from astropy.table import Table, vstack
 import numpy as np
 from jax import numpy as jnp
 from collections import OrderedDict
@@ -9,13 +10,12 @@ def read_pscan(pscan_dir, pscan_fname):
 
     first = True
     for n, pf in enumerate(pfiles):
-        #print('Reading {}'.format(os.path.basename(pf)))
         if first:
             pscan = Table.read(pf, format='ascii')
             first = False
         else:
             pscan = vstack([pscan, Table.read(pf, format='ascii')])
-        
+
     print('Read {} pscan rows'.format(len(pscan)))
 
     return pscan
