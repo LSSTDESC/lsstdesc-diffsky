@@ -1,16 +1,17 @@
-'''
+"""
 
-'''
+"""
 from astropy.cosmology import WMAP7 as cosmo
-import pdb
 import astropy.constants as const
 from numpy.core import umath_tests as npm
 import numpy as np
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+
 def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
-    '''
+    """
     This function calculates peculiar z_hubbs for n-body simulation objects, given
     their comoving position and velocity, and returns some other useful products of the calculation.
     Joe Hollowed COSMO-HEP 2017
@@ -34,7 +35,7 @@ def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
              - distance from observer to object in comoving Mpc
              - distance from observer to object in kpc proper (comoving dist * a)
              - distorted distance from observer to object in Mpc proper
-    '''
+    """
 
     # get relative position (r vector) of and position unit vector toward each object
     r_rel = np.array([x, y, z]).T - obs
@@ -43,30 +44,29 @@ def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
 
     # dot velocity vectors with relative position unit vector to get peculiar velocity
     v = np.array([vx, vy, vz]).T
-    v_mag = np.linalg.norm(v, axis=1)
     v_pec = npm.inner1d(v, r_rel_hat)
 
     # find total and peculiar z_hubb (full relativistic expression)
     c = const.c.value / 1000
-    z_pec = np.sqrt((1+v_pec/c) / (1-v_pec/c)) - 1
-    z_tot = (1+z_hubb)*(1+z_pec) - 1
+    z_pec = np.sqrt((1 + v_pec / c) / (1 - v_pec / c)) - 1
+    z_tot = (1 + z_hubb) * (1 + z_pec) - 1
 
     # find the distorted distance from appliying Hubble's law using the new
     # z_tot z_hubbs
-    a = 1/(1+z_hubb)
-    r_dist = r_rel_mag + v_pec/100./cosmo.efunc(z_hubb)/a
+    a = 1 / (1 + z_hubb)
+    r_dist = r_rel_mag + v_pec / 100.0 / cosmo.efunc(z_hubb) / a
     # pdb.set_trace()
 
     return z_pec, z_tot, v_pec, v_pec * a, r_rel_mag, r_rel_mag * a, r_dist
 
-def pecZ_snapshot(x, vx, z_hubb):
 
+def pecZ_snapshot(x, vx, z_hubb):
     c = const.c.value / 1000
-    z_pec = np.sqrt((1+vx/c) / (1-vx/c)) - 1
-    z_tot = (1+z_hubb)*(1+z_pec) - 1
+    z_pec = np.sqrt((1 + vx / c) / (1 - vx / c)) - 1
+    z_tot = (1 + z_hubb) * (1 + z_pec) - 1
 
     # find the distorted distance from appliying Hubble's law using the new
     # z_tot z_hubbs
-    a = 1/(1+z_hubb)
-    r_dist = r_rel_mag + vx/100./cosmo.efunc(z_hubb)/a
+    a = 1 / (1 + z_hubb)
+
     return z_pec, z_tot

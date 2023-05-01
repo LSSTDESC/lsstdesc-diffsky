@@ -84,7 +84,7 @@ def interpolate_ssp_photmag_table(z_gals, z_table, ssp_photmag_table):
 
 _z = [*[None] * 4, 0, *[None] * 4]
 _f = [None, None, 0, 0, None, *[None] * 4]
-_ssp = [None, 0, *[None] *7]
+_ssp = [None, 0, *[None] * 7]
 _calc_obs_mag_vmap_f = jjit(vmap(calc_obs_mag, in_axes=_f))
 _calc_obs_mag_vmap_f_ssp = jjit(
     vmap(vmap(_calc_obs_mag_vmap_f, in_axes=_ssp), in_axes=_ssp)
