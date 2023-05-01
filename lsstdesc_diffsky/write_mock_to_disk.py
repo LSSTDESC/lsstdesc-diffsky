@@ -66,7 +66,6 @@ from .size_modeling import (
 )
 from .black_hole_modeling import (
     monte_carlo_bh_acc_rate,
-    bh_mass_from_bulge_mass,
     monte_carlo_black_hole_mass,
 )
 from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
@@ -126,7 +125,8 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise=0.1,
 ):
     """
-    GalSample the UM mock into the lightcone healpix cutout, and write the healpix mock to disk.
+    GalSample the UM mock into the lightcone healpix cutout and
+    write the healpix mock to disk.
 
     Parameters
     ----------
@@ -176,7 +176,8 @@ def write_umachine_healpix_mock_to_disk(
         dz : float
         Spacing in redshift for precomputing ssp tables
         N_t_table: integer
-        Size of time array for computing star-formation histories from diffstar parameters
+        Size of time array for computing star-formation histories
+        from diffstar parameters
         t_table_0: float
         Star time for computing star-formation histories
         use_diffmah_pop: boolean
@@ -186,7 +187,8 @@ def write_umachine_healpix_mock_to_disk(
 
     mstar_min: stellar mass cut for synthetic galaxies (not used in image simulations)
 
-    mass_match_noise: noise added to log of source halo masses to randomize the match to target halos
+    mass_match_noise: noise added to log of source halo masses to randomize the match
+        to target halos
 
     versionMajor: int major version number
 
@@ -327,11 +329,8 @@ def write_umachine_healpix_mock_to_disk(
     z_max = zmax + dz
     n_z_table = int(np.ceil((z_max - z_min) / dz))
     ssp_z_table = np.linspace(z_min, z_max, n_z_table)
-    print(
-        "\nComputing ssp tables for {} z values: {:.2f} < z < {:.2f} (dz={:.2f})".format(
-            n_z_table, z_min, z_max, dz
-        )
-    )
+    msg = "\nComputing ssp tables for {} z values: {:.2f} < z < {:.2f} (dz={:.2f})"
+    print(msg.format(n_z_table, z_min, z_max, dz))
     ssp_restmag_table = precompute_ssp_restmags(
         ssp_wave, ssp_flux, filter_waves, filter_trans
     )
@@ -460,7 +459,8 @@ def write_umachine_healpix_mock_to_disk(
             )
 
         ################################################################################
-        #  Galsampler - For every target halo, find a source halo with closely matching mass
+        #  Galsampler - For every target halo,
+        #               find a source halo with closely matching mass
         ################################################################################
         print("\n...Finding halo--halo correspondence with GalSampler")
 
@@ -645,10 +645,6 @@ def get_astropy_table(table_data, halo_unique_id=0, check=False, cosmology=None)
     t.rename_column("rep", "lightcone_replication")
     t["halo_redshift"] = 1 / t["a"] - 1.0
 
-    # code for replacing redshift distribution with random uniform distribution
-    # redshift = 1/t['a'] - 1.
-    # t['halo_redshift'] = np.random.uniform(np.min(redshift), np.max(redshift), len(t['a']))
-
     t["halo_id"] = (
         np.arange(len(table_data["id"])) * halo_id_offset + halo_unique_id
     ).astype(int)
@@ -755,21 +751,16 @@ def add_low_mass_synthetic_galaxies(
         selected_synthetic_indices = np.random.choice(
             synthetic_indices, size=num_selected_synthetic, replace=False
         )
-    print(
-        ".....down-sampling synthetic galaxies with volume factor {} to yield {} selected synthetics".format(
-            volume_factor, num_selected_synthetic
-        )
-    )
+    msg = ".....down-sampling synthetic galaxies with volume factor {}\n
+           to yield {} selected synthetics"
+    print(msg.format(volume_factor, num_selected_synthetic))
 
     mstar_synthetic = mstar_synthetic_snapshot[selected_synthetic_indices]
     #  Apply additional M* cut to reduce number of synthetics for 5000 sq. deg. catalog
     if mstar_min > 0:
         mstar_mask = mstar_synthetic > mstar_min
-        print(
-            ".....removing synthetics with M* < {:.1e} to yield {}  selected synthetics".format(
-                mstar_min, np.count_nonzero(mstar_mask)
-            )
-        )
+        msg = ".....removing synthetics with M* < {:.1e} to yield {}  selected synthetics"
+        print(msg.format(mstar_min, np.count_nonzero(mstar_mask)))
 
     mstar_synthetic = mstar_synthetic[mstar_mask]
     mpeak_synthetic = mpeak_synthetic_snapshot[selected_synthetic_indices][mstar_mask]
@@ -826,7 +817,8 @@ def build_output_snapshot_mock(
         storing the target halo catalog
 
     gs_results: named ntuple
-        Named ntuple returned by galsample containing 3 arrays of shape (num_target_gals, )
+        Named ntuple returned by galsample containing 3 arrays
+        of shape (num_target_gals, )
         storing integers valued between [0, num_source_gals)
 
     commit_hash : string
@@ -855,8 +847,9 @@ def build_output_snapshot_mock(
 
     # save target halo information into mock
     # compute richness
-    # tgt_unique, tgt_inv, tgt_counts = np.unique(target_gals_target_halo_ids, return_inverse=True,
-    #                                            return_counts=True)
+    # tgt_unique, tgt_inv, tgt_counts = np.unique(target_gals_target_halo_ids,
+    #                                             return_inverse=True,
+    #                                             return_counts=True)
     # dc2['richness'] = tgt_counts[tgt_inv]
     #
     # Method 1: use unique arrays to get values
@@ -925,9 +918,10 @@ def build_output_snapshot_mock(
     dc2["sod_halo_radius"][idxA] = target_halos["sod_radius"][idxB]
 
     #  Here the host_centric_xyz_vxvyvz in umachine should be overwritten
-    #  Then we can associate x <--> A, y <--> B, z <--> C and then apply a random rotation
-    # It will be important to record the true direction of the major axis as a
-    # stored column
+    #  Then we can associate x <--> A, y <--> B, z <--> C and then apply
+    #  a random rotation
+    #  It will be important to record the true direction of the major axis as a
+    #  stored column
 
     source_galaxy_halo_keys = (
         "mp",
@@ -1128,11 +1122,9 @@ def build_output_snapshot_mock(
         if len(lowmass_mock) > 0:
             # astropy vstack pads missing values with zeros in lowmass_mock
             dc2 = vstack((dc2, lowmass_mock))
-            print(
-                ".....time to create {} galaxies in synthetic_lowmass_mock = {:.2f} secs".format(
-                    len(lowmass_mock["target_halo_id"]), time() - check_time
-                )
-            )
+            msg = ".....time to create {} galaxies in lowmass_mock = {:.2f} secs"
+            print(msg.format(len(lowmass_mock["target_halo_id"]), time() - check_time,
+                             ))
 
     # Add shears and magnification
     if shear_params["add_dummy_shears"]:
@@ -1215,7 +1207,8 @@ def build_output_snapshot_mock(
             )
             # srsc_indx_disk = 1.0*np.ones(lum_disk.size,dtype='f4')
             # srsc_indx_sphere = 4.0*np.ones(lum_disk.size,dtype='f4')
-            # srsc_indx_tot = srsc_indx_disk*(1. - dc2['bulge_to_total_ratio']) + srsc_indx_sphere*dc2['bulge_to_total_ratio']
+            # srsc_indx_tot = srsc_indx_disk*(1. - dc2['bulge_to_total_ratio'])
+            #                 + srsc_indx_sphere*dc2['bulge_to_total_ratio']
             # dc2['diskSersicIndex'] = srsc_indx_disk
             # dc2['spheroidSersicIndex'] = srsc_indx_sphere
             # dc2['totalSersicIndex'] = srsc_indx_tot
@@ -1292,17 +1285,12 @@ def generate_SEDs(
         nofit_replace = dc2["source_galaxy_nofit_replace"][~has_fit] == 1
         n_replace = np.count_nonzero(nofit_replace)
         if n_replace > 0:
-            print(
-                ".....Replacing {} diffmah/diffstar fit failures with {} resampled UM fit successes".format(
-                    nfail, n_replace
-                )
-            )
+            msg = ".....Replacing {} diffmah/diffstar fit failures with\n
+                   {} resampled UM fit successes"
+            print(msg.format(nfail, n_replace))
         else:
-            print(
-                ".....No replacements required; {} fit failures, {} replacements".format(
-                    nfail, n_replace
-                )
-            )
+            msg = ".....No replacements required; {} fit failures, {} replacements"
+            print(msg.format(nfail, n_replace))
         nmissed = nfail - n_replace
     if nmissed > 0 or (nmissed < 0 and nfail > 0) or (use_diffmah_pop and nfail > 0):
         msg = ".....Replacing {} diffmah/diffstar fit failures with diffmah{} pop"

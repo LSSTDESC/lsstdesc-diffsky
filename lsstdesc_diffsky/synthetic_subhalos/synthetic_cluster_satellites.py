@@ -292,9 +292,9 @@ def model_synthetic_cluster_satellites(
             for k in keys:
                 sats[k][masks] = mock[k][indexes]
 
-        #  It is important to insure that `sats` the `dc2` mock have the exact same columns,
-        # since these two get combined by a call to `astropy.table.vstack`. Here
-        # we enforce this:
+        # It is important to insure that `sats` the `dc2` mock have the exact same
+        # columns, since these two get combined by a call to `astropy.table.vstack`.
+        # Here, we enforce this:
         msg = (
             "The synthetic satellites columns must be the same as the regular mock\n"
             "sats keys = {0}\nmock keys = {1}"

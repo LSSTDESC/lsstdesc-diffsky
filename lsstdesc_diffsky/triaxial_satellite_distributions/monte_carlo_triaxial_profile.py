@@ -42,8 +42,8 @@ def generate_triaxial_satellite_distribution(
 
     Notes
     -----
-    The normalization of the input vector host_A determines the length of the principal axis
-
+    The normalization of the input vector host_A determines
+    the length of the principal axis
     """
     host_conc, host_Ax, host_Ay, host_Az, b_to_a, c_to_a = _format_args_as_ndarrays(
         host_conc, host_Ax, host_Ay, host_Az, b_to_a, c_to_a

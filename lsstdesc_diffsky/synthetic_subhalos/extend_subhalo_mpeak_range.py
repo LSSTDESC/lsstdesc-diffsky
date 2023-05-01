@@ -47,18 +47,20 @@ def model_extended_mpeak(
     -------
     corrected_mpeak : ndarray
         Numpy array of shape (nsubs_orig, ). Values greater than the midpoint
-        of the fitted range will be unchanged from the original mpeak. Values less than this
-        will be altered to correct for the power law departure
+        of the fitted range will be unchanged from the original mpeak. Values
+        less than this will be altered to correct for the power law departure
 
     mpeak_extension : ndarray
-        Numpy array of shape (num_new_subs, ) storing values of Mpeak for synthetic subhalos
+        Numpy array of shape (num_new_subs, )
+        storing values of Mpeak for synthetic subhalos
 
     Examples
     --------
     >>> from scipy.stats import powerlaw
     >>> mpeak = 10**(5*(1-powerlaw.rvs(2, size=40000)) + 10.)
     >>> desired_logm_completeness = 9.5
-    >>> corrected_mpeak, mpeak_extension = model_extended_mpeak(mpeak, desired_logm_completeness)
+    >>> corrected_mpeak, mpeak_extension = model_extended_mpeak
+    >>> (mpeak, desired_logm_completeness)
     """
     logmpeak = np.log10(mpeak)
     idx_sorted = np.argsort(logmpeak)[::-1]
@@ -211,8 +213,9 @@ def get_volume_factor(
     if vol_frac < 1.0:  # edge pixel needs adjustment
         if (
             vol_frac > 1.0 / Nsample
-        ):  # check if overlap with octant is big enough for estimate of reduction factor
-            # Monte Carlo the area to find the reduced number of synthetics needed
+        ):  # check if overlap with octant is big enough for estimate of reduction
+            # factor Monte Carlo the area to find 
+            # the reduced number of synthetics needed
             gals_x, gals_y, gals_z = generate_trial_sample(
                 box_mins, box_maxs, Nsample=Nsample
             )
@@ -233,16 +236,18 @@ def get_volume_factor(
                 )
             )
             volume_factor = float(N_inoctant) / float(N_inhpx)
+            msg = "...adjusting xyz box boundaries for octant edges:"
             print(
-                "...adjusting xyz box boundaries for octant edges: {:.3g}, {:.3g}, {:.3g}".format(
-                    x_min, y_min, z_max
+                "{} {:.3g}, {:.3g}, {:.3g}".format(
+                    msg, x_min, y_min, z_max
                 )
             )
         else:
             volume_factor = 0.0
+            msg = "too small for Monte Carlo measure"
             print(
-                "...fraction of box volume in octant ({:.3g}) too small for Monte Carlo measure".format(
-                    vol_frac
+                "...fraction of box volume in octant ({:.3g}) {}".format(
+                    msg, vol_frac
                 )
             )
 
@@ -287,10 +292,8 @@ def mask_galaxies_outside_healpix(
     """ """
     healpixels = hp.pixelfunc.vec2pix(Nside, gals_x, gals_y, gals_z, nest=False)
     healpix_number_mask = healpixels == cutout_id
-    # print('.....removing {} fakes falling outside healpixel'.format(np.sum(~healpix_number_mask)))
     r_gals = np.sqrt(gals_x**2 + gals_y**2 + gals_z**2)
     r_mask = (r_gals >= r_min) & (r_gals <= r_max)
-    # print('.....removing {} fakes falling outside comoving distance bounds {:.2f}-{:.2f}'.format(np.sum(~r_mask), r_min, r_max))
     healpix_mask = healpix_number_mask & r_mask
 
     return healpix_mask
@@ -315,7 +318,8 @@ def create_synthetic_lowmass_mock_with_centrals(
 ):
     """Function generates a data table storing synthetic ultra-faint galaxies
     for purposes of extending the resolution limit of the simulation.
-    The generated ultra-faint population will be made up exclusively of central galaxies.
+    The generated ultra-faint population will be made up exclusively
+    of central galaxies.
 
     Parameters
     ----------
@@ -323,7 +327,7 @@ def create_synthetic_lowmass_mock_with_centrals(
         Table storing the UniverseMachine galaxy population that we will sample from
 
     healpix_mock : Astropy Table
-        Table storing the galaxies in the healpixel of the Outer Rim simulation being populated
+        Table storing the galaxies in the healpixel of the simulation being populated
 
     synthetic_dict : dict
         Dictionary of additional properties being modeled onto synthetic galaxies

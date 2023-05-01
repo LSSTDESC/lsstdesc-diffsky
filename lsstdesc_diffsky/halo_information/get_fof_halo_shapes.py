@@ -49,7 +49,7 @@ def get_halo_shapes(snapshot, hpx_fof_tags, hpx_reps, shape_dir, debug=True):
 
                     mask[mloc] = found
 
-                msg = "...Matched {} fof & replication tags (/{} fof tags) for snapshot {}"
+                msg = "...Matched {} fof & replictn tags (/{} fof tags) for snapshot {}"
                 print(msg.format(np.count_nonzero(mask), nfof, snapshot))
                 for k, v in fh.items():
                     if "RIT" not in k and k[-3:] != "SIT":

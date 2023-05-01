@@ -8,8 +8,10 @@ from halotools.utils import rank_order_percentile
 
 def monte_carlo_ellipticity_bulge_disk(magr, seed=None):
     """
+    Model galaxy ellipticities using emprical model derived from observed data
     Parameters
-    ----------                                                                                                                      magr: ndarray
+    ----------
+    magr: ndarray
         Numpy array of shape (ngals, )
 
     Returns

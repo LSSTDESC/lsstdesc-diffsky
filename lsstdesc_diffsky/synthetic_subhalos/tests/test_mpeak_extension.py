@@ -20,7 +20,10 @@ def test1():
 
 
 def test_nonzero_synthetic_stellar_mass():
-    """Regression test for GitHub Issue #39 - https://github.com/LSSTDESC/cosmodc2/issues/39"""
+    """
+    Regression test for GitHub Issue #39 -
+    https://github.com/LSSTDESC/cosmodc2/issues/39
+    """
     nreal, nfake = int(1e5), int(5e5)
     corrected_mpeak = 10 ** np.random.uniform(9.5, 12, nreal)
     obs_sm_orig = corrected_mpeak / 100.0

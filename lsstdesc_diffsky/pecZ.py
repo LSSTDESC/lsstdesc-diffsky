@@ -13,7 +13,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
     """
     This function calculates peculiar z_hubbs for n-body simulation objects, given
-    their comoving position and velocity, and returns some other useful products of the calculation.
+    their comoving position and velocity, and returns some other useful products
+    of the calculation.
     Joe Hollowed COSMO-HEP 2017
     Parameters
     ----------
@@ -29,8 +30,8 @@ def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
     -------
              - the peculair z_hubb in each object in form of param redshift
              - the total observed z_hubb (cosmological+peculiar)
-             - the peculiar velocity of each object, in the form of param vx, where negative
-               velocities are toward the observer, in comoving km/s
+             - the peculiar velocity of each object, in the form of param vx,
+               where negative velocities are toward the observer, in comoving km/s
              - the line-of-sight velocity, in proper km/s (peculiar velocity * a)
              - distance from observer to object in comoving Mpc
              - distance from observer to object in kpc proper (comoving dist * a)
@@ -64,9 +65,5 @@ def pecZ_snapshot(x, vx, z_hubb):
     c = const.c.value / 1000
     z_pec = np.sqrt((1 + vx / c) / (1 - vx / c)) - 1
     z_tot = (1 + z_hubb) * (1 + z_pec) - 1
-
-    # find the distorted distance from appliying Hubble's law using the new
-    # z_tot z_hubbs
-    a = 1 / (1 + z_hubb)
 
     return z_pec, z_tot
