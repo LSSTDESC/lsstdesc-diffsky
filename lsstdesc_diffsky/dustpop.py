@@ -14,6 +14,7 @@ from diffsky.experimental.dspspop.nagaraj22_dust import (
     _get_median_dust_params_kern
     )
 
+
 def mc_generate_dust_params(ran_key, logsm, logssfr, redshift, **kwargs):
     """Generate dust_params array that should be passed to precompute_dust_attenuation
 
