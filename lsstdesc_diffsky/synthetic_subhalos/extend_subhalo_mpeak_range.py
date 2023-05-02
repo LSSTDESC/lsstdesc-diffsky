@@ -214,7 +214,7 @@ def get_volume_factor(
         if (
             vol_frac > 1.0 / Nsample
         ):  # check if overlap with octant is big enough for estimate of reduction
-            # factor Monte Carlo the area to find 
+            # factor Monte Carlo the area to find
             # the reduced number of synthetics needed
             gals_x, gals_y, gals_z = generate_trial_sample(
                 box_mins, box_maxs, Nsample=Nsample

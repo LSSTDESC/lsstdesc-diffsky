@@ -380,7 +380,8 @@ def write_umachine_healpix_mock_to_disk(
                 SED_params[key] = None  # filter not available; overwrite key
         else:
             if 'skip' not in SED_params[key]:
-                print("...incorrect option {} for galaxy-{}".format(SED_params[key], key))
+                print("...incorrect option {} for galaxy-{}".format(
+                    SED_params[key], key))
             print("...Skipping galaxy-{}".format(key))
             SED_params[key] = None  # filter not available; overwrite key
 
@@ -763,7 +764,7 @@ def add_low_mass_synthetic_galaxies(
     #  Apply additional M* cut to reduce number of synthetics for 5000 sq. deg. catalog
     if mstar_min > 0:
         mstar_mask = mstar_synthetic > mstar_min
-        msg = ".....removing synthetics with M* < {:.1e} to yield {}  selected synthetics"
+        msg = ".....removing synthetics with M* < {:.1e} to yield {} total synthetics"
         print(msg.format(mstar_min, np.count_nonzero(mstar_mask)))
 
     mstar_synthetic = mstar_synthetic[mstar_mask]

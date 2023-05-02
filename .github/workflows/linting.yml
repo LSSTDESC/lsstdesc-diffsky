@@ -1,7 +1,6 @@
-name: tests
+name: linting
 
 on:
-  workflow_dispatch: null
   schedule:
     # Runs "weekly at minute 01 before midnight Friday"
     - cron: '53 23 * * 5'
@@ -30,24 +29,13 @@ jobs:
       - name: configure conda and install code
         shell: bash -l {0}
         run: |
-          conda config --set always_yes yes
           mamba install --quiet \
             --file=requirements.txt
-          python -m pip install -e .
+          python -m pip install --no-deps -e .
           mamba install -y -q \
-            flake8 \
-            pytest \
-            pytest-xdist \
-            pytest-cov
+            flake8
 
-          # use upstream main for dsps
-          conda uninstall dsps --force
-          pip install --no-deps git+https://github.com/ArgonneCPAC/dsps.git
-
-      - name: test
+      - name: lint
         shell: bash -l {0}
         run: |
-          pytest -v lsstdesc_diffsky --cov --cov-report=xml
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+          flake8 lsstdesc_diffsky

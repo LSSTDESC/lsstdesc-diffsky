@@ -220,11 +220,6 @@ def run_shapes(h5, shape_dir):  # for testing
     return shapes
 
 
-# example files for testing
-# healpix_file = '/gpfs/mira-fs0/projects/DarkUniverse_esp/kovacs/OR_5000/healpix_cutouts/z_2_3/cutout_9554.hdf5'
-# shape_dir = '/gpfs/mira-fs0/projects/DarkUniverse_esp/kovacs/OR_5000/OR_haloshapes'
-
-
 def run_check(healpix_file, shape_dir):  # for testing
     fh = h5py.File(healpix_file)
 

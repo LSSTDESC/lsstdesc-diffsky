@@ -5,9 +5,14 @@ from jax import numpy as jnp
 import numpy as np
 from jax import jit as jjit
 from collections import OrderedDict
-from .nagaraj22_dust import TAU_BOUNDS_PDICT, TAU_PDICT, DELTA_PDICT
-from .nagaraj22_dust import _get_median_dust_params_kern
-
+from diffsky.experimental.dspspop.nagaraj22_dust import (
+    TAU_BOUNDS_PDICT,
+    TAU_PDICT,
+    DELTA_PDICT
+    )
+from diffsky.experimental.dspspop.nagaraj22_dust import (
+    _get_median_dust_params_kern
+    )
 
 def mc_generate_dust_params(ran_key, logsm, logssfr, redshift, **kwargs):
     """Generate dust_params array that should be passed to precompute_dust_attenuation
