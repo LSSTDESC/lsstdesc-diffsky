@@ -60,14 +60,12 @@ from .synthetic_subhalos.extend_subhalo_mpeak_range import (
 )
 
 # Additional catalog properties
-from .size_modeling import (
+from .size_modeling.zhang_yang17 import (
     mc_size_vs_luminosity_late_type,
     mc_size_vs_luminosity_early_type,
 )
-from .black_hole_modeling import (
-    monte_carlo_bh_acc_rate,
-    monte_carlo_black_hole_mass,
-)
+from .black_hole_modeling.black_hole_accretion_rate import monte_carlo_bh_acc_rate
+from .black_hole_modeling.black_hole_mass import monte_carlo_black_hole_mass
 from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
 
 fof_halo_mass = "fof_halo_mass"
@@ -364,19 +362,26 @@ def write_umachine_healpix_mock_to_disk(
         )
         print("...Saving {} to SED_params with shape: {}".format(k, dims))
 
-    model_keys = [k for k in SED_params.keys() if "model" in k]
+    model_keys = [k for k in SED_params.keys() if "_model" in k]
     for key in model_keys:
         # parse column name to extract filter, frame and band
-        filt_req = SED_params[key].split("_")[0]
-        frame_req = SED_params[key].split("_")[1]
-        band_req = SED_params[key].split("_")[-1].lower()
-        model_req = [
-            k for k in SED_params["filter_keys"] if filt_req in k and band_req in k
-        ]
-        if len(model_req) == 1 and frame_req in SED_params["frames"]:
-            print("...Using {} for galaxy-{}".format(SED_params[key], key))
+        _res = SED_params[key].split("_")
+        if len(_res) >= 2:
+            filt_req = SED_params[key].split("_")[0]
+            frame_req = SED_params[key].split("_")[1]
+            band_req = SED_params[key].split("_")[-1].lower()
+            model_req = [
+                k for k in SED_params["filter_keys"] if filt_req in k and band_req in k
+            ]
+            if len(model_req) == 1 and frame_req in SED_params["frames"]:
+                print("...Using {} for galaxy-{}".format(SED_params[key], key))
+            else:
+                print("...{} not available for galaxy-{}".format(SED_params[key], key))
+                SED_params[key] = None  # filter not available; overwrite key
         else:
-            print("...{} not available for galaxy-{}".format(SED_params[key], key))
+            if 'skip' not in SED_params[key]:
+                print("...incorrect option {} for galaxy-{}".format(SED_params[key], key))
+            print("...Skipping galaxy-{}".format(key))
             SED_params[key] = None  # filter not available; overwrite key
 
     t_table = np.linspace(SED_params["t_table_0"], T0, SED_params["N_t_table"])
@@ -751,10 +756,9 @@ def add_low_mass_synthetic_galaxies(
         selected_synthetic_indices = np.random.choice(
             synthetic_indices, size=num_selected_synthetic, replace=False
         )
-    msg = ".....down-sampling synthetic galaxies with volume factor {}\n
-           to yield {} selected synthetics"
-    print(msg.format(volume_factor, num_selected_synthetic))
-
+    msg = ".....down-sampling synthetic galaxies with volume factor {} to yield {}"
+    print("{} selected synthetics".format(msg.format(volume_factor,
+                                                     num_selected_synthetic)))
     mstar_synthetic = mstar_synthetic_snapshot[selected_synthetic_indices]
     #  Apply additional M* cut to reduce number of synthetics for 5000 sq. deg. catalog
     if mstar_min > 0:
@@ -1285,9 +1289,8 @@ def generate_SEDs(
         nofit_replace = dc2["source_galaxy_nofit_replace"][~has_fit] == 1
         n_replace = np.count_nonzero(nofit_replace)
         if n_replace > 0:
-            msg = ".....Replacing {} diffmah/diffstar fit failures with\n
-                   {} resampled UM fit successes"
-            print(msg.format(nfail, n_replace))
+            msg = ".....Replacing {} diffmah/diffstar fit failures with {}"
+            print("{} resampled UM fit successes".format(msg.format(nfail, n_replace)))
         else:
             msg = ".....No replacements required; {} fit failures, {} replacements"
             print(msg.format(nfail, n_replace))
