@@ -3,7 +3,7 @@
 if [ "$#" -lt 2 ]
 then
 echo "Bundle jobs to selected nodes (4 pixels per node)"
-echo "Usage: bundle_skysim_v3_hpx_z hpx_group (0-11, image) z_range (0-2)"
+echo "Usage: bundle_diffsky_hpx_z hpx_group (0-11, image) z_range (0-2)"
 exit
 else
 hpx_group=${1}
@@ -16,15 +16,13 @@ NODES=`cat $COBALT_NODEFILE | wc -l`
 PROCS=1
 npix=1
 # starting pixel number (1 is start of file)
-#cd /home/ekovacs/cosmology/mock_production/skysim5000_v3/OR_5000_v2
-cd /lus/eagle/projects/LastJourney/kovacs/Catalog_5000/OR_5000/skysim_v3.1.0_production
+cd /lus/eagle/projects/LastJourney/kovacs/Catalog_5000/OR_5000/diffsky_v0.1.0_production
 echo "Running from `pwd`"
-source activate diffmah
-PYTHONPATH=/home/ekovacs/.conda/envs/diffmah/bin/python
+source activate diffsky
+PYTHONPATH=/home/ekovacs/.conda/envs/diffsky/bin/python
 export PYTHONPATH
 
-vprod="skysim_v3.1.0_production"
-xtra_args="-skip_synthetics"
+vprod="diffsky_v0.1.0_production"
 filename="cutout"
 tot_pix_grp=16
 if [ "$hpx_group" == "image" ]
@@ -32,6 +30,9 @@ then
 #131 pixels
 total_pix_num=132
 else
+if [ "$hpx_group" == "test" ]
+then
+total_pix_num=4
 if [ "$hpx_group" -lt "$tot_pix_grp" ]
 then
 # 128 pixels per file
@@ -41,10 +42,11 @@ else
 total_pix_num=75
 fi
 fi
+fi
 echo "total_pix_num=${total_pix_num}"
 
-script_name=run_skysim_healpix_production.py
-pythonpath=/home/ekovacs/.conda/envs/diffmah/bin/python
+script_name=run_diffsky_healpix_production.py
+pythonpath=/home/ekovacs/.conda/envs/diffsky/bin/python
 
 readarray nodenumbers < $COBALT_NODEFILE
 for nodenumber in "${nodenumbers[@]}"
@@ -64,7 +66,7 @@ do
   echo $pixelname
   echo "${pixelname}_${z_range}" >> started_pixels_${hpx_group}_${z_range}.txt
   filename2=${filename}_${pixelname}.hdf5
-  args="${filename2} -zrange_value ${z_range} ${xtra_args}"
+  args="${filename2} -zrange_value ${z_range}"
   #echo $args
   #   mpirun --host ${hostname1}
   #echo ${hostname1}_${COBALT_JOBID}_${pixelname}-err.log

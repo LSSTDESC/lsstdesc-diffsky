@@ -7,6 +7,8 @@ echo "Submit jobs for healpix group for all z ranges"
 echo "Usage: submit_group hpx_group (0-11)"
 echo "     : special case for cosmodc2 area"
 echo "     :    submit_group image"
+echo "     : special case for test area"
+echo "     :    submit_group test"
 exit
 else
 hpx_group=${1}
