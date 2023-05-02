@@ -4,12 +4,22 @@ if [ "$#" -lt 2 ]
 then
 echo "Bundle jobs to selected nodes (4 pixels per node)"
 echo "Usage: bundle_diffsky_hpx_z hpx_group (0-11, image) z_range (0-2)"
+echo "       optional 3rd parameter: name of yaml config file to use"
+echo "       default (diffsky_config.yaml)"
 exit
 else
 hpx_group=${1}
 z_range=${2}
 echo "hpx_group=${hpx_group}"
 echo "z_range=${z_range}"
+if [ "$#" -gt 2 ]
+then
+config_file=${3}
+echo "config_file=${config_file}"
+xtra_args = "-config_file ${config_file}"
+else
+xtra_args=""
+fi
 fi
 
 NODES=`cat $COBALT_NODEFILE | wc -l`
@@ -66,7 +76,7 @@ do
   echo $pixelname
   echo "${pixelname}_${z_range}" >> started_pixels_${hpx_group}_${z_range}.txt
   filename2=${filename}_${pixelname}.hdf5
-  args="${filename2} -zrange_value ${z_range}"
+  args="${filename2} -zrange_value ${z_range} ${xtra_args}"
   #echo $args
   #   mpirun --host ${hostname1}
   #echo ${hostname1}_${COBALT_JOBID}_${pixelname}-err.log

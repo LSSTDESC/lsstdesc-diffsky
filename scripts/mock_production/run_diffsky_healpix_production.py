@@ -77,11 +77,15 @@ versionMajor = inputs['version']['versionMajor']
 versionMinor = inputs['version']['versionMinor']
 versionMinorMinor = inputs['version']['versionMinorMinor']
 
+name = inputs['name']
+
 healpix_cutout_dirname = os.path.join(input_master_dirname,
                                       inputs['file_dirs']['healpix_cutout_dirname'])
 output_mock_dirname = os.path.join(
     input_master_dirname,
-    inputs['file_dirs']['output_mock_dirname'].format(versionMajor, versionMinor, versionMinorMinor))
+    inputs['file_dirs']['output_mock_dirname'].format(versionMajor,
+                                                      versionMinor, versionMinorMinor),
+    name)
 shape_dir = os.path.join(input_master_dirname, inputs['file_dirs']['shape_dirname'])
 pkldirname = os.path.join(input_master_dirname, inputs['file_dirs']['pkldirname'])
 
