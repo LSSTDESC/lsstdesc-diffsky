@@ -52,8 +52,8 @@ parser.add_argument("-config_dirname",
                     help="Directory name storing link to production config yaml file",
                     default='production')
 parser.add_argument("-config_filename",
-                    help="filename for production config yaml file",
-                    default='diffsky_config.yaml')
+                    help="filename for production config yaml file (.yaml assumed)",
+                    default='diffsky_config')
 parser.add_argument("-zrange_value",
                     help="z-range to run",
                     choices=['0', '1', '2', 'all'],
@@ -69,7 +69,7 @@ args = parser.parse_args()
 # setup directory names; read yaml configuration
 input_master_dirname = os.path.join(home, args.input_master_dirname)
 yaml_dir = os.path.join(input_master_dirname, args.config_dirname)
-yaml_fn = os.path.join(yaml_dir, args.config_filename)
+yaml_fn = os.path.join(yaml_dir, args.config_filename + '.yaml')
 with open(os.path.join(yaml_dir, yaml_fn), 'r') as fh:
     inputs = yaml.safe_load(fh)
 

@@ -594,7 +594,7 @@ def write_umachine_healpix_mock_to_disk(
             output_mock,
             commit_hash,
             seed,
-            synthetic_halo_minimum_mass,
+            synthetic_params,
             cutout_number_true,
             Nside,
             cosmology,
@@ -1498,7 +1498,7 @@ def write_output_mock_to_disk(
     output_mock,
     commit_hash,
     seed,
-    synthetic_halo_minimum_mass,
+    synthetic_params,
     cutout_number,
     Nside,
     cosmology,
@@ -1524,8 +1524,10 @@ def write_output_mock_to_disk(
     hdfFile["metaData"]["Omega_matter"] = cosmology.Om0
     hdfFile["metaData"]["Omega_b"] = cosmology.Ob0
     hdfFile["metaData"]["skyArea"] = get_skyarea(output_mock, Nside)
-    hdfFile["metaData"]["synthetic_halo_minimum_mass"] = synthetic_halo_minimum_mass
     hdfFile["metaData"]["healpix_cutout_number"] = cutout_number
+    if synthetic_params and not synthetic_params["skip_synthetics"]:
+        synthetic_halo_minimum_mass = synthetic_params["synthetic_halo_minimum_mass"]
+        hdfFile["metaData"]["synthetic_halo_minimum_mass"] = synthetic_halo_minimum_mass
 
     for k, v in output_mock.items():
         gGroup = hdfFile.create_group(k)
