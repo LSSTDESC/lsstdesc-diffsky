@@ -1,7 +1,7 @@
 description: 'Config file for producing diffsky mock catalog'
 
 name:
-    pscan_3675
+    pscan_3765
 
 version:
     versionMajor: 0
