@@ -20,4 +20,14 @@ User Guide
    :maxdepth: 1
    :caption: Contents
 
+   installation.rst
+
+.. toctree::
+    :maxdepth: 1
+
     reference.rst
+
+.. toctree::
+    :maxdepth: 1
+
+    citation.rst

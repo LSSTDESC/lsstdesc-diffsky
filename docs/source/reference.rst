@@ -2,10 +2,11 @@ API reference
 =============
 
 .. automodule:: lsstdesc_diffsky
-    :members: write_mock_to_disk
+    :members:
+    :undoc-members:
 
 .. automodule:: lsstdesc_diffsky.black_hole_modeling
-    :members: black_hole_accretion_rate, black_hole_mass
+    :members: monte_carlo_black_hole_mass, monte_carlo_bh_acc_rate
 
 .. automodule:: lsstdesc_diffsky.ellipticity_modeling
     :members: monte_carlo_ellipticity_bulge_disk
