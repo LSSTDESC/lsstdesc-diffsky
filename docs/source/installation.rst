@@ -24,7 +24,6 @@ you can install the additional dependencies available on conda-forge as follows:
 
        conda install -c conda-forge diffmah diffstar dsps
 
-Depending on the mock you are making, 
 Note that for ``diffsky`` and depending on the mock you are making,
 for one or more of the above dependencies, 
 you may need to install the main branch of the code.

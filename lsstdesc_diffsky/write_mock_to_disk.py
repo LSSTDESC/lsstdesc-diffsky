@@ -1,5 +1,7 @@
 """
-Module for production of mock galaxy catalogs for LSST DESC.
+write_mock_to_disk.py
+=====================
+Main module for production of mock galaxy catalogs for LSST DESC.
 """
 import os
 import psutil
@@ -97,6 +99,11 @@ volume_minx = 0.0
 volume_miny = 0.0
 volume_maxz = 0.0
 
+__all__ = (write_umachine_healpix_mock_to_disk,
+           build_output_snapshot_mock,
+           write_output_mock_to_disk,
+           )
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -123,7 +130,8 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise=0.1,
 ):
     """
-    GalSample the UM mock into the lightcone healpix cutout and
+    GalSample the UM mock into the lightcone healpix cutout,
+    compute the SEDs using DSPS and
     write the healpix mock to disk.
 
     Parameters
@@ -188,11 +196,14 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise: noise added to log of source halo masses to randomize the match
         to target halos
 
-    versionMajor: int major version number
+    versionMajor: int
+        major version number
 
-    versionMinor: int minor version number
+    versionMinor: int
+        minor version number
 
-    versionMinorMinor: int minor.minor version number
+    versionMinorMinor: int
+        minor.minor version number
 
     Returns
     -------
@@ -1506,7 +1517,9 @@ def write_output_mock_to_disk(
     versionMinor=1,
     versionMinorMinor=1,
 ):
-    """ """
+    """ 
+    Write the assembled mock to specified output file in hdf5 format
+    """
 
     print(
         "\n...Writing to file {} using commit hash {}".format(
