@@ -31,8 +31,6 @@ jobs:
           mamba install -y -q \
             sphinx
 
-      - name: Build docs
+      - name: readthedocs
         run: |
-          # might need soemthing like this not sure
-	  # cd ../test/${{ matrix.copier_config.foldername }}
           sphinx-build -T -E -b html -d docs/build/doctrees docs/source docs/build/html
