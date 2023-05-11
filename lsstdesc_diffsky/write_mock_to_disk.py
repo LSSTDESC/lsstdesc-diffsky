@@ -99,9 +99,9 @@ volume_minx = 0.0
 volume_miny = 0.0
 volume_maxz = 0.0
 
-__all__ = (write_umachine_healpix_mock_to_disk,
-           build_output_snapshot_mock,
-           write_output_mock_to_disk,
+__all__ = ("write_umachine_healpix_mock_to_disk",
+           "build_output_snapshot_mock",
+           "write_output_mock_to_disk",
            )
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
