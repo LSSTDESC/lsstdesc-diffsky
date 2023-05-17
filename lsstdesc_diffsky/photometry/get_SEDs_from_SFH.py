@@ -1,8 +1,6 @@
 import numpy as np
 import time
-import re
 from astropy.table import Table
-from jax import numpy as jnp
 from diffsky.experimental.photometry_interpolation import get_interpolated_photometry
 from dsps.cosmology import flat_wcdm
 

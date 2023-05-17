@@ -1,15 +1,15 @@
 import numpy as np
 from diffstar.stars import calculate_histories_batch
-from .photometry import photometry_interpolation_kernels as pik
+from . import photometry_interpolation_kernels as pik
 from dsps.utils import _jax_get_dt_array
+from ..constants import MAH_PNAMES, MS_U_PNAMES, Q_U_PNAMES
 
-
-def get_params(
+def get_diff_params(
     um_data,
     tid="source_galaxy_halo_id",
-    mah_keys=["t0", "logmp_fit", "mah_logtc", "mah_k", "early_index", "late_index"],
-    ms_keys=["lgmcrit", "lgy_at_mcrit", "indx_lo", "indx_hi", "tau_dep"],
-    q_keys=["qt", "qs", "q_drop", "q_rejuv"],
+    mah_keys=MAH_PNAMES,
+    ms_keys=MS_U_PNAMES,
+    q_keys=Q_U_PNAMES,
 ):
     print(".....Retrieving mah, ms and q params")
 

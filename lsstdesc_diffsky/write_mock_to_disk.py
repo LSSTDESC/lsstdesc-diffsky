@@ -35,17 +35,17 @@ from .triaxial_satellite_distributions.axis_ratio_model import monte_carlo_halo_
 # SED generation
 from .pecZ import pecZ
 from .diffstarpop.mc_diffstar import mc_diffstarpop
-from .get_SEDs_from_SFH import get_mag_sed_pars
 from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import mzr_model, DEFAULT_MZR_PDICT
-from .dustpop import mc_generate_dust_params
-from .get_SFH_from_params import get_log_safe_ssfr
-from .get_SFH_from_params import get_logsm_sfr_from_params
+from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
+from .photometry.dustpop import mc_generate_dust_params
+from .photometry.get_SFH_from_params import get_log_safe_ssfr
+from .photometry.get_SFH_from_params import get_logsm_sfr_from_params
 from .photometry.precompute_ssp_tables import precompute_dust_attenuation
 from .photometry.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
 from .photometry.precompute_ssp_tables import precompute_ssp_restmags
 from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
-from .get_SFH_from_params import get_params
+from .photometry.get_SFH_from_params import get_diff_params
 from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
 
 # Synthetics
@@ -1340,7 +1340,7 @@ def generate_SEDs(
                 print(".......saving pop model parameters {}".format(key))
 
     params = {}
-    _res = get_params(
+    _res = get_diff_params(
         dc2,
         mah_keys=SED_params[mah_keys],
         ms_keys=SED_params[ms_keys],

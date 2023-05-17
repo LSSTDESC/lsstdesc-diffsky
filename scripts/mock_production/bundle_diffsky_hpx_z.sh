@@ -46,7 +46,7 @@ else
 if [ "$hpx_group" == "test" ]
 then
 #1 pixels
-total_pix_num=2
+total_pix_num=4
 else
 if [ "$hpx_group" -lt "$tot_pix_grp" ]
 then
