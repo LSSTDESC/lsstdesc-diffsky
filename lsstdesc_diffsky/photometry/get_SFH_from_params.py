@@ -4,6 +4,7 @@ from . import photometry_interpolation_kernels as pik
 from dsps.utils import _jax_get_dt_array
 from ..constants import MAH_PNAMES, MS_U_PNAMES, Q_U_PNAMES
 
+
 def get_diff_params(
     um_data,
     tid="source_galaxy_halo_id",
