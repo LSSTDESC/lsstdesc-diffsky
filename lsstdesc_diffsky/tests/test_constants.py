@@ -29,7 +29,7 @@ def test_diffstar_pnames():
 
 
 def test_SED_params_contents():
-    assert constants.SED_params == { 
+    assert constants.SED_params == {
         'mah_keys': constants.MAH_PNAMES,
         'ms_keys': constants.MS_U_PNAMES,
         'q_keys': constants.Q_U_PNAMES,
