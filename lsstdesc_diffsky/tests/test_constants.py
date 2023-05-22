@@ -26,3 +26,18 @@ def test_diffstar_pnames():
         "diffstar_u_q_drop",
         "diffstar_u_q_rejuv",
     ]
+
+
+def test_SED_params_contents():
+    assert constants.SED_params == { 
+        'mah_keys': constants.MAH_PNAMES,
+        'ms_keys': constants.MS_U_PNAMES,
+        'q_keys': constants.Q_U_PNAMES,
+        'sfh_keys': ['mstar', 'sfr', 'fstar', 'dmhdt', 'log_mah'],
+        'z0': 0.,
+        't_start': .05,
+        'N_t': 100,
+        'xkeys': ['ssp_z_table', 'ssp_restmag_table', 'ssp_obsmag_table',
+                  'ssp_lgmet', 'ssp_lg_age_gyr', 'filter_keys',
+                  'filter_waves', 'filter_trans', 'met_params'],
+    }
