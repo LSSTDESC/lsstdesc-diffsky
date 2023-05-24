@@ -53,4 +53,4 @@ fi
 
 qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 0 ${config_file}
 qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 1 ${config_file}
-qsub -n ${nodes} -t 11:00:00 -A LastJourneu -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 2 ${config_file}
+qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 2 ${config_file}
