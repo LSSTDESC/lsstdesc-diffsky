@@ -22,7 +22,7 @@ except ImportError:
 @jjit
 def _calc_age_met_weights_from_sfh_table(
     t_obs,
-    lgZsun_bin_mids,
+    ssp_lgmet,
     ssp_lg_age,
     lgt_table,
     logsm_table,
@@ -32,7 +32,7 @@ def _calc_age_met_weights_from_sfh_table(
     age_weights = _calc_age_weights_from_logsm_table(
         lgt_table, logsm_table, ssp_lg_age, t_obs
     )[1]
-    lgmet_bin_edges = _get_bin_edges(lgZsun_bin_mids, LGMET_LO, LGMET_HI)
+    lgmet_bin_edges = _get_bin_edges(ssp_lgmet, LGMET_LO, LGMET_HI)
     lgmet_weights = _get_triweights_singlepoint(lgmet, lgmet_scatter, lgmet_bin_edges)
 
     return age_weights, lgmet_weights
@@ -41,8 +41,8 @@ def _calc_age_met_weights_from_sfh_table(
 @jjit
 def _calc_sed_kern(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_flux,
     t_table,
     logsm_table,
@@ -53,8 +53,8 @@ def _calc_sed_kern(
     lgt_table = jnp.log10(t_table)
     _res = _calc_age_met_weights_from_sfh_table(
         t_obs,
-        lgZsun_bin_mids,
-        log_age_gyr,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
         lgt_table,
         logsm_table,
         lgmet,
@@ -77,8 +77,8 @@ _calc_sed_vmap = jjit(vmap(_calc_sed_kern, in_axes=_a))
 
 def compute_sed_galpop(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_flux,
     t_table,
     sfh_table,
@@ -91,10 +91,10 @@ def compute_sed_galpop(
     t_obs : float
         Time of observation in Gyr
 
-    lgZsun_bin_mids : ndarray of shape (n_met, )
-        SSP bins of log10(Z/Zsun)
+    ssp_lgmet : ndarray of shape (n_met, )
+        SSP bins of log10(Z)
 
-    log_age_gyr : ndarray of shape (n_ages, )
+    ssp_lg_age_gyr : ndarray of shape (n_ages, )
         SSP bins of log10(age) in gyr
 
     ssp_flux : ndarray of shape (n_met, n_ages, n_wave)
@@ -123,8 +123,8 @@ def compute_sed_galpop(
     lgmet_scatter = lgmet_params[:, 1]
     sed_galpop = _calc_sed_vmap(
         t_obs,
-        lgZsun_bin_mids,
-        log_age_gyr,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
         ssp_flux,
         t_table,
         logsm_table,
