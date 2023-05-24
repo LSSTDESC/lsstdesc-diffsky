@@ -1,5 +1,7 @@
 """
-Module for production of mock galaxy catalogs for LSST DESC.
+write_mock_to_disk.py
+=====================
+Main module for production of mock galaxy catalogs for LSST DESC.
 """
 import os
 import psutil
@@ -33,17 +35,17 @@ from .triaxial_satellite_distributions.axis_ratio_model import monte_carlo_halo_
 # SED generation
 from .pecZ import pecZ
 from .diffstarpop.mc_diffstar import mc_diffstarpop
-from .get_SEDs_from_SFH import get_mag_sed_pars
+from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import mzr_model, DEFAULT_MZR_PDICT
-from .dustpop import mc_generate_dust_params
-from .get_SFH_from_params import get_log_safe_ssfr
-from .get_SFH_from_params import get_logsm_sfr_from_params
+from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
+from .photometry.dustpop import mc_generate_dust_params
+from .photometry.get_SFH_from_params import get_log_safe_ssfr
+from .photometry.get_SFH_from_params import get_logsm_sfr_from_params
 from .photometry.precompute_ssp_tables import precompute_dust_attenuation
 from .photometry.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
 from .photometry.precompute_ssp_tables import precompute_ssp_restmags
-from .load_fsps_data import load_filter_data, load_sps_data
-from .get_SEDs_from_SFH import get_filter_wave_trans
-from .get_SFH_from_params import get_params
+from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
+from .photometry.get_SFH_from_params import get_diff_params
 from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
 
 # Synthetics
@@ -97,6 +99,11 @@ volume_minx = 0.0
 volume_miny = 0.0
 volume_maxz = 0.0
 
+__all__ = ("write_umachine_healpix_mock_to_disk",
+           "build_output_snapshot_mock",
+           "write_output_mock_to_disk",
+           )
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -123,7 +130,8 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise=0.1,
 ):
     """
-    GalSample the UM mock into the lightcone healpix cutout and
+    GalSample the UM mock into the lightcone healpix cutout,
+    compute the SEDs using DSPS and
     write the healpix mock to disk.
 
     Parameters
@@ -188,11 +196,14 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise: noise added to log of source halo masses to randomize the match
         to target halos
 
-    versionMajor: int major version number
+    versionMajor: int
+        major version number
 
-    versionMinor: int minor version number
+    versionMinor: int
+        minor version number
 
-    versionMinorMinor: int minor.minor version number
+    versionMinorMinor: int
+        minor.minor version number
 
     Returns
     -------
@@ -310,9 +321,12 @@ def write_umachine_healpix_mock_to_disk(
     )
 
     dsps_data_DRN = SED_params["dsps_data_dirname"]
-    # get ssp_wave, ssp_flux, lgZsun_bin_mids, log_age_gyr
-    ssp_wave, ssp_flux, lgZsun_bin_mids, log_age_gyr = load_sps_data(dsps_data_DRN)
-    filter_data = load_filter_data(dsps_data_DRN, SED_params["filters"])
+    dsps_data_fn = SED_params["dsps_data_filename"]
+    # get ssp_wave, ssp_flux, lg_met, lg_age_gyr
+    ssp_data = load_ssp_templates(os.path.join(dsps_data_DRN, dsps_data_fn))
+    ssp_wave = ssp_data.ssp_wave
+    ssp_flux = ssp_data.ssp_flux
+    filter_data = assemble_filter_data(dsps_data_DRN, SED_params["filters"])
     filter_waves, filter_trans, filter_keys = get_filter_wave_trans(filter_data)
     print("\nUsing filters and bands: {}".format(", ".join(filter_keys)))
     # generate precomputed ssp tables
@@ -346,8 +360,8 @@ def write_umachine_healpix_mock_to_disk(
 
     # save in SED_params for passing to other modules
     SED_params["ssp_z_table"] = ssp_z_table
-    SED_params["ssp_lgZsun_bin_mids"] = lgZsun_bin_mids
-    SED_params["ssp_log_age_gyr"] = log_age_gyr
+    SED_params["ssp_lgmet"] = ssp_data.ssp_lgmet
+    SED_params["ssp_lg_age_gyr"] = ssp_data.ssp_lg_age_gyr
     SED_params["ssp_restmag_table"] = ssp_restmag_table
     SED_params["ssp_obsmag_table"] = ssp_obsmag_table
     SED_params["filter_keys"] = filter_keys
@@ -1326,7 +1340,7 @@ def generate_SEDs(
                 print(".......saving pop model parameters {}".format(key))
 
     params = {}
-    _res = get_params(
+    _res = get_diff_params(
         dc2,
         mah_keys=SED_params[mah_keys],
         ms_keys=SED_params[ms_keys],
@@ -1506,7 +1520,9 @@ def write_output_mock_to_disk(
     versionMinor=1,
     versionMinorMinor=1,
 ):
-    """ """
+    """
+    Write the assembled mock to specified output file in hdf5 format
+    """
 
     print(
         "\n...Writing to file {} using commit hash {}".format(
