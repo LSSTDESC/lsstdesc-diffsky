@@ -6,9 +6,13 @@ from astropy.utils.misc import NumpyRNGContext
 from halotools.utils import rank_order_percentile
 
 
+__all__ = ("monte_carlo_ellipticity_bulge_disk",)
+
+
 def monte_carlo_ellipticity_bulge_disk(magr, seed=None):
     """
     Model galaxy ellipticities using emprical model derived from observed data
+
     Parameters
     ----------
     magr: ndarray
@@ -18,8 +22,10 @@ def monte_carlo_ellipticity_bulge_disk(magr, seed=None):
     -------
     ellip_bulge: ndarray
         Numpy array of shape (ngals, )
+
     ellip_disk: ndarray
         Numpy array of shape (ngals, )
+
     """
 
     magr = np.atleast_1d(magr)
