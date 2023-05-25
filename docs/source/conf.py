@@ -6,9 +6,20 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+from pkg_resources import DistributionNotFound, get_distribution
+
+try:
+    __version__ = get_distribution("emcee").version
+except DistributionNotFound:
+    __version__ = "unknown version"
+
+
 project = "lsstdesc_diffsky"
 copyright = "2023, Andrew Hearin"
-author = "Andrew Hearin"
+author = "Andrew Hearin, Eve Kovacs"
+version = __version__
+release = __version__
+
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

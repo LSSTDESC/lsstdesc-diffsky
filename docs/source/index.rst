@@ -5,8 +5,29 @@
 
 Welcome to the lsstdesc_diffsky documentation
 =============================================
+This package contains the code to generate LSST-specific mock galaxy catalogs
+from selected gravity-only N-body simulations using a forward modeling approach. 
+Currently, the pipeline begins with halo-lightcone healpixels generated from the simulation. Each halo is matched
+by mass to a corresponding halo in UniverseMachine, whose galaxy content is then transferred
+to the simulated halo. Each galaxy has an associated parametrized star-formation history.
+The code then uses the `DSPS package <https://dsps.readthedocs.io/en/latest/>`__.
+to generate SEDs for each galaxy, based on the star-formation history parameters.
+
+User Guide
+----------
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :caption: Contents
 
+   installation.rst
+
+.. toctree::
+    :maxdepth: 1
+
+    reference.rst
+
+.. toctree::
+    :maxdepth: 1
+
+    citation.rst
