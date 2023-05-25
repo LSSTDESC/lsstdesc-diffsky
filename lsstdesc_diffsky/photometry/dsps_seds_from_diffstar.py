@@ -36,8 +36,8 @@ def _get_diffstar_sfh_tables(mah_params, ms_params, q_params):
 @jjit
 def _calc_diffstar_sed_kern(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_flux,
     mah_params,
     ms_params,
@@ -51,8 +51,8 @@ def _calc_diffstar_sed_kern(
     logsm_table = _res[4]
     sed = _calc_sed_kern(
         t_obs,
-        lgZsun_bin_mids,
-        log_age_gyr,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
         ssp_flux,
         t_table,
         logsm_table,
@@ -69,8 +69,8 @@ _calc_diffstarpop_seds_vmap = jjit(vmap(_calc_diffstar_sed_kern, in_axes=_e))
 @jjit
 def _calc_diffstar_attenuated_sed_kern(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_wave,
     ssp_flux,
     mah_params,
@@ -81,8 +81,8 @@ def _calc_diffstar_attenuated_sed_kern(
 ):
     sed, sfh_table, logsm_table = _calc_diffstar_sed_kern(
         t_obs,
-        lgZsun_bin_mids,
-        log_age_gyr,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
         ssp_flux,
         mah_params,
         ms_params,
@@ -105,8 +105,8 @@ _calc_diffstar_attenuated_sed_vmap = jjit(
 
 def compute_diffstarpop_restframe_seds(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_wave,
     ssp_flux,
     mah_params,
@@ -123,10 +123,10 @@ def compute_diffstarpop_restframe_seds(
     t_obs : float
         Age of the universe at the time of observation in units of Gyr
 
-    lgZsun_bin_mids : ndarray of shape (n_met, )
-        SSP bins of log10(Z/Zsun)
+    ssp_lgmet : ndarray of shape (n_met, )
+        SSP bins of log10(Z)
 
-    log_age_gyr : ndarray of shape (n_ages, )
+    ssp_lg_age_gyr : ndarray of shape (n_ages, )
         SSP bins of log10(age) in gyr
 
     ssp_wave : ndarray of shape (n_wave, )
@@ -165,8 +165,8 @@ def compute_diffstarpop_restframe_seds(
     if dust_params is None:
         rest_seds, sfh_tables, logsm_tables = _calc_diffstarpop_seds_vmap(
             t_obs,
-            lgZsun_bin_mids,
-            log_age_gyr,
+            ssp_lgmet,
+            ssp_lg_age_gyr,
             ssp_flux,
             mah_params,
             u_ms_params,
@@ -176,8 +176,8 @@ def compute_diffstarpop_restframe_seds(
     else:
         rest_seds, sfh_tables, logsm_tables = _calc_diffstar_attenuated_sed_vmap(
             t_obs,
-            lgZsun_bin_mids,
-            log_age_gyr,
+            ssp_lgmet,
+            ssp_lg_age_gyr,
             ssp_wave,
             ssp_flux,
             mah_params,
@@ -192,8 +192,8 @@ def compute_diffstarpop_restframe_seds(
 @jjit
 def _calc_diffstar_rest_mag_kern(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_wave,
     ssp_flux,
     mah_params,
@@ -205,8 +205,8 @@ def _calc_diffstar_rest_mag_kern(
 ):
     sed, sfh_table, logsm_table = _calc_diffstar_sed_kern(
         t_obs,
-        lgZsun_bin_mids,
-        log_age_gyr,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
         ssp_flux,
         mah_params,
         u_ms_params,
@@ -220,8 +220,8 @@ def _calc_diffstar_rest_mag_kern(
 @jjit
 def _calc_diffstar_rest_mag_attenuation_kern(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_wave,
     ssp_flux,
     mah_params,
@@ -234,8 +234,8 @@ def _calc_diffstar_rest_mag_attenuation_kern(
 ):
     sed, sfh_table, logsm_table = _calc_diffstar_attenuated_sed_kern(
         t_obs,
-        lgZsun_bin_mids,
-        log_age_gyr,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
         ssp_wave,
         ssp_flux,
         mah_params,
@@ -264,8 +264,8 @@ _calc_diffstar_rest_mags_attenuation_vmap = jjit(
 
 def compute_diffstarpop_restframe_mags(
     t_obs,
-    lgZsun_bin_mids,
-    log_age_gyr,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
     ssp_wave,
     ssp_flux,
     mah_params,
@@ -284,10 +284,10 @@ def compute_diffstarpop_restframe_mags(
     t_obs : float
         Age of the universe at the time of observation in units of Gyr
 
-    lgZsun_bin_mids : ndarray of shape (n_met, )
-        SSP bins of log10(Z/Zsun)
+    ssp_lgmet : ndarray of shape (n_met, )
+        SSP bins of log10(Z)
 
-    log_age_gyr : ndarray of shape (n_ages, )
+    ssp_lg_age_gyr : ndarray of shape (n_ages, )
         SSP bins of log10(age) in gyr
 
     ssp_wave : ndarray of shape (n_wave, )
@@ -332,8 +332,8 @@ def compute_diffstarpop_restframe_mags(
     if dust_params is None:
         rest_mags = _calc_diffstar_rest_mags_vmap(
             t_obs,
-            lgZsun_bin_mids,
-            log_age_gyr,
+            ssp_lgmet,
+            ssp_lg_age_gyr,
             ssp_wave,
             ssp_flux,
             mah_params,
@@ -346,8 +346,8 @@ def compute_diffstarpop_restframe_mags(
     else:
         rest_mags = _calc_diffstar_rest_mags_attenuation_vmap(
             t_obs,
-            lgZsun_bin_mids,
-            log_age_gyr,
+            ssp_lgmet,
+            ssp_lg_age_gyr,
             ssp_wave,
             ssp_flux,
             mah_params,

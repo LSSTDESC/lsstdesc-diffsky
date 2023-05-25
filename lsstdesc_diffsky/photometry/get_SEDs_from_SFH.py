@@ -1,22 +1,8 @@
 import numpy as np
 import time
-import re
 from astropy.table import Table
-from jax import numpy as jnp
 from diffsky.experimental.photometry_interpolation import get_interpolated_photometry
 from dsps.cosmology import flat_wcdm
-
-
-def get_filter_wave_trans(filter_data):
-    wave_keys = [k for k in filter_data.dtype.names if "wave" in k]
-    # print(wave_keys)
-    trans_keys = [k for k in filter_data.dtype.names if "trans" in k]
-    filter_waves = jnp.array([filter_data[key] for key in wave_keys])
-    filter_trans = jnp.array([filter_data[key] for key in trans_keys])
-    # print(filter_waves.shape, filter_waves.dtype.names)
-    filter_keys = [re.sub("_filter_wave", "", k) for k in wave_keys]
-
-    return filter_waves, filter_trans, filter_keys
 
 
 def add_colors(mags, minmax=True):
@@ -76,8 +62,8 @@ def get_mag_sed_pars(
             SED_params["ssp_z_table"],
             SED_params["ssp_restmag_table"],
             SED_params["ssp_obsmag_table"],
-            SED_params["ssp_lgZsun_bin_mids"],
-            SED_params["ssp_log_age_gyr"],
+            SED_params["ssp_lgmet"],
+            SED_params["ssp_lg_age_gyr"],
             gal_t_table,
             gal_z_obs,
             gal_log_sm,
