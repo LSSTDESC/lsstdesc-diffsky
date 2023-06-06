@@ -111,6 +111,11 @@ else:
     z_range_dirs = [os.path.basename(d) for d in glob.glob(
         healpix_cutout_dirname + '/z_{}*'.format(args.zrange_value))]
 
+# setup environmentals to limit pthreads
+os.environ["OMP_NUM_THREADS"] = "1"
+#os.environ["MKL_NUM_THREADS"] = "1"
+#os.environ["NUMEXPR_NUM_THREADS"] = "1"
+print("Setting OMP_NUM_THREADS = {}".format(os.environ.get("OMP_NUM_THREADS")))
 
 for zdir in z_range_dirs:
                          
