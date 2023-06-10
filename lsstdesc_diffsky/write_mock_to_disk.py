@@ -601,7 +601,8 @@ def write_umachine_healpix_mock_to_disk(
 
         mem = "Thread count =  {}"
         print(mem.format(threading.active_count()))
-        print("Checking OMP_NUM_THREADS: {}".format(os.environ.get("OMP_NUM_THREADS")))
+        for env in ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"]:
+            print("Checking {} = {}".format(env, os.environ.get(env)))
 
     ########################################################################
     #  Write the output mock to disk

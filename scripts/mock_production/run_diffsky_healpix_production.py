@@ -112,10 +112,9 @@ else:
         healpix_cutout_dirname + '/z_{}*'.format(args.zrange_value))]
 
 # setup environmentals to limit pthreads
-os.environ["OMP_NUM_THREADS"] = "1"
-#os.environ["MKL_NUM_THREADS"] = "1"
-#os.environ["NUMEXPR_NUM_THREADS"] = "1"
-print("Setting OMP_NUM_THREADS = {}".format(os.environ.get("OMP_NUM_THREADS")))
+for env in ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"]:
+    os.environ[env] = "1"
+    print("Setting {} = {}".format(env, os.environ.get(env)))
 
 for zdir in z_range_dirs:
                          
