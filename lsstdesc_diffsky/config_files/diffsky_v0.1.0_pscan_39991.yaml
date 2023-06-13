@@ -15,6 +15,9 @@ file_dirs:  #relative to input_master_dirname, which is a supplied argument to p
     shape_dirname: 'OR_haloshapes'
     pkldirname: 'production'
 
+file_names:
+    healpix_fname: 'cutout_{}.hdf5'
+
 parse_str:
     um_split_fname: '.diffstar_fits'
 
