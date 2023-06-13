@@ -120,8 +120,9 @@ for env in ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"]:
 for zdir in z_range_dirs:
                          
     # get list of snapshots
+    healpix_fname = healpix_fname_template.format(args.healpix_number)
     healpix_cutout_fname = os.path.join(
-        healpix_cutout_dirname, zdir, healpix_fname_template.format(args.healpix_number))
+        healpix_cutout_dirname, zdir, healpix_fname)
     print('Processing healpix cutout {}'.format(healpix_cutout_fname))
     healpix_data, redshift_strings, snapshots, z2ts = get_healpix_cutout_info(pkldirname,
                                                                               healpix_cutout_fname, sim_name='AlphaQ')
@@ -155,7 +156,7 @@ for zdir in z_range_dirs:
             print('umachine_mstar_ssfr_mock_basename_list:',
                   umachine_mstar_ssfr_mock_basename_list)
 
-        healpix_basename = os.path.basename(args.healpix_fname)
+        healpix_basename = os.path.basename(healpix_cutout_fname)
         output_mock_basename = '_'.join(
             [inputs['file_dirs']['output_mock_dirname'].split('_')[0], zdir, healpix_basename])
         output_healpix_mock_fname = os.path.join(
@@ -194,4 +195,4 @@ for zdir in z_range_dirs:
             Nside=inputs['nside'], z2ts=z2ts, cosmological_params=cosmological_params,
             )
     else:
-        print('Skipping empty healpix-cutout file {}'.format(args.healpix_fname))
+        print('Skipping empty healpix-cutout file {}'.format(healpix_fname))
