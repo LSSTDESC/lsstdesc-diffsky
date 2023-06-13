@@ -16,6 +16,7 @@ echo "Running from `pwd`"
 
 echo "hpx_group=${hpx_group}"
 echo "z_range=${z_range}"
+echo "num=${hpx_group#*test}"
 if [ "$#" -gt 2 ]
 then
 config_file=${3}
@@ -43,10 +44,10 @@ then
 #131 pixels
 total_pix_num=132
 else
-if [ "$hpx_group" == "test" ]
-then
-#1 pixels
-total_pix_num=3
+if [[ "${1}" =~ "test" ]]; then
+echo "$hpx_group"
+#test# gives number of pixels
+total_pix_num="${hpx_group#*test}"
 else
 if [ "$hpx_group" -lt "$tot_pix_grp" ]
 then
