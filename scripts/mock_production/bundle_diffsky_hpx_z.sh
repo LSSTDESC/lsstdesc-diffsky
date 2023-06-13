@@ -29,7 +29,7 @@ cname=${vprod}
 fi
 fi
 
-#NODES=`cat $COBALT_NODEFILE | wc -l`
+NODES=`cat $COBALT_NODEFILE | wc -l`
 PROCS=1
 npix=1
 # starting pixel number (1 is start of file)
@@ -60,7 +60,6 @@ fi
 fi
 fi
 echo "total_pix_num=${total_pix_num}"
-exit
 
 script_name=run_diffsky_healpix_production.py
 pythonpath=/home/ekovacs/.conda/envs/diffsky/bin/python
