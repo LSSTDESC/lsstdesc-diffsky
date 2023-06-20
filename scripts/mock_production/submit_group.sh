@@ -8,7 +8,7 @@ echo "Usage: submit_group hpx_group (0-11)"
 echo "     : special case for cosmodc2 area"
 echo "     :    submit_group image"
 echo "     : special case for test area"
-echo "     :    submit_group test"
+echo "     :    submit_group test*"
 echo "     : optional 2nd parameter specifies"
 echo "     : of yaml config file"
 exit
@@ -30,7 +30,7 @@ then
 # 131 pixels in file; 4 pixels per node
 nodes=33
 else
-if [ "$hpx_group" == "test" ]
+if [[ "${hpx_group}" =~ "test" ]]
 then
 nodes=1
 else

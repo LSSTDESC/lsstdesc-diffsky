@@ -16,6 +16,7 @@ echo "Running from `pwd`"
 
 echo "hpx_group=${hpx_group}"
 echo "z_range=${z_range}"
+echo "num=${hpx_group#*test}"
 if [ "$#" -gt 2 ]
 then
 config_file=${3}
@@ -36,17 +37,15 @@ source activate diffsky
 PYTHONPATH=/home/ekovacs/.conda/envs/diffsky/bin/python
 export PYTHONPATH
 
-filename="cutout"
 tot_pix_grp=16
 if [ "$hpx_group" == "image" ]
 then
 #131 pixels
 total_pix_num=132
 else
-if [ "$hpx_group" == "test" ]
-then
-#1 pixels
-total_pix_num=4
+if [[ "${1}" =~ "test" ]]; then
+#test# gives number of pixels
+total_pix_num=$(expr "${hpx_group#*test}" + 1)
 else
 if [ "$hpx_group" -lt "$tot_pix_grp" ]
 then
@@ -73,15 +72,14 @@ do
   hostname1=${hostname1%?}
   #echo $hostname1
   #hostname1=$(cat $COBALT_NODEFILE | awk 'NR=='${nodenumber})
-  for pixnumber in {1..3}
+  for pixnumber in {1..4}
   do
   if [ "$npix" -lt "$total_pix_num" ]
   then
   pixelname=$(cat pixels_${hpx_group}.txt | awk 'NR=='${npix})
   echo $pixelname
   echo "${pixelname}_${z_range}" >> started_pixels_${hpx_group}_${z_range}.txt
-  filename2=${filename}_${pixelname}.hdf5
-  args="${filename2} -zrange_value ${z_range} ${xtra_args}"
+  args="${pixelname} -zrange_value ${z_range} ${xtra_args}"
   #echo $args
   #   mpirun --host ${hostname1}
   #echo ${hostname1}_${COBALT_JOBID}_${pixelname}-err.log

@@ -17,7 +17,6 @@ dependencies:
     - pip
     - astropy
     - healpy
-    - cython
     - halotools
     - lsstdesc-galsampler
     - diffmah

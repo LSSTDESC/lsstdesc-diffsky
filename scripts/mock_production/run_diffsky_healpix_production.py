@@ -41,8 +41,8 @@ sys.path.insert(0, path_to_lsstdesc_diffsky)
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument("healpix_fname",
-                    help="Filename of healpix cutout to run")
+parser.add_argument("healpix_number",
+                    help="Healpix cutout number to run")
 # parser.add_argument("commit_hash",
 #    help="Commit hash to save in output files")
 parser.add_argument("-input_master_dirname",
@@ -88,6 +88,7 @@ output_mock_dirname = os.path.join(
     name)
 shape_dir = os.path.join(input_master_dirname, inputs['file_dirs']['shape_dirname'])
 pkldirname = os.path.join(input_master_dirname, inputs['file_dirs']['pkldirname'])
+healpix_fname_template = inputs['file_names']['healpix_fname']
 
 SED_pars = {}
 
@@ -111,12 +112,17 @@ else:
     z_range_dirs = [os.path.basename(d) for d in glob.glob(
         healpix_cutout_dirname + '/z_{}*'.format(args.zrange_value))]
 
+# setup environmentals to limit pthreads
+for env in ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"]:
+    os.environ[env] = "1"
+    print("Setting {} = {}".format(env, os.environ.get(env)))
 
 for zdir in z_range_dirs:
                          
     # get list of snapshots
+    healpix_fname = healpix_fname_template.format(args.healpix_number)
     healpix_cutout_fname = os.path.join(
-        healpix_cutout_dirname, zdir, args.healpix_fname)
+        healpix_cutout_dirname, zdir, healpix_fname)
     print('Processing healpix cutout {}'.format(healpix_cutout_fname))
     healpix_data, redshift_strings, snapshots, z2ts = get_healpix_cutout_info(pkldirname,
                                                                               healpix_cutout_fname, sim_name='AlphaQ')
@@ -150,7 +156,7 @@ for zdir in z_range_dirs:
             print('umachine_mstar_ssfr_mock_basename_list:',
                   umachine_mstar_ssfr_mock_basename_list)
 
-        healpix_basename = os.path.basename(args.healpix_fname)
+        healpix_basename = os.path.basename(healpix_cutout_fname)
         output_mock_basename = '_'.join(
             [inputs['file_dirs']['output_mock_dirname'].split('_')[0], zdir, healpix_basename])
         output_healpix_mock_fname = os.path.join(
@@ -189,4 +195,4 @@ for zdir in z_range_dirs:
             Nside=inputs['nside'], z2ts=z2ts, cosmological_params=cosmological_params,
             )
     else:
-        print('Skipping empty healpix-cutout file {}'.format(args.healpix_fname))
+        print('Skipping empty healpix-cutout file {}'.format(healpix_fname))

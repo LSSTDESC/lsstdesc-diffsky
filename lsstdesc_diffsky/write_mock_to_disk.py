@@ -10,6 +10,7 @@ import h5py
 import re
 import gc
 import warnings
+import threading
 from time import time
 from jax import numpy as jnp
 from jax import random as jran
@@ -597,6 +598,11 @@ def write_umachine_healpix_mock_to_disk(
 
         mem = "Memory usage =  {0:.2f} GB"
         print(mem.format(process.memory_info().rss / 1.0e9))
+
+        mem = "Thread count =  {}"
+        print(mem.format(threading.active_count()))
+        for env in ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"]:
+            print("Checking {} = {}".format(env, os.environ.get(env)))
 
     ########################################################################
     #  Write the output mock to disk
