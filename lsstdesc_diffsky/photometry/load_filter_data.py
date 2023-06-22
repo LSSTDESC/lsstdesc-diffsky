@@ -20,12 +20,14 @@ def assemble_filter_data(drn, filters):
     filter_dict = {
         "locs": {
             "lsst": "filters/lsst_{}_transmission.h5",
+            "lsst_imsim": "LSST_ImSim/total_{}.dat",
             "hsc": "HSC/{}_HSC.txt",
             "hsc_bv": "filters/suprimecam_{}_transmission.h5",
             "sdss": "SDSS/{}_SDSS.res",
         },
         "bands": {
             "lsst": ("u", "g", "r", "i", "z", "y"),
+            "lsst_imsim": ("u", "g", "r", "i", "z", "y"),
             "hsc": ("g", "r", "i", "z", "y"),
             "hsc_bv": ("b", "g", "r", "i", "v", "z"),
             "sdss": ("u", "g", "r", "i", "z"),
