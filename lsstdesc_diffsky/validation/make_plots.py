@@ -66,7 +66,7 @@ def plot_mag_color(ax_all, dat, label, magbins=50, colbins=30, data_mask=None,
 
 
 def plot_y_vs_x(ax, x, y, x_bins, y_bins, xlabel=None, ylabel=None,
-                cmap='BuPu', contour=False,  alphactr=0.8,
+                cmap='BuPu', contour=False, alphactr=0.8,
                 levels=[.05, .2, .5, .8], cntr_label='', cntr_color='black'):
 
     qd, xedges, yedges = np.histogram2d(x, y, bins=(x_bins, y_bins), density=True)
