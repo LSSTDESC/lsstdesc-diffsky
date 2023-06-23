@@ -313,7 +313,6 @@ def write_umachine_healpix_mock_to_disk(
     else:
         print("\nUsing default dustpop parameters")
 
-
     T0 = cosmology.age(SED_params["z0"]).value
     SED_params["LGT0"] = np.log10(T0)
     print(
