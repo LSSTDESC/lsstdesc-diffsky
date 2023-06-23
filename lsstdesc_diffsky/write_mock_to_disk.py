@@ -313,6 +313,7 @@ def write_umachine_healpix_mock_to_disk(
     else:
         print("\nUsing default dustpop parameters")
 
+
     T0 = cosmology.age(SED_params["z0"]).value
     SED_params["LGT0"] = np.log10(T0)
     print(
@@ -331,9 +332,6 @@ def write_umachine_healpix_mock_to_disk(
     filter_waves, filter_trans, filter_keys = get_filter_wave_trans(filter_data)
     print("\nUsing filters and bands: {}".format(", ".join(filter_keys)))
     # generate precomputed ssp tables
-    ssp_restmag_table = precompute_ssp_restmags(
-        ssp_wave, ssp_flux, filter_waves, filter_trans
-    )
     min_snap = 0 if len(healpix_data[snapshots[0]]["a"]) > 0 else 1
     zmin = 1.0 / np.max(healpix_data[snapshots[min_snap]]["a"][()]) - 1.0
     zmax = 1.0 / np.min(healpix_data[snapshots[-1]]["a"][()]) - 1.0
@@ -1310,14 +1308,14 @@ def generate_SEDs(
         nofit_replace = dc2["source_galaxy_nofit_replace"][~has_fit] == 1
         n_replace = np.count_nonzero(nofit_replace)
         if n_replace > 0:
-            msg = ".....Replacing {} diffmah/diffstar fit failures with {}"
+            msg = ".....Replaced {} diffmah/diffstar fit failures with {}"
             print("{} resampled UM fit successes".format(msg.format(nfail, n_replace)))
         else:
             msg = ".....No replacements required; {} fit failures, {} replacements"
             print(msg.format(nfail, n_replace))
         nmissed = nfail - n_replace
     if nmissed > 0 or (nmissed < 0 and nfail > 0) or (use_diffmah_pop and nfail > 0):
-        msg = ".....Replacing {} diffmah/diffstar fit failures with diffmah{} pop"
+        msg = ".....Replacing parameters for {} fit failures with diffmah{} pop"
         if nmissed > 0 and not use_diffmah_pop:
             failed_mask = ~nofit_replace
             print(".......{}".format(msg.format(nmissed, "/diffstar")))
