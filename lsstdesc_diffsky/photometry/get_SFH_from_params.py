@@ -1,28 +1,28 @@
 import numpy as np
-from diffstar.stars import calculate_histories_batch
+from jax import numpy as jnp
 from . import photometry_interpolation_kernels as pik
 from dsps.utils import _jax_get_dt_array
 from ..constants import MAH_PNAMES, MS_U_PNAMES, Q_U_PNAMES
+from diffstar.sfh import get_sfh_from_mah_kern
 
 
 def get_diff_params(
-    um_data,
-    tid="source_galaxy_halo_id",
-    mah_keys=MAH_PNAMES,
-    ms_keys=MS_U_PNAMES,
-    q_keys=Q_U_PNAMES,
+        data,
+        mah_keys=MAH_PNAMES,
+        ms_keys=MS_U_PNAMES,
+        q_keys=Q_U_PNAMES,
 ):
     print(".....Retrieving mah, ms and q params")
 
-    dlen = len(um_data[tid].value)
+    dlen = len(data)
     mah_params = np.zeros((dlen, len(mah_keys)))
     ms_params = np.zeros((dlen, len(ms_keys)))
     q_params = np.zeros((dlen, len(q_keys)))
     for keys, array in zip(
-        [mah_keys, ms_keys, q_keys], [mah_params, ms_params, q_params]
+            [mah_keys, ms_keys, q_keys], [mah_params, ms_params, q_params]
     ):
         for n, colname in enumerate(keys):
-            array[:, n] = um_data[colname].value
+            array[:, n] = data[colname].value
 
     return mah_params, ms_params, q_params
 
@@ -49,38 +49,8 @@ def get_log_ssfr_array(t_bpl, mstar, sfr):
 
 
 # Compute SFHs from params
-def get_sfh_from_params(
-    params,
-    t,
-    fstar_tdelay,
-    mah_key="mah_params",
-    ms_key="ms_params",
-    q_key="q_params",
-    sfh_keys=["mstar", "sfr", "fstar", "dmhdt", "log_mah"],
-):
-    sfh = {}
-    print(".......computing SFHs from diffmah/star params for {} times".format(len(t)))
-    print(
-        ".......using parameters with shapes {}, {}, {}".format(
-            params[mah_key].shape, params[ms_key].shape, params[q_key].shape
-        )
-    )
-    _res = calculate_histories_batch(
-        t, params[mah_key], params[ms_key], params[q_key], fstar_tdelay
-    )
-    for n, s in enumerate(sfh_keys):
-        sfh[s] = _res[n]
-
-    sfh["logssfr"] = get_log_ssfr_array(t, sfh["mstar"], sfh["sfr"])
-
-    return sfh
-
-
-# Compute mstar and sfr from params
-def get_logsm_sfr_from_params(lgt_table, lgt0, t_obs, mah_params, ms_params, q_params):
-
+def get_sfh_from_params(mah_params, ms_params, q_params, LGT0, t_table):
     """Calculate star-formation history from diffmah and diffstar parameters
-
     Parameters
     ----------
     mah_params : array of shape (4, n_gals)
@@ -89,30 +59,54 @@ def get_logsm_sfr_from_params(lgt_table, lgt0, t_obs, mah_params, ms_params, q_p
 
     q_params : array of shape (4, n_gals)
 
-    lgt_table : array of shape (n_t_table, )
-
-    t_obs : array of shape (n_gals, )
+    t_table : array of shape (n_t_table, )
 
     lgt0 : float
 
     Returns
     -------
-    gal_sfh : array of shape (n_gals, n_t_table)
+    sfh_table : array of shape (n_gals, n_t_table)
 
+    """
+
+    print(".......computing SFHs from diffmah/star params for {} times".format(len(t_table)))
+    print(
+        ".......using parameters with shapes {}, {}, {}".format(
+            mah_params.shape, ms_params.shape, q_params.shape
+        )
+    )
+    sfh_from_mah_kern = get_sfh_from_mah_kern(lgt0=LGT0,
+                                              tobs_loop='scan', galpop_loop='vmap')
+    sfh_table = sfh_from_mah_kern(t_table, mah_params, ms_params, q_params)
+
+    return sfh_table
+
+
+# Compute logsm_obs, sfr_obs from sfh_table
+def get_logsm_sfr_obs(sfh_table, t_obs, t_table):
+    """
+    Calculate logsm_obs and sfr_obs from star-formation history
+    Parameters
+    ----------
+    sfh_table : array of shape (n_gals, n_t_table)
+
+    t_obs : array of shape (n_gals, )
+
+    t_table : array of shape (n_t_table, )
+
+    Returns
+    -------
     logsm_obs : array of shape (n_gals, )
 
     sfr_obs : array of shape (n_gals, )
-
-    logsm_table: array of shape (n_gals, n_t_table)
     """
 
-    dt_gyr = _jax_get_dt_array(10**lgt_table)
+    dt_gyr = _jax_get_dt_array(t_table)
+    MIN_SFH = 1e-7
+    sfh = jnp.where(sfh_table <= 0, MIN_SFH, sfh_table)
+    smh = jnp.cumsum(sfh * dt_gyr, axis=1) * 1e9
+    logsmh = jnp.log10(smh)
+    logsm_obs = pik._interp_vmap(t_obs, t_table, logsmh)
+    sfr_obs = pik._interp_vmap(t_obs, t_table, sfh_table)
 
-    gal_dmhdt, gal_log_mah, gal_sfh = pik._calc_galhalo_history_vmap(
-        lgt_table, dt_gyr, lgt0, mah_params, ms_params, q_params
-    )
-    logsm_table = pik._calc_logmstar_formed_vmap(gal_sfh, dt_gyr)
-    logsm_obs = pik._interp_vmap(t_obs, lgt_table, logsm_table)
-    sfr_obs = pik._interp_vmap(t_obs, lgt_table, gal_sfh)
-
-    return logsm_obs, sfr_obs, gal_sfh
+    return logsm_obs, sfr_obs

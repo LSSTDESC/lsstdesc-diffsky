@@ -38,15 +38,16 @@ from .pecZ import pecZ
 from .diffstarpop.mc_diffstar import mc_diffstarpop
 from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import mzr_model, DEFAULT_MZR_PDICT
+from .photometry.get_SFH_from_params import get_diff_params
+from .photometry.get_SFH_from_params import get_sfh_from_params
+from .photometry.get_SFH_from_params import get_logsm_sfr_obs
+from .photometry.get_SFH_from_params import get_log_safe_ssfr
 from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
 from .photometry.dustpop import mc_generate_dust_params
-from .photometry.get_SFH_from_params import get_log_safe_ssfr
-from .photometry.get_SFH_from_params import get_logsm_sfr_from_params
 from .photometry.precompute_ssp_tables import precompute_dust_attenuation
 from .photometry.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
 from .photometry.precompute_ssp_tables import precompute_ssp_restmags
 from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
-from .photometry.get_SFH_from_params import get_diff_params
 from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
 
 # Synthetics
@@ -398,7 +399,7 @@ def write_umachine_healpix_mock_to_disk(
             SED_params[key] = None  # filter not available; overwrite key
 
     t_table = np.linspace(SED_params["t_table_0"], T0, SED_params["N_t_table"])
-    SED_params["lgt_table"] = jnp.log10(t_table)
+    SED_params["t_table"] = t_table
 
     for a, b, c in gen:
         umachine_mock_fname = a
@@ -1237,10 +1238,10 @@ def build_output_snapshot_mock(
 
     if SED_params["black_hole_model"]:
         bulge_to_total_i = np.array([0.5] * Ngals)  # need a model here
-        percentile_sfr = dc2["obs_sfr"]  # TBD check this  or use sfr from SED
+        percentile_sfr = dc2["obs_sfr"]  # TBD check this or use sfr from SED
         bulge_mass = (
             dc2["obs_sm"] * bulge_to_total_i
-        )  # check this or use log_sm from SED
+        )  # check this or use logsm_obs from SED
         dc2["blackHoleMass"] = monte_carlo_black_hole_mass(bulge_mass)
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
             dc2["redshift"], dc2["blackHoleMass"], percentile_sfr
@@ -1342,32 +1343,27 @@ def generate_SEDs(
                 dc2[key][failed_mask] = mc_params[:, i]
                 print(".......saving pop model parameters {}".format(key))
 
-    params = {}
     _res = get_diff_params(
         dc2,
         mah_keys=SED_params[mah_keys],
         ms_keys=SED_params[ms_keys],
         q_keys=SED_params[q_keys],
     )
-    params[mah_pars], params[ms_pars], params[q_pars] = _res
-    times = cosmology.age(dc2["redshift"]).value
+    mah_params, u_ms_params, u_q_params = _res
+    t_obs = cosmology.age(dc2["redshift"]).value
 
-    # get log_sm and sfr and SFH
-    log_sm, sfr, gal_sfh = get_logsm_sfr_from_params(
-        SED_params["lgt_table"],
-        SED_params["LGT0"],
-        times,
-        params[mah_pars],
-        params[ms_pars],
-        params[q_pars],
-    )
-    log_ssfr = get_log_safe_ssfr(log_sm, sfr)
-    dc2["log_sm"] = log_sm
-    dc2["sfr"] = sfr
+    # get SFH table and observed stellar mass
+    sfh_table = get_sfh_from_params(mah_params, u_ms_params, u_q_params,
+                                    SED_params['LGT0'],
+                                    SED_params['t_table'])
+    logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
+    dc2["logsm_obs"] = logsm_obs
+    dc2["sfr"] = sfr_obs
+    log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
     dc2["log_ssfr"] = log_ssfr
-
+    
     # generate metallicities
-    lg_met_mean = mzr_model(log_sm, times, *SED_params["met_params"])
+    lg_met_mean = mzr_model(logsm_obs, t_obs, *SED_params["met_params"])
     # lg_met_scatt = np.random.uniform(low=SED_params['lgmet_scatter_min'],
     #                                 high=SED_params['lgmet_scatter_max'],
     #                                 size=Ngals)
@@ -1385,11 +1381,11 @@ def generate_SEDs(
             alt_dustpop_params = SED_params["alt_dustpop_params"]
             print(".......with alt_dustpop_parameters")
             dust_params = mc_generate_dust_params(
-                ran_key, log_sm, log_ssfr, dc2["redshift"], tau_pdict=alt_dustpop_params
+                ran_key, logsm_obs, log_ssfr, dc2["redshift"], tau_pdict=alt_dustpop_params
             )
         else:
             dust_params = mc_generate_dust_params(
-                ran_key, log_sm, log_ssfr, dc2["redshift"]
+                ran_key, logsm_obs, log_ssfr, dc2["redshift"]
             )
 
         attenuation_factors = precompute_dust_attenuation(
@@ -1410,8 +1406,8 @@ def generate_SEDs(
     mags, seds = get_mag_sed_pars(
         SED_params,
         dc2["redshift"],
-        log_sm,
-        gal_sfh,
+        logsm_obs,
+        sfh_table,
         lg_met_mean,
         lg_met_scatt,
         cosmology,

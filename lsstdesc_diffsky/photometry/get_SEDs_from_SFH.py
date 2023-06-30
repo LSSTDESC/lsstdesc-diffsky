@@ -50,7 +50,6 @@ def get_mag_sed_pars(
 
     cosmo_params = flat_wcdm.CosmoParams(cosmology.Om0, w0, wa,
                                          cosmology.H0.value/100)
-    gal_t_table = SED_params['lgt_table']
     print(
         ".....Evaluating mags & colors for {:.4f} <= z <= {:.4f}".format(
             np.min(gal_z_obs), np.max(gal_z_obs)
@@ -64,7 +63,7 @@ def get_mag_sed_pars(
             SED_params["ssp_obsmag_table"],
             SED_params["ssp_lgmet"],
             SED_params["ssp_lg_age_gyr"],
-            gal_t_table,
+            SED_params["t_table"],
             gal_z_obs,
             gal_log_sm,
             gal_sfr_table,
