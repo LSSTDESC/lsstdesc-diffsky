@@ -69,7 +69,9 @@ def get_sfh_from_params(mah_params, ms_params, q_params, LGT0, t_table):
 
     """
 
-    print(".......computing SFHs from diffmah/star params for {} times".format(len(t_table)))
+    print(".......computing SFHs from diffmah/star params for {} times".format(
+        len(t_table))
+    )
     print(
         ".......using parameters with shapes {}, {}, {}".format(
             mah_params.shape, ms_params.shape, q_params.shape

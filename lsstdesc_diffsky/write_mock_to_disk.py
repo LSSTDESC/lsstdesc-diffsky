@@ -12,7 +12,6 @@ import gc
 import warnings
 import threading
 from time import time
-from jax import numpy as jnp
 from jax import random as jran
 from astropy.utils.misc import NumpyRNGContext
 from astropy.cosmology import FlatLambdaCDM, WMAP7
@@ -1361,7 +1360,7 @@ def generate_SEDs(
     dc2["sfr"] = sfr_obs
     log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
     dc2["log_ssfr"] = log_ssfr
-    
+
     # generate metallicities
     lg_met_mean = mzr_model(logsm_obs, t_obs, *SED_params["met_params"])
     # lg_met_scatt = np.random.uniform(low=SED_params['lgmet_scatter_min'],
@@ -1381,7 +1380,8 @@ def generate_SEDs(
             alt_dustpop_params = SED_params["alt_dustpop_params"]
             print(".......with alt_dustpop_parameters")
             dust_params = mc_generate_dust_params(
-                ran_key, logsm_obs, log_ssfr, dc2["redshift"], tau_pdict=alt_dustpop_params
+                ran_key, logsm_obs, log_ssfr, dc2["redshift"],
+                tau_pdict=alt_dustpop_params,
             )
         else:
             dust_params = mc_generate_dust_params(
