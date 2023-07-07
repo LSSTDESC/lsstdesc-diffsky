@@ -14,12 +14,12 @@ with open(pth, "r") as fp:
 setup(
     name=PACKAGENAME,
     version=__version__,
-    author="Andrew Hearin",
-    author_email="ahearin@anl.gov",
-    description="Some package",
-    long_description="Just some package",
-    install_requires=["numpy"],
+    author=("Andrew Hearin", "Eve Kovacs"),
+    author_email=("ahearin@anl.gov", "kovacs@anl.gov"),
+    description="Parallel differentiable generation of synthetic galaxy catalogs",
+    long_description="Parallel differentiable generation of synthetic galaxy catalogs",
+    install_requires=("numpy", "jax"),
     packages=find_packages(),
-    url="https://github.com/aphearin/lsstdesc_diffsky",
+    url="https://github.com/LSSTDESC/lsstdesc-diffsky",
     package_data={"lsstdesc_diffsky": ("tests/testing_data/*.dat",)},
 )

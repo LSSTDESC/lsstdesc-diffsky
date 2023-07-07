@@ -1,0 +1,23 @@
+name: diffsky
+dependencies:
+    - python=3.9
+    - numpy 
+    - numba 
+    - flake8
+    - pytest
+    - jax
+    - mpi4py
+    - sphinx
+    - nbsphinx
+    - ipython
+    - jupyter 
+    - matplotlib
+    - scipy
+    - h5py
+    - pip
+    - astropy
+    - healpy
+    - halotools
+    - lsstdesc-galsampler
+    - diffmah
+    - diffstar
