@@ -186,7 +186,7 @@ parser.add_argument("-config_filename",
                     default='diffsky_config')
 parser.add_argument("-log_filename_template",
                     help="filename for logfile",
-                    default='logfiles/cutout_{}_z_{}_cfg_{}.log')
+                    default='logfiles/cutout_{}_z_{}_{}_{}.log')
 parser.add_argument("-zrange_value",
                     help="z-range to run",
                     choices=['0', '1', '2', 'all'],
@@ -202,6 +202,7 @@ args = parser.parse_args()
 # setup directory names; read yaml configuration
 input_master_dirname = os.path.join(home, args.input_master_dirname)
 yaml_dir = os.path.join(input_master_dirname, args.production_dirname)
+production_dir = yaml_dir
 yaml_fn = os.path.join(yaml_dir, args.config_filename + '.yaml')
 
 with open(os.path.join(yaml_dir, yaml_fn), 'r') as fh:
@@ -213,6 +214,7 @@ if not all(char.isdigit() for char in args.hpx):
     node_name = MPI.Get_processor_name()
     rank, nranks = comm.Get_rank(), comm.Get_size()
     # read hpx list and assign hpx number to rank
+    print(args.hpx)
     with open(os.path.join(yaml_dir, args.hpx), 'r') as fh:
         hpx_list = fh.read()
     hpx_list = hpx_list.strip().split('\n')
@@ -220,12 +222,10 @@ if not all(char.isdigit() for char in args.hpx):
     hpx_indx = np.array_split(np.arange(nhpx), nranks)[rank]
     assert len(hpx_indx)==1, "Multiple healpixels assigned to rank {}".format(rank)
     healpix_number = hpx_list[hpx_indx[0]]
-
     rank_node = '{}_{}'.format(rank, node_name)
-    with open(args.log_filename.format(healpix_number,
-                                       args.zrange_value,
-                                       args.config_filename,
-                                       rank_node), 'w') as f:
+    log_filename = args.log_filename_template.format(healpix_number, args.zrange_value,
+                                                args.config_filename, rank_node)
+    with open(os.path.join(production_dir, log_filename), 'w') as f:
         with redirect_stdout(f):
             print("Parallel processing of {}th hpx {} on rank {} on node {}".format(
                 hpx_indx[0], healpix_number, rank, node_name))

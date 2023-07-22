@@ -2,20 +2,20 @@
 
 if [ "$#" -lt 2 ]
 then
-echo "Run mpi processing of healpix file list (assign 4 pixels per node)"
+echo "Run mpi processing of healpix file list (request ranks = total number)"
 echo "Usage: run_mpi_hpx_production hpx_list (0-17, image, test#) z_range (0-2)"
 echo "       filename for healpix list will be pixels_${1}.txt"
 echo "       optional 3rd parameter: name of yaml config file to use"
 echo "       default (diffsky_config) (.yaml is assumed)"
 exit
 else
-hpx_group=${1}
+hpx_list="pixels_${1}.txt"
 z_range=${2}
 vprod="diffsky_v0.1.0_production"
 cd /lus/eagle/projects/LastJourney/kovacs/Catalog_5000/OR_5000/${vprod}
 echo "Running from `pwd`"
 
-echo "hpx_group=pixels_${hpx_group}.txt"
+echo "hpx_list=${hpx_list}"
 echo "z_range=${z_range}"
 if [ "$#" -gt 2 ]
 then
@@ -57,5 +57,6 @@ echo "total_pix_num=${total_pix_num}"
 
 script_name=run_diffsky_healpix_production.py
 pythonpath=/home/ekovacs/.conda/envs/diffsky/bin/python
+args="${hpx_list} -zrange_value ${z_range} ${xtra_args}"
 
 mpiexec -n ${total_pix_num} ${pythonpath} ${script_name} ${args}
