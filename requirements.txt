@@ -10,3 +10,4 @@ halotools
 lsstdesc-galsampler
 diffmah
 diffstar
+dsps
