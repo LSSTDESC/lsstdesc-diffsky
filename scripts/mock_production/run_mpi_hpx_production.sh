@@ -33,26 +33,8 @@ source activate diffsky
 PYTHONPATH=/home/ekovacs/.conda/envs/diffsky/bin/python
 export PYTHONPATH
 
-tot_pix_grp=17
-if [ "$hpx_list" == "image" ]
-then
-#131 pixels
-total_pix_num=131
-else
-if [[ "${hpx_list}" =~ "test" ]]; then
-#test# gives number of pixels
-total_pix_num=$(expr "${hpx_list#*test}")
-else
-if [ "$hpx_list" -lt "$tot_pix_grp" ]
-then
-# 128 pixels per file
-total_pix_num=128
-else
-# 74 pixels in last file
-total_pix_num=74
-fi
-fi
-fi
+#retrive number of pixels in list file
+total_pix_num="`wc -l < ${pixels_list}`"
 echo "total_pix_num=${total_pix_num}"
 
 script_name=run_diffsky_healpix_production.py
@@ -60,3 +42,4 @@ pythonpath=/home/ekovacs/.conda/envs/diffsky/bin/python
 args="${pixels_list} -zrange_value ${z_range} ${xtra_args}"
 
 mpiexec -n ${total_pix_num} ${pythonpath} ${script_name} ${args}
+echo "Running ${pythonpath} ${script_name} ${args} on ${total_pix_num} ranks"

@@ -117,6 +117,7 @@ def model_synthetic_cluster_satellites(
     tri_axial_positions=True,
     host_conc=5.0,
     snapshot=False,
+    source_galaxy_tag="source_galaxy",
     **kwargs
 ):
     """ """
@@ -252,16 +253,16 @@ def model_synthetic_cluster_satellites(
         # add source keys and SFH parameter histories randomly from existing
         # satellites
         keys = [
-            "source_galaxy_mp",
-            "source_galaxy_vmp",
-            "source_galaxy_rvir",
-            "source_galaxy_upid",
-            "source_galaxy_host_rvir",
-            "source_galaxy_has_fit",
-            "source_galaxy_nofit_replace",
-            "source_galaxy_is_main_branch",
-            "obs_sm",
-            "obs_sfr",
+            source_galaxy_tag +"mp",
+            source_galaxy_tag +"vmp",
+            source_galaxy_tag +"rvir",
+            source_galaxy_tag +"upid",
+            source_galaxy_tag +"host_rvir",
+            source_galaxy_tag + "has_fit",
+            source_galaxy_tag + "nofit_replace",
+            source_galaxy_tag + "is_main_branch",
+            source_galaxy_tag + "obs_sm",
+            source_galaxy_tag + "obs_sfr",
         ] + list(SFH_keys)
         # initialize
         for k in keys:
@@ -281,7 +282,7 @@ def model_synthetic_cluster_satellites(
         for ns, halo_id in zip(synthetic_richness[nonzeros], target_halo_id[nonzeros]):
             # identify existing satellites
             maskm = (mock["target_halo_id"] == halo_id) & (
-                mock["source_galaxy_upid"] != -1
+                mock[source_galaxy_tag + "upid"] != -1
             )
             # randomly select from existing satellites to populate synthetics
             indexes = np.random.choice(np.where(maskm)[0], size=ns)

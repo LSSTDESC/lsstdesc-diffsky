@@ -1,0 +1,63 @@
+description: 'Config file for producing diffsky mock catalog'
+
+name:
+    pscan_3765
+
+version:
+    versionMajor: 0
+    versionMinor: 1
+    versionMinorMinor: 1
+
+file_dirs:  #relative to input_master_dirname, which is a supplied argument to production script
+    healpix_cutout_dirname: 'healpix_cutouts'
+    um_sfr_catalogs_dirname: 'smdpl_value_added_replaced_nofit_catalogs'
+    output_mock_dirname: 'diffsky_v{}.{}.{}'
+    shape_dirname: 'OR_haloshapes'
+    pkldirname: 'production'
+
+file_names:
+    healpix_fname: 'cutout_{}.hdf5'
+    
+parse_str:
+    um_split_fname: '.diffstar_fits'
+
+cosmology:
+    H0: 71.0
+    OmegaM: 0.2648
+    OmegaB: 0.0448
+    w0: -1.0
+    wa: 0.0
+
+nside: 32
+
+SEDs:
+    filters: ['lsst', 'hsc', 'sdss', 'uvista']
+    frames: ['rest', 'obs']
+    lgmet_scatter_min: 0.1
+    lgmet_scatter_max: 0.3
+    dz: .02
+    t_table_0: .05 
+    N_t_table: 100
+    use_diffmah_pop: True
+    dsps_data_dirname: 'dsps_data/FSPS_ssp_data'
+    dsps_data_filename: 'ssp_data_fsps_v3.2_lgmet_age.h5'
+
+dust_parameters:
+    dust: True
+    use_alt_dustpop_params: True
+    pscan_dirname: 'parameter_tune'
+    pscan_filename: 'color_scan_pct_4000_0_colors.ascii'
+    pscan_rownumber: 3765
+
+empirical_models:
+    size_model_mag: 'SDSS_rest_R'
+    ellipticity_model_mag: 'SDSS_rest_R'
+    black_hole_model: 'skip'
+
+synthetic_ultra_faints:
+    skip_synthetics: True
+    synthetic_halo_minimum_mass: 9.8
+    randomize_redshift_synthetic: True
+
+shears:
+    add_dummy_shears: True
