@@ -1,5 +1,7 @@
 """
-Module for production of mock galaxy catalogs for LSST DESC.
+write_mock_to_disk.py
+=====================
+Main module for production of mock galaxy catalogs for LSST DESC.
 """
 import os
 import psutil
@@ -8,8 +10,8 @@ import h5py
 import re
 import gc
 import warnings
+import threading
 from time import time
-from jax import numpy as jnp
 from jax import random as jran
 from astropy.utils.misc import NumpyRNGContext
 from astropy.cosmology import FlatLambdaCDM, WMAP7
@@ -33,17 +35,18 @@ from .triaxial_satellite_distributions.axis_ratio_model import monte_carlo_halo_
 # SED generation
 from .pecZ import pecZ
 from .diffstarpop.mc_diffstar import mc_diffstarpop
-from .get_SEDs_from_SFH import get_mag_sed_pars
+from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import mzr_model, DEFAULT_MZR_PDICT
-from .dustpop import mc_generate_dust_params
-from .get_SFH_from_params import get_log_safe_ssfr
-from .get_SFH_from_params import get_logsm_sfr_from_params
+from .photometry.get_SFH_from_params import get_diff_params
+from .photometry.get_SFH_from_params import get_sfh_from_params
+from .photometry.get_SFH_from_params import get_logsm_sfr_obs
+from .photometry.get_SFH_from_params import get_log_safe_ssfr
+from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
+from .photometry.dustpop import mc_generate_dust_params
 from .photometry.precompute_ssp_tables import precompute_dust_attenuation
 from .photometry.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
 from .photometry.precompute_ssp_tables import precompute_ssp_restmags
-from .load_fsps_data import load_filter_data, load_sps_data
-from .get_SEDs_from_SFH import get_filter_wave_trans
-from .get_SFH_from_params import get_params
+from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
 from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
 
 # Synthetics
@@ -97,6 +100,11 @@ volume_minx = 0.0
 volume_miny = 0.0
 volume_maxz = 0.0
 
+__all__ = ("write_umachine_healpix_mock_to_disk",
+           "build_output_snapshot_mock",
+           "write_output_mock_to_disk",
+           )
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
@@ -123,7 +131,8 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise=0.1,
 ):
     """
-    GalSample the UM mock into the lightcone healpix cutout and
+    GalSample the UM mock into the lightcone healpix cutout,
+    compute the SEDs using DSPS and
     write the healpix mock to disk.
 
     Parameters
@@ -188,11 +197,14 @@ def write_umachine_healpix_mock_to_disk(
     mass_match_noise: noise added to log of source halo masses to randomize the match
         to target halos
 
-    versionMajor: int major version number
+    versionMajor: int
+        major version number
 
-    versionMinor: int minor version number
+    versionMinor: int
+        minor version number
 
-    versionMinorMinor: int minor.minor version number
+    versionMinorMinor: int
+        minor.minor version number
 
     Returns
     -------
@@ -310,15 +322,15 @@ def write_umachine_healpix_mock_to_disk(
     )
 
     dsps_data_DRN = SED_params["dsps_data_dirname"]
-    # get ssp_wave, ssp_flux, lgZsun_bin_mids, log_age_gyr
-    ssp_wave, ssp_flux, lgZsun_bin_mids, log_age_gyr = load_sps_data(dsps_data_DRN)
-    filter_data = load_filter_data(dsps_data_DRN, SED_params["filters"])
+    dsps_data_fn = SED_params["dsps_data_filename"]
+    # get ssp_wave, ssp_flux, lg_met, lg_age_gyr
+    ssp_data = load_ssp_templates(os.path.join(dsps_data_DRN, dsps_data_fn))
+    ssp_wave = ssp_data.ssp_wave
+    ssp_flux = ssp_data.ssp_flux
+    filter_data = assemble_filter_data(dsps_data_DRN, SED_params["filters"])
     filter_waves, filter_trans, filter_keys = get_filter_wave_trans(filter_data)
     print("\nUsing filters and bands: {}".format(", ".join(filter_keys)))
     # generate precomputed ssp tables
-    ssp_restmag_table = precompute_ssp_restmags(
-        ssp_wave, ssp_flux, filter_waves, filter_trans
-    )
     min_snap = 0 if len(healpix_data[snapshots[0]]["a"]) > 0 else 1
     zmin = 1.0 / np.max(healpix_data[snapshots[min_snap]]["a"][()]) - 1.0
     zmax = 1.0 / np.min(healpix_data[snapshots[-1]]["a"][()]) - 1.0
@@ -346,8 +358,8 @@ def write_umachine_healpix_mock_to_disk(
 
     # save in SED_params for passing to other modules
     SED_params["ssp_z_table"] = ssp_z_table
-    SED_params["ssp_lgZsun_bin_mids"] = lgZsun_bin_mids
-    SED_params["ssp_log_age_gyr"] = log_age_gyr
+    SED_params["ssp_lgmet"] = ssp_data.ssp_lgmet
+    SED_params["ssp_lg_age_gyr"] = ssp_data.ssp_lg_age_gyr
     SED_params["ssp_restmag_table"] = ssp_restmag_table
     SED_params["ssp_obsmag_table"] = ssp_obsmag_table
     SED_params["filter_keys"] = filter_keys
@@ -386,7 +398,7 @@ def write_umachine_healpix_mock_to_disk(
             SED_params[key] = None  # filter not available; overwrite key
 
     t_table = np.linspace(SED_params["t_table_0"], T0, SED_params["N_t_table"])
-    SED_params["lgt_table"] = jnp.log10(t_table)
+    SED_params["t_table"] = t_table
 
     for a, b, c in gen:
         umachine_mock_fname = a
@@ -583,6 +595,11 @@ def write_umachine_healpix_mock_to_disk(
 
         mem = "Memory usage =  {0:.2f} GB"
         print(mem.format(process.memory_info().rss / 1.0e9))
+
+        mem = "Thread count =  {}"
+        print(mem.format(threading.active_count()))
+        for env in ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"]:
+            print("Checking {} = {}".format(env, os.environ.get(env)))
 
     ########################################################################
     #  Write the output mock to disk
@@ -1220,10 +1237,10 @@ def build_output_snapshot_mock(
 
     if SED_params["black_hole_model"]:
         bulge_to_total_i = np.array([0.5] * Ngals)  # need a model here
-        percentile_sfr = dc2["obs_sfr"]  # TBD check this  or use sfr from SED
+        percentile_sfr = dc2["obs_sfr"]  # TBD check this or use sfr from SED
         bulge_mass = (
             dc2["obs_sm"] * bulge_to_total_i
-        )  # check this or use log_sm from SED
+        )  # check this or use logsm_obs from SED
         dc2["blackHoleMass"] = monte_carlo_black_hole_mass(bulge_mass)
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
             dc2["redshift"], dc2["blackHoleMass"], percentile_sfr
@@ -1290,14 +1307,14 @@ def generate_SEDs(
         nofit_replace = dc2["source_galaxy_nofit_replace"][~has_fit] == 1
         n_replace = np.count_nonzero(nofit_replace)
         if n_replace > 0:
-            msg = ".....Replacing {} diffmah/diffstar fit failures with {}"
+            msg = ".....Replaced {} diffmah/diffstar fit failures with {}"
             print("{} resampled UM fit successes".format(msg.format(nfail, n_replace)))
         else:
             msg = ".....No replacements required; {} fit failures, {} replacements"
             print(msg.format(nfail, n_replace))
         nmissed = nfail - n_replace
     if nmissed > 0 or (nmissed < 0 and nfail > 0) or (use_diffmah_pop and nfail > 0):
-        msg = ".....Replacing {} diffmah/diffstar fit failures with diffmah{} pop"
+        msg = ".....Replacing parameters for {} fit failures with diffmah{} pop"
         if nmissed > 0 and not use_diffmah_pop:
             failed_mask = ~nofit_replace
             print(".......{}".format(msg.format(nmissed, "/diffstar")))
@@ -1325,32 +1342,27 @@ def generate_SEDs(
                 dc2[key][failed_mask] = mc_params[:, i]
                 print(".......saving pop model parameters {}".format(key))
 
-    params = {}
-    _res = get_params(
+    _res = get_diff_params(
         dc2,
         mah_keys=SED_params[mah_keys],
         ms_keys=SED_params[ms_keys],
         q_keys=SED_params[q_keys],
     )
-    params[mah_pars], params[ms_pars], params[q_pars] = _res
-    times = cosmology.age(dc2["redshift"]).value
+    mah_params, u_ms_params, u_q_params = _res
+    t_obs = cosmology.age(dc2["redshift"]).value
 
-    # get log_sm and sfr and SFH
-    log_sm, sfr, gal_sfh = get_logsm_sfr_from_params(
-        SED_params["lgt_table"],
-        SED_params["LGT0"],
-        times,
-        params[mah_pars],
-        params[ms_pars],
-        params[q_pars],
-    )
-    log_ssfr = get_log_safe_ssfr(log_sm, sfr)
-    dc2["log_sm"] = log_sm
-    dc2["sfr"] = sfr
+    # get SFH table and observed stellar mass
+    sfh_table = get_sfh_from_params(mah_params, u_ms_params, u_q_params,
+                                    SED_params['LGT0'],
+                                    SED_params['t_table'])
+    logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
+    dc2["logsm_obs"] = logsm_obs
+    dc2["sfr"] = sfr_obs
+    log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
     dc2["log_ssfr"] = log_ssfr
 
     # generate metallicities
-    lg_met_mean = mzr_model(log_sm, times, *SED_params["met_params"])
+    lg_met_mean = mzr_model(logsm_obs, t_obs, *SED_params["met_params"])
     # lg_met_scatt = np.random.uniform(low=SED_params['lgmet_scatter_min'],
     #                                 high=SED_params['lgmet_scatter_max'],
     #                                 size=Ngals)
@@ -1368,11 +1380,12 @@ def generate_SEDs(
             alt_dustpop_params = SED_params["alt_dustpop_params"]
             print(".......with alt_dustpop_parameters")
             dust_params = mc_generate_dust_params(
-                ran_key, log_sm, log_ssfr, dc2["redshift"], tau_pdict=alt_dustpop_params
+                ran_key, logsm_obs, log_ssfr, dc2["redshift"],
+                tau_pdict=alt_dustpop_params,
             )
         else:
             dust_params = mc_generate_dust_params(
-                ran_key, log_sm, log_ssfr, dc2["redshift"]
+                ran_key, logsm_obs, log_ssfr, dc2["redshift"]
             )
 
         attenuation_factors = precompute_dust_attenuation(
@@ -1393,8 +1406,8 @@ def generate_SEDs(
     mags, seds = get_mag_sed_pars(
         SED_params,
         dc2["redshift"],
-        log_sm,
-        gal_sfh,
+        logsm_obs,
+        sfh_table,
         lg_met_mean,
         lg_met_scatt,
         cosmology,
@@ -1506,7 +1519,9 @@ def write_output_mock_to_disk(
     versionMinor=1,
     versionMinorMinor=1,
 ):
-    """ """
+    """
+    Write the assembled mock to specified output file in hdf5 format
+    """
 
     print(
         "\n...Writing to file {} using commit hash {}".format(

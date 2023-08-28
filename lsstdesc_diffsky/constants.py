@@ -27,6 +27,6 @@ SED_params = {
     't_start': .05,
     'N_t': 100,
     'xkeys': ['ssp_z_table', 'ssp_restmag_table', 'ssp_obsmag_table',
-              'ssp_lgZsun_bin_mids', 'ssp_log_age_gyr', 'filter_keys',
+              'ssp_lgmet', 'ssp_lg_age_gyr', 'filter_keys',
               'filter_waves', 'filter_trans', 'met_params'],
 }

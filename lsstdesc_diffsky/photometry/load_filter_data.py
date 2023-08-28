@@ -1,29 +1,35 @@
+"""
+"""
 import numpy as np
 import os
+import re
+from jax import numpy as jnp
+from dsps.data_loaders import load_transmission_curve
+from dsps.data_loaders.defaults import TransmissionCurve
+
+__all__ = (
+           "assemble_filter_data",
+           "get_filter_wave_trans",
+          )
 
 
-def load_sps_data(sps_drn):
-
-    zlegend = np.load(os.path.join(sps_drn, "zlegend.npy"))
-    lgZsun_bin_mids = np.log10(zlegend / zlegend[-3])
-    log_age_gyr = np.load(os.path.join(sps_drn, "log_age.npy")) - 9
-    ssp_wave = np.load(os.path.join(sps_drn, "ssp_spec_wave.npy"))
-    ssp_flux = np.load(os.path.join(sps_drn, "ssp_spec_flux_lines.npy"))
-
-    return ssp_wave, ssp_flux, lgZsun_bin_mids, log_age_gyr
-
-
-def load_filter_data(drn, filters):
-
+def assemble_filter_data(drn, filters):
+    """
+    Assemble requested filter data into numpy structured arrays of identical lengths
+    """
     filter_dict = {
         "locs": {
-            "lsst": "LSST/lsst_{}_transmission.npy",
+            "lsst": "filters/lsst_{}_transmission.h5",
+            "lsst_imsim": "LSST_ImSim/total_{}.dat",
             "hsc": "HSC/{}_HSC.txt",
+            "hsc_bv": "filters/suprimecam_{}_transmission.h5",
             "sdss": "SDSS/{}_SDSS.res",
         },
         "bands": {
             "lsst": ("u", "g", "r", "i", "z", "y"),
+            "lsst_imsim": ("u", "g", "r", "i", "z", "y"),
             "hsc": ("g", "r", "i", "z", "y"),
+            "hsc_bv": ("b", "g", "r", "i", "v", "z"),
             "sdss": ("u", "g", "r", "i", "z"),
         },
     }
@@ -33,9 +39,9 @@ def load_filter_data(drn, filters):
     filter_specs = []
     for f in filters:
         fwpat = filter_dict["locs"][f]
-        if ".npy" in fwpat:
+        if ".h5" in fwpat:
             filter_spec = [
-                np.load(os.path.join(drn, fwpat.format(band)))
+                load_transmission_curve(os.path.join(drn, fwpat.format(band)))
                 for band in filter_dict["bands"][f]
             ]
         else:
@@ -47,21 +53,24 @@ def load_filter_data(drn, filters):
                 )
                 for band in filter_dict["bands"][f]
             ]
-        filter_size = max(filter_size, np.max([f.shape[0] for f in filter_spec]))
+            filter_spec = [TransmissionCurve(f["wave"],
+                                             f["transmission"]) for f in filter_spec]
+
+        filter_size = max(filter_size, np.max([f.wave.shape[0] for f in filter_spec]))
         filter_specs.append(filter_spec)
 
-    # print(filter_size, len(filter_specs))
+    # interpolate arrays to match filter_size
     filter_waves_out = []
     filter_trans_out = []
     for f in [f for filter_spec in filter_specs for f in filter_spec]:  # flatten list
-        wave, trans = f["wave"], f["transmission"]
+        wave, trans = f.wave, f.transmission
         xout = np.linspace(wave.min(), wave.max(), filter_size)
         yout = np.interp(xout, wave, trans)
         filter_waves_out.append(xout)
         filter_trans_out.append(yout)
 
     dt_list = []
-    # prepare ndarray
+    # prepare list of ndarray dtype
     filter_names = []
     for f in filters:
         for b in filter_dict["bands"][f]:
@@ -81,3 +90,15 @@ def load_filter_data(drn, filters):
         filter_data[colname] = filter_trans_out[ifilter]
 
     return filter_data
+
+
+def get_filter_wave_trans(filter_data):
+    wave_keys = [k for k in filter_data.dtype.names if "wave" in k]
+    # print(wave_keys)
+    trans_keys = [k for k in filter_data.dtype.names if "trans" in k]
+    filter_waves = jnp.array([filter_data[key] for key in wave_keys])
+    filter_trans = jnp.array([filter_data[key] for key in trans_keys])
+    # print(filter_waves.shape, filter_waves.dtype.names)
+    filter_keys = [re.sub("_filter_wave", "", k) for k in wave_keys]
+
+    return filter_waves, filter_trans, filter_keys

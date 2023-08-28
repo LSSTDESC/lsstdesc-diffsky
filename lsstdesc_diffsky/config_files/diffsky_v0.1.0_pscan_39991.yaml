@@ -15,6 +15,9 @@ file_dirs:  #relative to input_master_dirname, which is a supplied argument to p
     shape_dirname: 'OR_haloshapes'
     pkldirname: 'production'
 
+file_names:
+    healpix_fname: 'cutout_{}.hdf5'
+
 parse_str:
     um_split_fname: '.diffstar_fits'
 
@@ -37,6 +40,7 @@ SEDs:
     N_t_table: 100
     use_diffmah_pop: True
     dsps_data_dirname: 'dsps_data/FSPS_ssp_data'
+    dsps_data_filename: 'ssp_data_fsps_v3.2_lgmet_age.h5'
 
 dust_parameters:
     dust: True

@@ -4,7 +4,7 @@ export EMAIL=kovacs@anl.gov
 if [ "$#" -lt 1 ]
 then
 echo "Submit jobs for healpix group for all z ranges"
-echo "Usage: submit_group hpx_group (0-11)"
+echo "Usage: submit_mpi_group hpx_group (0-17)"
 echo "     : special case for cosmodc2 area"
 echo "     :    submit_group image"
 echo "     : special case for test area"
@@ -24,7 +24,7 @@ else
 config_file=""
 fi
 
-tot_pix_grp=12
+tot_pix_grp=16
 if [ "$hpx_group" == "image" ]
 then
 # 131 pixels in file; 4 pixels per node
@@ -51,6 +51,6 @@ fi
 fi
 fi
 
-qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 0 ${config_file}
-qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 1 ${config_file}
-qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./bundle_diffsky_hpx_z.sh ${hpx_group} 2 ${config_file}
+qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 0 ${config_file}
+qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 1 ${config_file}
+qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 2 ${config_file}
