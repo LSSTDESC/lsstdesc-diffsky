@@ -11,8 +11,6 @@ exit
 else
 hpx_list="${1}"
 z_range=${2}
-vprod="diffsky_v0.1.0_production"
-cd /lus/eagle/projects/LastJourney/kovacs/Catalog_5000/OR_5000/${vprod}
 echo "Running from `pwd`"
 pixels_list="pixels_${hpx_list}.txt"
 echo "pixels_list=${pixels_list}"
@@ -22,10 +20,8 @@ then
 config_file=${3}
 echo "config_file=${config_file}"
 xtra_args="-config_file ${config_file}"
-cname=${config_file}
 else
 xtra_args=""
-cname=${vprod}
 fi
 fi
 
