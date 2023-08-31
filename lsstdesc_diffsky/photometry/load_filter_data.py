@@ -32,7 +32,7 @@ def assemble_filter_data(drn, filters):
             "hsc": ("g", "r", "i", "z", "y"),
             "hsc_bv": ("b", "g", "r", "i", "v", "z"),
             "sdss": ("u", "g", "r", "i", "z"),
-            "uvista":("Y", "H", "J", "Ks")
+            "uvista": ("Y", "H", "J", "Ks")
         },
     }
 

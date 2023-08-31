@@ -253,11 +253,11 @@ def model_synthetic_cluster_satellites(
         # add source keys and SFH parameter histories randomly from existing
         # satellites
         keys = [
-            source_galaxy_tag +"mp",
-            source_galaxy_tag +"vmp",
-            source_galaxy_tag +"rvir",
-            source_galaxy_tag +"upid",
-            source_galaxy_tag +"host_rvir",
+            source_galaxy_tag + "mp",
+            source_galaxy_tag + "vmp",
+            source_galaxy_tag + "rvir",
+            source_galaxy_tag + "upid",
+            source_galaxy_tag + "host_rvir",
             source_galaxy_tag + "has_fit",
             source_galaxy_tag + "nofit_replace",
             source_galaxy_tag + "is_main_branch",
