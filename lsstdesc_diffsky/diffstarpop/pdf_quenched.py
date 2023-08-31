@@ -1,6 +1,8 @@
 """Model of a quenched galaxy population calibrated to SMDPL halos."""
 from collections import OrderedDict
+
 from jax import jit as jjit
+from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
@@ -108,13 +110,13 @@ DEFAULT_SFH_PDF_QUENCH_PARAMS = OrderedDict(
 @jjit
 def _sigmoid(x, logtc, k, ymin, ymax):
     height_diff = ymax - ymin
-    return ymin + height_diff / (1.0 + jnp.exp(-k * (x - logtc)))
+    return ymin + height_diff / (1.0 + lax.exp(-k * (x - logtc)))
 
 
 @jjit
 def _inverse_sigmoid(y, x0=0, k=1, ymin=-1, ymax=1):
     lnarg = (ymax - ymin) / (y - ymin) - 1
-    return x0 - jnp.log(lnarg) / k
+    return x0 - lax.log(lnarg) / k
 
 
 @jjit
@@ -209,14 +211,14 @@ def _get_cov_scalar(
     urej_udrop,
 ):
     cov = jnp.zeros((8, 8)).astype("f4")
-    cov = cov.at[(0, 0)].set(ulgm_ulgm ** 2)
-    cov = cov.at[(1, 1)].set(ulgy_ulgy ** 2)
-    cov = cov.at[(2, 2)].set(ul_ul ** 2)
-    cov = cov.at[(3, 3)].set(utau_utau ** 2)
-    cov = cov.at[(4, 4)].set(uqt_uqt ** 2)
-    cov = cov.at[(5, 5)].set(uqs_uqs ** 2)
-    cov = cov.at[(6, 6)].set(udrop_udrop ** 2)
-    cov = cov.at[(7, 7)].set(urej_urej ** 2)
+    cov = cov.at[(0, 0)].set(ulgm_ulgm**2)
+    cov = cov.at[(1, 1)].set(ulgy_ulgy**2)
+    cov = cov.at[(2, 2)].set(ul_ul**2)
+    cov = cov.at[(3, 3)].set(utau_utau**2)
+    cov = cov.at[(4, 4)].set(uqt_uqt**2)
+    cov = cov.at[(5, 5)].set(uqs_uqs**2)
+    cov = cov.at[(6, 6)].set(udrop_udrop**2)
+    cov = cov.at[(7, 7)].set(urej_urej**2)
 
     cov = cov.at[(1, 0)].set(ulgy_ulgm * ulgy_ulgy * ulgm_ulgm)
     cov = cov.at[(0, 1)].set(ulgy_ulgm * ulgy_ulgy * ulgm_ulgm)
@@ -959,7 +961,6 @@ def get_smah_means_and_covs_quench(
         "cov_urej_udrop_quench_yhi"
     ],
 ):
-
     frac_quench = frac_quench_vs_lgm0(
         logmp_arr, frac_quench_x0, frac_quench_k, frac_quench_ylo, frac_quench_yhi
     )
@@ -1190,7 +1191,6 @@ def _get_covs_quench(
         "cov_urej_udrop_quench_yhi"
     ],
 ):
-
     _res = _get_cov_params_quench(
         lgmp_arr,
         cov_ulgm_ulgm_quench_ylo,

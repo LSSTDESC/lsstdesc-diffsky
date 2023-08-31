@@ -24,6 +24,7 @@ def assemble_filter_data(drn, filters):
             "hsc": "HSC/{}_HSC.txt",
             "hsc_bv": "filters/suprimecam_{}_transmission.h5",
             "sdss": "SDSS/{}_SDSS.res",
+            "uvista": "COSMOS/COSMOS_UVISTA_{}.h5"
         },
         "bands": {
             "lsst": ("u", "g", "r", "i", "z", "y"),
@@ -31,6 +32,7 @@ def assemble_filter_data(drn, filters):
             "hsc": ("g", "r", "i", "z", "y"),
             "hsc_bv": ("b", "g", "r", "i", "v", "z"),
             "sdss": ("u", "g", "r", "i", "z"),
+            "uvista": ("Y", "H", "J", "Ks")
         },
     }
 

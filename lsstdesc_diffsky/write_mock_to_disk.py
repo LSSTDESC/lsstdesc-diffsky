@@ -821,6 +821,7 @@ def build_output_snapshot_mock(
     q_pars="q_params",
     halo_unique_id=0,
     redshift_method="galaxy",
+    source_galaxy_tag="um_source_galaxy_"
 ):
     """
     Collect the GalSampled snapshot mock into an astropy table
@@ -945,7 +946,7 @@ def build_output_snapshot_mock(
     #  It will be important to record the true direction of the major axis as a
     #  stored column
 
-    source_galaxy_halo_keys = (
+    source_galaxy_prop_keys = (
         "mp",
         "vmp",
         "rvir",
@@ -956,28 +957,28 @@ def build_output_snapshot_mock(
         "halo_id",
         "has_fit",
         "is_main_branch",
+        "obs_sm",
+        "obs_sfr",
     )
-    source_galaxy_prop_keys = (
+    source_galaxy_pv_keys = (
         "host_dx",
         "host_dy",
         "host_dz",
         "host_dvx",
         "host_dvy",
         "host_dvz",
-        "obs_sm",
-        "obs_sfr",
     )
     # check for no-fit replacement
     if "nofit_replace" in umachine.colnames:
-        source_galaxy_halo_keys = source_galaxy_halo_keys + ("nofit_replace",)
+        source_galaxy_prop_keys = source_galaxy_prop_keys + ("nofit_replace",)
     SFH_param_keys = SED_params[mah_keys] + SED_params[ms_keys] + SED_params[q_keys]
 
     source_galaxy_keys = (
-        source_galaxy_halo_keys + source_galaxy_prop_keys + tuple(SFH_param_keys)
+        source_galaxy_pv_keys + source_galaxy_prop_keys + tuple(SFH_param_keys)
     )
 
     for key in source_galaxy_keys:
-        newkey = "source_galaxy_" + key if key in source_galaxy_halo_keys else key
+        newkey = source_galaxy_tag + key if key in source_galaxy_prop_keys else key
         try:
             dc2[newkey] = umachine[key][galaxy_indices]
         except KeyError:
@@ -989,7 +990,7 @@ def build_output_snapshot_mock(
 
     # remap M* for high-mass halos
     max_umachine_halo_mass = np.max(umachine["mp"])
-    ultra_high_mvir_halo_mask = (dc2["source_galaxy_upid"] == -1) & (
+    ultra_high_mvir_halo_mask = (dc2[source_galaxy_tag + "upid"] == -1) & (
         dc2["target_halo_mass"] > max_umachine_halo_mass
     )
     num_to_remap = np.count_nonzero(ultra_high_mvir_halo_mask)
@@ -1001,11 +1002,11 @@ def build_output_snapshot_mock(
         )
 
         halo_mass_array = dc2["target_halo_mass"][ultra_high_mvir_halo_mask]
-        mpeak_array = dc2["source_galaxy_mp"][ultra_high_mvir_halo_mask]
+        mpeak_array = dc2[source_galaxy_tag + "mp"][ultra_high_mvir_halo_mask]
         mhalo_ratio = halo_mass_array / mpeak_array
-        mstar_array = dc2["obs_sm"][ultra_high_mvir_halo_mask]
+        mstar_array = dc2[source_galaxy_tag + "obs_sm"][ultra_high_mvir_halo_mask]
         redshift_array = dc2["target_halo_redshift"][ultra_high_mvir_halo_mask]
-        upid_array = dc2["source_galaxy_upid"][ultra_high_mvir_halo_mask]
+        upid_array = dc2[source_galaxy_tag + "upid"][ultra_high_mvir_halo_mask]
 
         assert np.shape(halo_mass_array) == (
             num_to_remap,
@@ -1025,17 +1026,19 @@ def build_output_snapshot_mock(
             mhalo_ratio
         )
 
-        dc2["obs_sm"][ultra_high_mvir_halo_mask] = mstar_array * (mhalo_ratio**0.5)
-        idx = np.argmax(dc2["obs_sm"])
-        halo_id_most_massive = dc2["source_galaxy_halo_id"][idx]
+        obs_sm_key = source_galaxy_tag + "obs_sm"
+        halo_id_key = source_galaxy_tag + "halo_id"
+        dc2[obs_sm_key][ultra_high_mvir_halo_mask] = mstar_array * (mhalo_ratio**0.5)
+        idx = np.argmax(dc2[obs_sm_key])
+        halo_id_most_massive = dc2[halo_id_key][idx]
         assert (
-            dc2["obs_sm"][idx] < 10**13.5
+            dc2[obs_sm_key][idx] < 10**13.5
         ), "halo_id = {0} has stellar mass {1:.3e}".format(
-            halo_id_most_massive, dc2["obs_sm"][idx]
+            halo_id_most_massive, dc2[obs_sm_key][idx]
         )
 
     # generate triaxial satellite distributions based on halo shapes
-    satmask = dc2["source_galaxy_upid"] != -1
+    satmask = dc2[source_galaxy_tag + "upid"] != -1
     nsats = np.count_nonzero(satmask)
     host_conc = 5.0
     if nsats > 0:
@@ -1069,7 +1072,7 @@ def build_output_snapshot_mock(
 
     print(
         ".....number of galaxies before adding synthetic satellites = {}".format(
-            len(dc2["source_galaxy_halo_id"])
+            len(dc2[source_galaxy_tag + "halo_id"])
         )
     )
 
@@ -1079,10 +1082,11 @@ def build_output_snapshot_mock(
         Lbox=0.0,
         host_conc=host_conc,
         SFH_keys=list(SFH_param_keys),
-        source_halo_mass_key="source_galaxy_host_mp",
-        source_halo_id_key="source_galaxy_halo_id",
-        upid_key="source_galaxy_upid",
+        source_halo_mass_key=source_galaxy_tag + "host_mp",
+        source_halo_id_key=source_galaxy_tag + "halo_id",
+        upid_key=source_galaxy_tag + "upid",
         tri_axial_positions=True,
+        source_galaxy_tag=source_galaxy_tag,
     )  # turn off periodicity
     if len(fake_cluster_sats) > 0:
         print(".....generating and stacking synthetic cluster satellites")
@@ -1097,7 +1101,8 @@ def build_output_snapshot_mock(
         print(".....no synthetic cluster satellites required")
 
     # generate redshifts, ra and dec
-    dc2 = get_sky_coords(dc2, cosmology, redshift_method)
+    dc2 = get_sky_coords(dc2, cosmology, redshift_method,
+                         source_galaxy_tag=source_galaxy_tag)
 
     # save number of galaxies in shell
     Ngals = len(dc2["target_halo_id"])
@@ -1118,6 +1123,7 @@ def build_output_snapshot_mock(
         mah_pars=mah_pars,
         ms_pars=ms_pars,
         q_pars=q_pars,
+        source_galaxy_tag=source_galaxy_tag,
     )
 
     # Add low-mass synthetic galaxies
@@ -1293,18 +1299,19 @@ def generate_SEDs(
     mah_pars="mah_params",
     ms_pars="ms_params",
     q_pars="q_params",
+    source_galaxy_tag="source_galaxy"
 ):
     """
     assemble params from UM matches and compute required magnitudes
     """
     # check for fit failures
-    has_fit = dc2["source_galaxy_has_fit"] == 1
+    has_fit = dc2[source_galaxy_tag + "has_fit"] == 1
     # check for replacement
     nfail = np.count_nonzero(~has_fit)
     nmissed = -1
     use_diffmah_pop = SED_params["use_diffmah_pop"]
-    if "source_galaxy_nofit_replace" in dc2.colnames:
-        nofit_replace = dc2["source_galaxy_nofit_replace"][~has_fit] == 1
+    if source_galaxy_tag + "nofit_replace" in dc2.colnames:
+        nofit_replace = dc2[source_galaxy_tag + "nofit_replace"][~has_fit] == 1
         n_replace = np.count_nonzero(nofit_replace)
         if n_replace > 0:
             msg = ".....Replaced {} diffmah/diffstar fit failures with {}"
@@ -1436,7 +1443,8 @@ def get_galaxy_sizes(SDSS_R, redshift, cosmology):
     return size_disk, size_sphere, arcsec_per_kpc
 
 
-def get_sky_coords(dc2, cosmology, redshift_method="halo", Nzgrid=50):
+def get_sky_coords(dc2, cosmology, redshift_method="halo", Nzgrid=50,
+                   source_galaxy_tag='source_galaxy'):
     #  compute galaxy redshift, ra and dec
     if redshift_method is not None:
         print(
@@ -1458,7 +1466,7 @@ def get_sky_coords(dc2, cosmology, redshift_method="halo", Nzgrid=50):
             zgrid = np.logspace(np.log10(zmin), np.log10(zmax), Nzgrid)
             CDgrid = cosmology.comoving_distance(zgrid) * H0 / 100.0
             #  use interpolation to get redshifts for satellites only
-            sat_mask = dc2["source_galaxy_upid"] != -1
+            sat_mask = dc2[source_galaxy_tag + "upid"] != -1
             dc2["redshift"][sat_mask] = np.interp(r[sat_mask], CDgrid, zgrid)
 
         dc2["dec"] = 90.0 - np.arccos(dc2["z"] / r) * 180.0 / np.pi  # co-latitude

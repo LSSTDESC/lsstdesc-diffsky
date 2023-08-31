@@ -32,7 +32,7 @@ nodes=33
 else
 if [[ "${hpx_group}" =~ "test" ]]
 then
-nodes=1
+nodes=4
 else
 if [ "$hpx_group" -lt "$tot_pix_grp" ]
 then
@@ -51,6 +51,6 @@ fi
 fi
 fi
 
-qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 0 ${config_file}
-qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 1 ${config_file}
-qsub -n ${nodes} -t 11:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 2 ${config_file}
+qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 0 ${config_file}
+qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 1 ${config_file}
+qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 2 ${config_file}

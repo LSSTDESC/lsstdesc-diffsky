@@ -1,12 +1,12 @@
 description: 'Config file for producing diffsky mock catalog'
 
 name:
-    pscan_3765
+    pscan_39991
 
 version:
     versionMajor: 0
     versionMinor: 1
-    versionMinorMinor: 0
+    versionMinorMinor: 1
 
 file_dirs:  #relative to input_master_dirname, which is a supplied argument to production script
     healpix_cutout_dirname: 'healpix_cutouts'
@@ -17,7 +17,7 @@ file_dirs:  #relative to input_master_dirname, which is a supplied argument to p
 
 file_names:
     healpix_fname: 'cutout_{}.hdf5'
-    
+
 parse_str:
     um_split_fname: '.diffstar_fits'
 
@@ -45,9 +45,9 @@ SEDs:
 dust_parameters:
     dust: True
     use_alt_dustpop_params: True
-    pscan_dirname: 'parameter_tune'
-    pscan_filename: 'color_scan_pct_4000_0_colors.ascii'
-    pscan_rownumber: 3765
+    pscan_dirname: 'parameter_tune_mpi'
+    pscan_filename: 'parallel_scan_test_1000_*.ascii'
+    pscan_rownumber: 39991
 
 empirical_models:
     size_model_mag: 'SDSS_rest_R'
