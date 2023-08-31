@@ -6,7 +6,7 @@ name:
 version:
     versionMajor: 0
     versionMinor: 1
-    versionMinorMinor: 0
+    versionMinorMinor: 1
 
 file_dirs:  #relative to input_master_dirname, which is a supplied argument to production script
     healpix_cutout_dirname: 'healpix_cutouts'

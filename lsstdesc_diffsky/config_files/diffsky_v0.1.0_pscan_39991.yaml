@@ -31,7 +31,7 @@ cosmology:
 nside: 32
 
 SEDs:
-    filters: ['lsst', 'hsc', 'sdss']
+    filters: ['lsst', 'hsc', 'sdss', 'uvista']
     frames: ['rest', 'obs']
     lgmet_scatter_min: 0.1
     lgmet_scatter_max: 0.3
