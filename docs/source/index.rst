@@ -12,6 +12,8 @@ by mass to a corresponding halo in UniverseMachine, whose galaxy content is then
 to the simulated halo. Each galaxy has an associated parametrized star-formation history.
 The code then uses the `DSPS package <https://dsps.readthedocs.io/en/latest/>`__.
 to generate SEDs for each galaxy, based on the star-formation history parameters.
+The source code is publicly available  `on GitHub <https://github.com/LSSTDESC/lsstdesc-diffsky/>`__.
+
 
 User Guide
 ----------
