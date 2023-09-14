@@ -1,15 +1,16 @@
 """
 """
+from diffmah.individual_halo_assembly import _calc_halo_history
+from diffstar.fitting_helpers.stars import calculate_sm_sfr_history_from_mah
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
-from diffmah.individual_halo_assembly import _calc_halo_history
-from diffstar.stars import calculate_sm_sfr_history_from_mah
 
 try:
-    from dsps.sed.stellar_age_weights import _get_linspace_time_tables
+    from dsps.dust.att_curves import _frac_transmission_from_k_lambda, sbl18_k_lambda
     from dsps.photometry.photometry_kernels import calc_rest_mag
-    from dsps.dust.att_curves import sbl18_k_lambda, _frac_transmission_from_k_lambda
+    from dsps.sed.stellar_age_weights import _get_linspace_time_tables
+
     from .dsps_seds_from_tables import _calc_sed_kern
 
     HAS_DSPS = True

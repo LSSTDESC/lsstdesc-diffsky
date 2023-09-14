@@ -1,20 +1,15 @@
 """Monte Carlo generator of Diffstar parameters
 """
+from collections import OrderedDict, namedtuple
+
 import numpy as np
-from jax import random as jran
-from collections import OrderedDict
-from collections import namedtuple
-
-from diffstar.stars import DEFAULT_SFR_PARAMS as DEFAULT_SFR_PARAMS_DICT
-from diffstar.stars import _get_unbounded_sfr_params
-from diffstar.constants import LGT0
-from diffstar.quenching import DEFAULT_Q_PARAMS as DEFAULT_Q_PARAMS_DICT
-from diffstar.quenching import _get_unbounded_q_params
-
 from diffmah.monte_carlo_diffmah_hiz import mc_diffmah_params_hiz
-from .pdf_quenched import get_smah_means_and_covs_quench
-from .pdf_mainseq import get_smah_means_and_covs_mainseq
+from diffstar.defaults import DEFAULT_MS_PDICT, DEFAULT_U_Q_PARAMS, LGT0
+from diffstar.fitting_helpers.stars import _get_unbounded_sfr_params
+from jax import random as jran
 
+from .pdf_mainseq import get_smah_means_and_covs_mainseq
+from .pdf_quenched import get_smah_means_and_covs_quench
 
 _SFHParams = namedtuple(
     "SFHParams",
@@ -23,14 +18,12 @@ _SFHParams = namedtuple(
 
 
 DEFAULT_UNBOUND_SFR_PARAMS = _get_unbounded_sfr_params(
-    *tuple(DEFAULT_SFR_PARAMS_DICT.values())
+    *tuple(DEFAULT_MS_PDICT.values())
 )
 DEFAULT_UNBOUND_SFR_PARAMS_DICT = OrderedDict(
-    zip(DEFAULT_SFR_PARAMS_DICT.keys(), DEFAULT_UNBOUND_SFR_PARAMS)
+    zip(DEFAULT_MS_PDICT.keys(), DEFAULT_UNBOUND_SFR_PARAMS)
 )
-DEFAULT_UNBOUND_Q_PARAMS = np.array(
-    _get_unbounded_q_params(*tuple(DEFAULT_Q_PARAMS_DICT.values()))
-)
+DEFAULT_UNBOUND_Q_PARAMS = np.array(DEFAULT_U_Q_PARAMS)
 UH = DEFAULT_UNBOUND_SFR_PARAMS_DICT["indx_hi"]
 
 DEFAULT_UNBOUND_Q_PARAMS_MAIN_SEQ = DEFAULT_UNBOUND_Q_PARAMS.copy()
