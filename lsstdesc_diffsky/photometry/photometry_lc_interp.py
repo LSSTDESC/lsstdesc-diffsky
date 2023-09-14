@@ -1,6 +1,5 @@
 """
 """
-import numpy as np
 from diffsky.experimental.dspspop.burstshapepop import (
     _get_burstshape_galpop_from_params,
 )
