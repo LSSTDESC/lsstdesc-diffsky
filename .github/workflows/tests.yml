@@ -39,6 +39,7 @@ jobs:
             pytest \
             pytest-xdist \
             pytest-cov
+          pip install git+https://github.com/ArgonneCPAC/diffsky
 
       - name: test
         shell: bash -l {0}
