@@ -1,18 +1,16 @@
 """
 """
-from jax import numpy as jnp
-from jax import jit as jjit
-from jax import vmap
-from diffmah.individual_halo_assembly import _calc_halo_history
-from diffstar.stars import _sfr_history_from_mah
-from dsps.photometry.photometry_kernels import calc_obs_mag, calc_rest_mag
-from dsps.dust.att_curves import sbl18_k_lambda, _frac_transmission_from_k_lambda
-
 from diffmah.individual_halo_assembly import (
     DEFAULT_MAH_PARAMS as DEFAULT_MAH_PARAM_DICT,
 )
-
-MIN_SFH = 1e-7
+from diffmah.individual_halo_assembly import _calc_halo_history
+from diffstar.defaults import SFR_MIN
+from diffstar.fitting_helpers.stars import _sfr_history_from_mah
+from dsps.dust.att_curves import _frac_transmission_from_k_lambda, sbl18_k_lambda
+from dsps.photometry.photometry_kernels import calc_obs_mag, calc_rest_mag
+from jax import jit as jjit
+from jax import numpy as jnp
+from jax import vmap
 
 _interp_vmap = jjit(vmap(jnp.interp, in_axes=[0, None, 0]))
 
@@ -37,7 +35,7 @@ _calc_galhalo_history_vmap = jjit(vmap(_calc_galhalo_history, in_axes=_g))
 
 @jjit
 def _calc_logmstar_formed(sfh, dt_gyr):
-    sfh = jnp.where(sfh <= 0, MIN_SFH, sfh)
+    sfh = jnp.where(sfh < SFR_MIN, SFR_MIN, sfh)
     smh = jnp.cumsum(sfh * dt_gyr) * 1e9
     logsmh = jnp.log10(smh)
     return logsmh

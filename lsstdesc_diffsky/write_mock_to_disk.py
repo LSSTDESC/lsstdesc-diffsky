@@ -3,73 +3,76 @@ write_mock_to_disk.py
 =====================
 Main module for production of mock galaxy catalogs for LSST DESC.
 """
-import os
-import psutil
-import numpy as np
-import h5py
-import re
 import gc
-import warnings
+import os
+import re
 import threading
+import warnings
 from time import time
-from jax import random as jran
-from astropy.utils.misc import NumpyRNGContext
-from astropy.cosmology import FlatLambdaCDM, WMAP7
+
+import h5py
+import numpy as np
+import psutil
+from astropy.cosmology import WMAP7, FlatLambdaCDM
 from astropy.table import Table, vstack
+from astropy.utils.misc import NumpyRNGContext
+from dsps.data_loaders import load_ssp_templates
+from dsps.metallicity.mzr import DEFAULT_MZR_PDICT, mzr_model
+from galsampler import crossmatch
+from galsampler.galmatch import galsample
+from halotools.empirical_models import halo_mass_to_halo_radius
 
 # Galsampler
 from halotools.utils.value_added_halo_table_functions import compute_uber_hostid
-from galsampler import crossmatch
-from galsampler.galmatch import galsample
+from halotools.utils.vector_utilities import normalized_vectors
+from jax import random as jran
+
+from .black_hole_modeling.black_hole_accretion_rate import monte_carlo_bh_acc_rate
+from .black_hole_modeling.black_hole_mass import monte_carlo_black_hole_mass
+from .diffstarpop.mc_diffstar import mc_diffstarpop
+from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
 
 # Halo shapes
-from .halo_information.get_fof_halo_shapes import get_matched_shapes
-from .halo_information.get_fof_halo_shapes import get_halo_shapes
-from .triaxial_satellite_distributions.monte_carlo_triaxial_profile import (
-    generate_triaxial_satellite_distribution,
-)
-from halotools.utils.vector_utilities import normalized_vectors
-from halotools.empirical_models import halo_mass_to_halo_radius
-from .triaxial_satellite_distributions.axis_ratio_model import monte_carlo_halo_shapes
-
-# SED generation
-from .pecZ import pecZ
-from .diffstarpop.mc_diffstar import mc_diffstarpop
-from dsps.data_loaders import load_ssp_templates
-from dsps.metallicity.mzr import mzr_model, DEFAULT_MZR_PDICT
-from .photometry.get_SFH_from_params import get_diff_params
-from .photometry.get_SFH_from_params import get_sfh_from_params
-from .photometry.get_SFH_from_params import get_logsm_sfr_obs
-from .photometry.get_SFH_from_params import get_log_safe_ssfr
-from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
-from .photometry.dustpop import mc_generate_dust_params
-from .photometry.precompute_ssp_tables import precompute_dust_attenuation
-from .photometry.precompute_ssp_tables import precompute_ssp_obsmags_on_z_table
-from .photometry.precompute_ssp_tables import precompute_ssp_restmags
-from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
-from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
+from .halo_information.get_fof_halo_shapes import get_halo_shapes, get_matched_shapes
 
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
-from .synthetic_subhalos.synthetic_lowmass_subhalos import synthetic_logmpeak
-from .synthetic_subhalos.synthetic_cluster_satellites import (
-    model_synthetic_cluster_satellites,
+from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
+
+# SED generation
+from .pecZ import pecZ
+from .photometry.dustpop import mc_generate_dust_params
+from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
+from .photometry.get_SFH_from_params import (
+    get_diff_params,
+    get_log_safe_ssfr,
+    get_logsm_sfr_obs,
+    get_sfh_from_params,
 )
-from .synthetic_subhalos.extend_subhalo_mpeak_range import (
-    create_synthetic_lowmass_mock_with_centrals,
-)
-from .synthetic_subhalos.extend_subhalo_mpeak_range import (
-    map_mstar_onto_lowmass_extension,
+from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
+from .photometry.precompute_ssp_tables import (
+    precompute_dust_attenuation,
+    precompute_ssp_obsmags_on_z_table,
+    precompute_ssp_restmags,
 )
 
 # Additional catalog properties
 from .size_modeling.zhang_yang17 import (
-    mc_size_vs_luminosity_late_type,
     mc_size_vs_luminosity_early_type,
+    mc_size_vs_luminosity_late_type,
 )
-from .black_hole_modeling.black_hole_accretion_rate import monte_carlo_bh_acc_rate
-from .black_hole_modeling.black_hole_mass import monte_carlo_black_hole_mass
-from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
+from .synthetic_subhalos.extend_subhalo_mpeak_range import (
+    create_synthetic_lowmass_mock_with_centrals,
+    map_mstar_onto_lowmass_extension,
+)
+from .synthetic_subhalos.synthetic_cluster_satellites import (
+    model_synthetic_cluster_satellites,
+)
+from .synthetic_subhalos.synthetic_lowmass_subhalos import synthetic_logmpeak
+from .triaxial_satellite_distributions.axis_ratio_model import monte_carlo_halo_shapes
+from .triaxial_satellite_distributions.monte_carlo_triaxial_profile import (
+    generate_triaxial_satellite_distribution,
+)
 
 fof_halo_mass = "fof_halo_mass"
 # fof halo mass in healpix cutouts
@@ -100,10 +103,11 @@ volume_minx = 0.0
 volume_miny = 0.0
 volume_maxz = 0.0
 
-__all__ = ("write_umachine_healpix_mock_to_disk",
-           "build_output_snapshot_mock",
-           "write_output_mock_to_disk",
-           )
+__all__ = (
+    "write_umachine_healpix_mock_to_disk",
+    "build_output_snapshot_mock",
+    "write_output_mock_to_disk",
+)
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -391,9 +395,10 @@ def write_umachine_healpix_mock_to_disk(
                 print("...{} not available for galaxy-{}".format(SED_params[key], key))
                 SED_params[key] = None  # filter not available; overwrite key
         else:
-            if 'skip' not in SED_params[key]:
-                print("...incorrect option {} for galaxy-{}".format(
-                    SED_params[key], key))
+            if "skip" not in SED_params[key]:
+                print(
+                    "...incorrect option {} for galaxy-{}".format(SED_params[key], key)
+                )
             print("...Skipping galaxy-{}".format(key))
             SED_params[key] = None  # filter not available; overwrite key
 
@@ -775,8 +780,11 @@ def add_low_mass_synthetic_galaxies(
             synthetic_indices, size=num_selected_synthetic, replace=False
         )
     msg = ".....down-sampling synthetic galaxies with volume factor {} to yield {}"
-    print("{} selected synthetics".format(msg.format(volume_factor,
-                                                     num_selected_synthetic)))
+    print(
+        "{} selected synthetics".format(
+            msg.format(volume_factor, num_selected_synthetic)
+        )
+    )
     mstar_synthetic = mstar_synthetic_snapshot[selected_synthetic_indices]
     #  Apply additional M* cut to reduce number of synthetics for 5000 sq. deg. catalog
     if mstar_min > 0:
@@ -821,7 +829,7 @@ def build_output_snapshot_mock(
     q_pars="q_params",
     halo_unique_id=0,
     redshift_method="galaxy",
-    source_galaxy_tag="um_source_galaxy_"
+    source_galaxy_tag="um_source_galaxy_",
 ):
     """
     Collect the GalSampled snapshot mock into an astropy table
@@ -1101,8 +1109,9 @@ def build_output_snapshot_mock(
         print(".....no synthetic cluster satellites required")
 
     # generate redshifts, ra and dec
-    dc2 = get_sky_coords(dc2, cosmology, redshift_method,
-                         source_galaxy_tag=source_galaxy_tag)
+    dc2 = get_sky_coords(
+        dc2, cosmology, redshift_method, source_galaxy_tag=source_galaxy_tag
+    )
 
     # save number of galaxies in shell
     Ngals = len(dc2["target_halo_id"])
@@ -1151,8 +1160,12 @@ def build_output_snapshot_mock(
             # astropy vstack pads missing values with zeros in lowmass_mock
             dc2 = vstack((dc2, lowmass_mock))
             msg = ".....time to create {} galaxies in lowmass_mock = {:.2f} secs"
-            print(msg.format(len(lowmass_mock["target_halo_id"]), time() - check_time,
-                             ))
+            print(
+                msg.format(
+                    len(lowmass_mock["target_halo_id"]),
+                    time() - check_time,
+                )
+            )
 
     # Add shears and magnification
     if shear_params["add_dummy_shears"]:
@@ -1299,7 +1312,7 @@ def generate_SEDs(
     mah_pars="mah_params",
     ms_pars="ms_params",
     q_pars="q_params",
-    source_galaxy_tag="source_galaxy"
+    source_galaxy_tag="source_galaxy",
 ):
     """
     assemble params from UM matches and compute required magnitudes
@@ -1359,9 +1372,9 @@ def generate_SEDs(
     t_obs = cosmology.age(dc2["redshift"]).value
 
     # get SFH table and observed stellar mass
-    sfh_table = get_sfh_from_params(mah_params, u_ms_params, u_q_params,
-                                    SED_params['LGT0'],
-                                    SED_params['t_table'])
+    sfh_table = get_sfh_from_params(
+        mah_params, u_ms_params, u_q_params, SED_params["LGT0"], SED_params["t_table"]
+    )
     logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
     dc2["logsm_obs"] = logsm_obs
     dc2["sfr"] = sfr_obs
@@ -1387,7 +1400,10 @@ def generate_SEDs(
             alt_dustpop_params = SED_params["alt_dustpop_params"]
             print(".......with alt_dustpop_parameters")
             dust_params = mc_generate_dust_params(
-                ran_key, logsm_obs, log_ssfr, dc2["redshift"],
+                ran_key,
+                logsm_obs,
+                log_ssfr,
+                dc2["redshift"],
                 tau_pdict=alt_dustpop_params,
             )
         else:
@@ -1443,8 +1459,9 @@ def get_galaxy_sizes(SDSS_R, redshift, cosmology):
     return size_disk, size_sphere, arcsec_per_kpc
 
 
-def get_sky_coords(dc2, cosmology, redshift_method="halo", Nzgrid=50,
-                   source_galaxy_tag='source_galaxy'):
+def get_sky_coords(
+    dc2, cosmology, redshift_method="halo", Nzgrid=50, source_galaxy_tag="source_galaxy"
+):
     #  compute galaxy redshift, ra and dec
     if redshift_method is not None:
         print(

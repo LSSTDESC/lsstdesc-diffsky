@@ -1,13 +1,12 @@
 """
 """
-from jax import jit as jjit
-from jax import vmap
-from jax import numpy as jnp
-from diffstar.stars import _sfr_history_from_mah, _integrate_sfr
+from diffmah.individual_halo_assembly import calc_halo_history
+from diffstar.fitting_helpers.stars import _integrate_sfr, _sfr_history_from_mah
 from diffstar.sfh import get_sfh_from_mah_kern
 from diffstar.utils import _jax_get_dt_array
-from diffmah.individual_halo_assembly import calc_halo_history
-
+from jax import jit as jjit
+from jax import numpy as jnp
+from jax import vmap
 
 calculate_sfh_pop = jjit(vmap(_sfr_history_from_mah, in_axes=(*[None] * 2, *[0] * 4)))
 integrate_sfr_pop = jjit(vmap(_integrate_sfr, in_axes=(0, None)))
