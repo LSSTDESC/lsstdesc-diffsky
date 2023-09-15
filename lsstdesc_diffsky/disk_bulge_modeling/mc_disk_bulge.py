@@ -37,7 +37,7 @@ def mc_disk_bulge(ran_key, tarr, sfh_pop):
     smh : ndarray, shape (n_gals, n_t)
         Stellar mass history of galaxy in units of Msun
 
-    fbulge : ndarray, shape (n_gals, n_t)
+    eff_bulge : ndarray, shape (n_gals, n_t)
         History of in-situ bulge growth efficiency for every galaxy
 
     sfh_bulge : ndarray, shape (n_gals, n_t)
@@ -61,8 +61,8 @@ def mc_disk_bulge(ran_key, tarr, sfh_pop):
     tcrit, fbulge_early, fbulge_late = fbulge_params
     params_pop = np.array((tcrit, fbulge_early, fbulge_late)).T
     _res = _bulge_sfh_vmap(tarr, sfh_pop, params_pop)
-    smh, fbulge, sfh_bulge, smh_bulge, bth = _res
-    return smh, fbulge, sfh_bulge, smh_bulge, bth
+    smh, eff_bulge, sfh_bulge, smh_bulge, bth = _res
+    return smh, eff_bulge, sfh_bulge, smh_bulge, bth
 
 
 def generate_frac_bulge_params(
