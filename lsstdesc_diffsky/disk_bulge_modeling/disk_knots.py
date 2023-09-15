@@ -6,6 +6,9 @@ from dsps.sed.stellar_age_weights import calc_age_weights_from_sfh_table
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
 from jax import numpy as jnp
+from jax import vmap
+
+FKNOT_MAX = 0.2
 
 
 @jjit
@@ -49,3 +52,7 @@ def _disk_knot_kern(
     ) * age_weights_burst
 
     return mstar_tot, mburst, mdd, mknot, age_weights_dd, age_weights_knot
+
+
+_V = (None, 0, 0, 0, 0, 0, 0, None)
+_disk_knot_vmap = jjit(vmap(_disk_knot_kern, in_axes=_V))
