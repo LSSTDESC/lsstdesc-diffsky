@@ -1,4 +1,11 @@
-"""
+"""Module implements two functions:
+
+1. get_diffsky_sed_info calculates composite the composite SED and photometry of
+a population of diffsky galaxies
+
+2. decompose_sfh_into_bulge_disk_knots decomposes the composite SED into 3 components:
+bulge, diffuse disk, star-forming knots
+
 """
 from diffsky.experimental.dspspop.burstshapepop import (
     _get_burstshape_galpop_from_params,
@@ -11,7 +18,15 @@ from diffsky.experimental.dspspop.lgfburstpop import _get_lgfburst_galpop_from_u
 from diffsky.experimental.photometry_interpolation import interpolate_ssp_photmag_table
 from diffstar.defaults import SFR_MIN
 from dsps.cosmology.flat_wcdm import _age_at_z_vmap
-from dsps.experimental.diffburst import _age_weights_from_u_params
+from dsps.experimental.diffburst import (
+    _age_weights_from_u_params as _burst_age_weights_from_u_params,
+)
+from dsps.experimental.diffburst import (
+    _age_weights_from_params as _burst_age_weights_from_params,
+)
+from dsps.experimental.diffburst import (
+    _get_params_from_u_params as _get_burst_params_from_u_params,
+)
 from dsps.metallicity.mzr import DEFAULT_MZR_PDICT, mzr_model
 from dsps.sed import calc_ssp_weights_sfh_table_lognormal_mdf
 from dsps.sed.stellar_age_weights import (
@@ -23,8 +38,9 @@ from jax import numpy as jnp
 from jax import random as jran
 from jax import vmap
 
+from ..disk_bulge_modeling.disk_bulge_kernels import calc_tform_pop
 from ..disk_bulge_modeling.disk_knots import FKNOT_MAX, _disk_knot_vmap
-from ..disk_bulge_modeling.mc_disk_bulge import mc_disk_bulge
+from ..disk_bulge_modeling.mc_disk_bulge import _bulge_sfh_vmap, generate_fbulge_params
 
 _D = (None, 0, None, 0)
 calc_age_weights_from_sfh_table_vmap = jjit(
@@ -44,12 +60,20 @@ _calc_logsm_table_from_sfh_table_vmap = jjit(
 )
 
 _A = (None, 0)
-_age_weights_from_u_params_vmap = jjit(vmap(_age_weights_from_u_params, in_axes=_A))
+_burst_age_weights_from_u_params_vmap = jjit(
+    vmap(_burst_age_weights_from_u_params, in_axes=_A)
+)
+_burst_age_weights_from_params_vmap = jjit(
+    vmap(_burst_age_weights_from_params, in_axes=_A)
+)
+
+_get_burst_params_from_u_params_vmap = jjit(vmap(_get_burst_params_from_u_params))
 
 DEFAULT_MZR_PARAMS = jnp.array(list(DEFAULT_MZR_PDICT.values()))
 
 
 def get_diffsky_sed_info(
+    ran_key,
     ssp_z_table,
     ssp_rest_seds,
     ssp_restmag_table,
@@ -72,22 +96,175 @@ def get_diffsky_sed_info(
     met_params=DEFAULT_MZR_PARAMS,
     lgmet_scatter=0.2,
 ):
+    """Compute SED and photometry for population of Diffsky galaxies
+
+    Parameters
+    ----------
+    ran_key : jax.random.PRNGKey
+        Random number seed used to assign values for disk/bulge/knot decomposition
+
+    ssp_z_table : ndarray, shape (n_z_table, )
+        Table storing a grid in redshift at which SSP photometry have been precomputed
+
+    ssp_rest_seds : ndarray, shape (n_met, n_age, n_wave_seds)
+        Restframe SEDs of collection of SSPs with fluxes defined
+        in units of [Lsun/Hz/Mstar] on a grid of metallicity and age
+
+    ssp_restmag_table : ndarray, shape (n_met, n_age, n_rest_filters)
+        Restframe AB magnitude of SSPs integrated across input transmission curves
+        for n_rest_filters filters
+
+    ssp_obsmag_table : ndarray, shape (n_z_table, n_met, n_age, n_obs_filters)
+        Apparent AB magnitude of SSPs observed on a redshift grid with n_z_table points
+        for n_obs_filters filters
+
+    ssp_lgmet : ndarray, shape (n_met, )
+        Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
+
+    ssp_lg_age_gyr : ndarray, shape (n_age, )
+        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+
+    gal_t_table : ndarray, shape (n_t, )
+        Grid in cosmic time t in Gyr at which SFH of the galaxy population is tabulated
+        gal_t_table should increase monotonically and it should span the
+        full range of gal_t_obs, including some padding of a few million years
+
+    gal_z_obs : ndarray, shape (n_gals, )
+        Redshift of each galaxy
+
+    gal_sfr_table : ndarray, shape (n_gals, n_t)
+        Grid in SFR in Msun/yr for each galaxy tabulated at the input gal_t_table
+
+    cosmo_params : ndarray, shape (n_cosmo, )
+        In dsps.cosmology.flat_wcdm, cosmo_params = (Om0, w0, wa, h)
+
+    rest_filter_waves : ndarray, shape (n_rest_filters, n_trans_wave)
+        Grid in λ in angstroms at which n_rest_filters filter transmission
+        curves are defined.
+
+        Note that each observer- and rest-frame filter transmission curve must be
+        specified by a λ-grid with the same number of points.
+
+    rest_filter_trans : ndarray, shape (n_rest_filters, n_trans_wave)
+        Transmission curves of n_rest_filters for photometry restframe absolute mags
+
+    obs_filter_waves : ndarray, shape (n_obs_filters, n_trans_wave)
+        Grid in λ in angstroms at which n_obs_filters filter transmission
+        curves are defined
+
+        Note that each observer- and rest-frame filter transmission curve must be
+        specified by a λ-grid with the same number of points.
+
+    obs_filter_trans : ndarray, shape (n_obs_filters, n_trans_wave)
+        Transmission curves of n_obs_filters for photometry apparent mags
+
+    lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
+        Unbounded parameters controlling Fburst, which sets the fractional contribution
+        of a recent burst to the smooth SFH of a galaxy. For typical values, see
+        diffsky.experimental.dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
+
+    burstshapepop_u_params : ndarray, shape (n_pars_burstshape_pop, )
+        Unbounded parameters controlling the distribution of stellar ages
+        of stars formed in a recent burst. For typical values, see
+        diffsky.experimental.dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
+
+    lgav_u_params : ndarray, shape (n_pars_lgav_pop, )
+        Unbounded parameters controlling the distribution of dust parameter Av,
+        the normalization of the attenuation curve at λ_V=5500 angstrom.
+        For typical values, see
+        diffsky.experimental.dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
+
+    dust_delta_u_params : ndarray, shape (n_pars_dust_delta_pop, )
+        Unbounded parameters controlling the distribution of dust parameter δ,
+        which modifies the power-law slope of the attenuation curve. For typical values,
+        see diffsky.experimental.dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
+
+    fracuno_pop_u_params : ndarray, shape (n_pars_fracuno_pop, )
+        Unbounded parameters controlling the fraction of sightlines unobscured by dust.
+        For typical values, see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
+
+    met_params : ndarray, shape (n_pars_met_pop, ), optional
+        Parameters controlling the mass-metallicity scaling relation.
+        For typical values, see dsps.metallicity.mzr.DEFAULT_MZR_PDICT
+
+    lgmet_scatter : float, optional
+        Scatter in dex of the metallicity distribution function. Default is 0.2.
+
+    Returns
+    ----------
+    gal_weights : ndarray, shape (n_gals, n_met, n_age)
+        Probability distribution P(Z, τ_age) for each galaxy
+
+    gal_frac_trans_obs : ndarray, shape (n_gals, n_age, n_obs_filters)
+        For each galaxy, array stores the fraction of light transmitted through dust
+        as a function of τ_age and filter bandpass used in observer-frame magnitudes
+
+    gal_frac_trans_rest : ndarray, shape (n_gals, n_age, n_rest_filters)
+        For each galaxy, array stores the fraction of light transmitted through dust
+        as a function of τ_age and filter bandpass used in rest-frame magnitudes
+
+    gal_att_curve_params : ndarray, shape (n_gals, 3)
+        Dust attenuation curve parameters (Eb, δ, Av) for each galaxy
+
+    gal_frac_unobs : ndarray, shape (n_gals, n_age)
+        Unobscured fraction for every galaxy at every τ_age
+
+    gal_fburst : ndarray, shape (n_gals, )
+        Fraction of the galaxy mass in the bursting population at gal_t_obs
+
+    gal_burstshape_params : ndarray, shape (n_gals, 2)
+        Parameters controlling P(τ) for burst population in each galaxy
+        lgyr_peak = gal_burstshape_params[:, 0]
+        lgyr_max = gal_burstshape_params[:, 1]
+
+    gal_fbulge_params : ndarray, shape (n_gals, 3)
+        Bulge efficiency parameters (tcrit, fbulge_early, fbulge_late) for each galaxy
+
+    gal_fknot : ndarray, shape (n_gals, )
+        Fraction of the disk mass in bursty star-forming knots for each galaxy
+
+    gal_rest_seds : ndarray, shape (n_gals, n_wave_seds)
+        Restframe SEDs of each galaxy in units of Lsun/Hz
+
+    gal_obsmags_nodust : ndarray, shape (n_gals, n_obs_filters)
+        Apparent AB magnitude of each galaxy through each filter,
+        neglecting dust attenuation
+
+    gal_restmags_nodust : ndarray, shape (n_gals, n_rest_filters)
+        Rest-frame AB magnitude of each galaxy through each filter,
+        neglecting dust attenuation
+
+    gal_obsmags_dust : ndarray, shape (n_gals, n_obs_filters)
+        Apparent AB magnitude of each galaxy through each filter,
+        accounting for dust attenuation
+
+    gal_restmags_dust : ndarray, shape (n_gals, n_rest_filters)
+        Rest-frame AB magnitude of each galaxy through each filter,
+        accounting for dust attenuation
+
+    """
+    # Bounds check input arguments and extract array shapes and sizes
     _check_ssp_info_shapes(ssp_z_table, gal_z_obs)
 
     ssp_obsmag_table_pergal = _get_ssp_obsmag_table_pergal(
         gal_z_obs, ssp_z_table, ssp_obsmag_table, ssp_restmag_table, gal_sfr_table
     )
-    ssp_obsflux_table_pergal = 10 ** (-0.4 * ssp_obsmag_table_pergal)
-    ssp_restflux_table = 10 ** (-0.4 * ssp_restmag_table)
-
     n_gals, n_met, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
     n_rest_filters = ssp_restmag_table.shape[-1]
 
-    _res = _get_galprops_at_t_obs(
+    # Compute various galaxy properties at z_obs
+    _galprops = _get_galprops_at_t_obs(
         gal_z_obs, gal_t_table, gal_sfr_table, met_params, cosmo_params
     )
-    gal_t_obs, gal_logsm_t_obs, gal_logssfr_t_obs, gal_lgmet_t_obs = _res
+    gal_t_obs, gal_logsm_t_obs, gal_logssfr_t_obs, gal_lgmet_t_obs = _galprops[:4]
+    gal_t10, gal_t90, gal_logsm0 = _galprops[4:]
 
+    # Monte Carlo generate morphology parameters
+    fbulge_key, knot_key = jran.split(ran_key, 2)
+    gal_fbulge_params = generate_fbulge_params(fbulge_key, gal_t10, gal_t90, gal_logsm0)
+    gal_fknot = jran.uniform(knot_key, minval=0, maxval=FKNOT_MAX, shape=(n_gals,))
+
+    # Compute P(Z) and P(τ) for every galaxy
     args = (
         gal_t_table,
         gal_sfr_table,
@@ -97,46 +274,62 @@ def get_diffsky_sed_info(
         ssp_lg_age_gyr,
         gal_t_obs,
     )
-    _res = calc_ssp_weights_sfh_table_lognormal_mdf_vmap(*args)
-    lgmet_weights, smooth_age_weights = _res[1:]
+    _weights = calc_ssp_weights_sfh_table_lognormal_mdf_vmap(*args)
+    lgmet_weights, smooth_age_weights = _weights[1:]
 
+    # Compute burst fraction for every galaxy
     gal_lgf_burst = _get_lgfburst_galpop_from_u_params(
         gal_logsm_t_obs, gal_logssfr_t_obs, lgfburst_pop_u_params
     )
     gal_fburst = 10**gal_lgf_burst
 
-    burstshape_u_params = _get_burstshape_galpop_from_params(
+    # Compute P(τ) for each bursting population
+    gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_params(
         gal_logsm_t_obs, gal_logssfr_t_obs, burstshapepop_u_params
     )
-    burstshape_u_params = jnp.array(burstshape_u_params).T
+    burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
     ssp_lg_age_yr = ssp_lg_age_gyr + 9
-    burst_weights = _age_weights_from_u_params_vmap(ssp_lg_age_yr, burstshape_u_params)
+    burst_age_weights = _burst_age_weights_from_u_params_vmap(
+        ssp_lg_age_yr, burstshape_u_params
+    )
 
+    gal_lgyr_peak, gal_lgyr_max = _get_burst_params_from_u_params_vmap(
+        burstshape_u_params
+    )
+    gal_burstshape_params = jnp.array((gal_lgyr_peak, gal_lgyr_max)).T
+
+    # Compute P(τ) for each composite galaxy
     _fb = gal_fburst.reshape((n_gals, 1))
-    bursty_age_weights = _fb * burst_weights + (1 - _fb) * smooth_age_weights
+    gal_age_weights = _fb * burst_age_weights + (1 - _fb) * smooth_age_weights
 
-    _w_age = bursty_age_weights.reshape((n_gals, 1, n_age))
+    # Compute P(τ, Z) for each composite galaxy
+    _w_age = gal_age_weights.reshape((n_gals, 1, n_age))
     _w_met = lgmet_weights.reshape((n_gals, n_met, 1))
     _w = _w_age * _w_met
     _norm = jnp.sum(_w, axis=(1, 2))
     gal_weights = _w / _norm.reshape((n_gals, 1, 1))  # (n_gals, n_met, n_age)
     gal_weights = gal_weights.reshape((n_gals, n_met, n_age, 1))
 
+    # Compute rest SED for each composite galaxy
+    prod_rest_seds_per_mstar = gal_weights * ssp_rest_seds
     gal_mstar_obs = (10**gal_logsm_t_obs).reshape((n_gals, 1))
+    gal_rest_seds = jnp.sum(prod_rest_seds_per_mstar, axis=(1, 2)) * gal_mstar_obs
 
-    prod_rest_seds = gal_weights * ssp_rest_seds
-    gal_rest_seds = jnp.sum(prod_rest_seds, axis=(1, 2)) * gal_mstar_obs
-
+    # Compute apparent magnitude in each band for each composite galaxy neglecting dust
+    ssp_obsflux_table_pergal = 10 ** (-0.4 * ssp_obsmag_table_pergal)
     prod_obs_nodust = gal_weights * ssp_obsflux_table_pergal
     gal_obsflux_nodust = jnp.sum(prod_obs_nodust, axis=(1, 2)) * gal_mstar_obs
     gal_obsmags_nodust = -2.5 * jnp.log10(gal_obsflux_nodust)
 
+    # Compute restframe magnitude in each band for each composite galaxy neglecting dust
+    ssp_restflux_table = 10 ** (-0.4 * ssp_restmag_table)
     prod_rest = gal_weights * ssp_restflux_table
     gal_restflux_nodust = jnp.sum(prod_rest, axis=(1, 2)) * gal_mstar_obs
     gal_restmags_nodust = -2.5 * jnp.log10(gal_restflux_nodust)
 
+    # Compute attenuation through each observed filter bandpass
     dummy_dust_key = 0
-    _res = _frac_dust_transmission_lightcone_kernel(
+    _dust_results_obs = _frac_dust_transmission_lightcone_kernel(
         dummy_dust_key,
         gal_z_obs,
         gal_logsm_t_obs,
@@ -149,15 +342,17 @@ def get_diffsky_sed_info(
         dust_delta_u_params,
         fracuno_pop_u_params,
     )
-    gal_frac_trans_obs = _res[0]  # (n_gals, n_age, n_filters)
-    gal_att_curve_params, gal_frac_unobs = _res[1:]
+    gal_frac_trans_obs = _dust_results_obs[0]  # (n_gals, n_age, n_filters)
+    gal_att_curve_params, gal_frac_unobs = _dust_results_obs[1:]
 
+    # Apply dust attenuation to the apparent magnitude in each band for each galaxy
     ft_obs = gal_frac_trans_obs.reshape((n_gals, 1, n_age, n_obs_filters))
     prod_obs_dust = gal_weights * ssp_obsflux_table_pergal * ft_obs
     gal_obsflux_dust = jnp.sum(prod_obs_dust, axis=(1, 2)) * gal_mstar_obs
     gal_obsmags_dust = -2.5 * jnp.log10(gal_obsflux_dust)
 
-    _res = _frac_dust_transmission_singlez_kernel(
+    # Compute attenuation through each restframe filter bandpass
+    _dust_results_rest = _frac_dust_transmission_singlez_kernel(
         dummy_dust_key,
         0.0,
         gal_logsm_t_obs,
@@ -170,19 +365,24 @@ def get_diffsky_sed_info(
         dust_delta_u_params,
         fracuno_pop_u_params,
     )
-    gal_frac_trans_rest = _res[0]  # (n_gals, n_age, n_filters)
+    gal_frac_trans_rest = _dust_results_rest[0]  # (n_gals, n_age, n_filters)
 
+    # Apply dust attenuation to the restframe magnitude in each band for each galaxy
     ft_rest = gal_frac_trans_rest.reshape((n_gals, 1, n_age, n_rest_filters))
     prod_rest_dust = gal_weights * ssp_restflux_table * ft_rest
     gal_restflux_dust = jnp.sum(prod_rest_dust, axis=(1, 2)) * gal_mstar_obs
     gal_restmags_dust = -2.5 * jnp.log10(gal_restflux_dust)
 
     return (
-        gal_weights,
+        gal_weights.reshape((n_gals, n_met, n_age)),
         gal_frac_trans_obs,
         gal_frac_trans_rest,
         gal_att_curve_params,
         gal_frac_unobs,
+        gal_fburst,
+        gal_burstshape_params,
+        gal_fbulge_params,
+        gal_fknot,
         gal_rest_seds,
         gal_obsmags_nodust,
         gal_restmags_nodust,
@@ -191,16 +391,111 @@ def get_diffsky_sed_info(
     )
 
 
-def decompose_sfh_into_bulge_disk_knots(
-    ran_key, gal_t_obs, gal_t_table, gal_sfh, fburst, age_weights_burst, ssp_lg_age_gyr
+def decompose_sfhpop_into_bulge_disk_knots(
+    gal_fbulge_params,
+    gal_fknot,
+    gal_t_obs,
+    gal_t_table,
+    gal_sfh,
+    gal_fburst,
+    gal_burstshape_params,
+    ssp_lg_age_gyr,
 ):
-    bulge_key, knot_key = jran.split(ran_key, 2)
+    """Decompose the SFH of a Diffsky galaxy into three components:
+    bulges, diffuse disk, and star-forming knots in the disks
 
-    gal_smh, eff_bulge, bulge_sfh, bulge_smh, bth = mc_disk_bulge(
-        bulge_key, gal_t_table, gal_sfh
+    Parameters
+    ----------
+    gal_fbulge_params : ndarray, shape (n_gals, 3)
+        Bulge efficiency parameters (tcrit, fbulge_early, fbulge_late) for each galaxy
+
+    gal_fknot : ndarray, shape (n_gals, )
+        Fraction of the disk mass in bursty star-forming knots for each galaxy
+
+    gal_t_obs : ndarray, shape (n_gals, )
+        Age of the universe in Gyr at the redshift of each galaxy
+
+    gal_t_table : ndarray, shape (n_t, )
+        Grid in cosmic time t in Gyr at which SFH of the galaxy population is tabulated
+        gal_t_table should increase monotonically and it should span the
+        full range of gal_t_obs, including some padding of a few million years
+
+    gal_sfh : ndarray, shape (n_gals, n_t)
+        Grid in SFR in Msun/yr for each galaxy tabulated at the input gal_t_table
+
+    gal_fburst : ndarray, shape (n_gals, )
+        Fraction of stellar mass in the burst population of each galaxy
+
+    gal_burstshape_params : ndarray, shape (n_gals, 2)
+        Parameters controlling P(τ) for burst population in each galaxy
+        lgyr_peak = gal_burstshape_params[:, 0]
+        lgyr_max = gal_burstshape_params[:, 1]
+
+    ssp_lg_age_gyr : ndarray, shape (n_age, )
+        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+
+    Returns
+    -------
+    mbulge : ndarray, shape (n_gals, )
+        Total stellar mass in Msun formed in the bulge at time gal_t_obs
+
+    mdd : ndarray, shape (n_gals, )
+        Total stellar mass in Msun formed in the diffuse disk at time gal_t_obs
+
+    mknot : ndarray, shape (n_gals, )
+        Total stellar mass in Msun formed in star-forming knots at time gal_t_obs
+
+    mburst : ndarray, shape (n_gals, )
+        Total stellar mass in Msun in the burst population at time gal_t_obs
+
+    bulge_age_weights : ndarray, shape (n_gals, n_age)
+        Probability distribution P(τ_age) for bulge of each galaxy
+
+    dd_age_weights : ndarray, shape (n_gals, n_age)
+        Probability distribution P(τ_age) for diffuse disk of each galaxy
+
+    knot_age_weights : ndarray, shape (n_gals, n_age)
+        Probability distribution P(τ_age) for star-forming knots of each galaxy
+
+    bulge_sfh : ndarray, shape (n_gals, n_t)
+        Grid in SFR in Msun/yr for each galaxy bulge tabulated at the input gal_t_table
+
+    frac_bulge_t_obs : ndarray, shape (n_gals, )
+        Bulge/total mass ratio at gal_t_obs for every galaxy
+
+    """
+    ssp_lg_age_yr = ssp_lg_age_gyr + 9.0
+    gal_burst_age_weights = _burst_age_weights_from_params_vmap(
+        ssp_lg_age_yr, gal_burstshape_params
     )
+    return _decompose_sfhpop_into_bulge_disk_knots(
+        gal_fbulge_params,
+        gal_fknot,
+        gal_t_obs,
+        gal_t_table,
+        gal_sfh,
+        gal_fburst,
+        gal_burst_age_weights,
+        ssp_lg_age_gyr,
+    )
+
+
+@jjit
+def _decompose_sfhpop_into_bulge_disk_knots(
+    gal_fbulge_params,
+    gal_fknot,
+    gal_t_obs,
+    gal_t_table,
+    gal_sfh,
+    gal_fburst,
+    age_weights_burst,
+    ssp_lg_age_gyr,
+):
+    _res = _bulge_sfh_vmap(gal_t_table, gal_sfh, gal_fbulge_params)
+    smh, eff_bulge, bulge_sfh, smh_bulge, bulge_to_total_history = _res
+
     bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
-    frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bth)
+    frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
 
     bulge_age_weights = calc_age_weights_from_sfh_table_vmap(
         gal_t_table, bulge_sfh, ssp_lg_age_gyr, gal_t_obs
@@ -209,26 +504,23 @@ def decompose_sfh_into_bulge_disk_knots(
     disk_sfh = gal_sfh - bulge_sfh
     disk_sfh = jnp.where(disk_sfh < SFR_MIN, SFR_MIN, disk_sfh)
 
-    n_gals = gal_sfh.shape[0]
-    fknot = jran.uniform(knot_key, minval=0, maxval=FKNOT_MAX, shape=(n_gals,))
-
     args = (
         gal_t_table,
         gal_t_obs,
         gal_sfh,
         disk_sfh,
-        fburst,
-        fknot,
+        gal_fburst,
+        gal_fknot,
         age_weights_burst,
         ssp_lg_age_gyr,
     )
-    _res = _disk_knot_vmap(*args)
-    mstar_tot, mburst, mdd, mknot, dd_age_weights, knot_age_weights = _res
+    _knot_info = _disk_knot_vmap(*args)
+    mstar_tot, mburst, mdd, mknot, dd_age_weights, knot_age_weights = _knot_info
 
     mbulge = frac_bulge_t_obs * mstar_tot
     masses = mbulge, mdd, mknot, mburst
     age_weights = bulge_age_weights, dd_age_weights, knot_age_weights
-    ret = (*masses, *age_weights)
+    ret = (*masses, *age_weights, bulge_sfh, frac_bulge_t_obs)
     return ret
 
 
@@ -249,9 +541,22 @@ def _get_galprops_at_t_obs(
     gal_logsfr_t_obs = _linterp_vmap(lgt_obs, lgt_table, gal_logsfr_table)
     gal_logssfr_t_obs = gal_logsfr_t_obs - gal_logsm_t_obs
 
+    gal_smh_table = 10**gal_logsm_table
+    gal_t10 = calc_tform_pop(gal_t_table, gal_smh_table, 0.1)
+    gal_t90 = calc_tform_pop(gal_t_table, gal_smh_table, 0.9)
+    gal_logsm0 = gal_smh_table[:, -1]
+
     gal_lgmet_t_obs = mzr_model(gal_logsm_t_obs, gal_t_obs, *met_params[:-1])
 
-    return gal_t_obs, gal_logsm_t_obs, gal_logssfr_t_obs, gal_lgmet_t_obs
+    return (
+        gal_t_obs,
+        gal_logsm_t_obs,
+        gal_logssfr_t_obs,
+        gal_lgmet_t_obs,
+        gal_t10,
+        gal_t90,
+        gal_logsm0,
+    )
 
 
 def _check_ssp_info_shapes(ssp_z_table, gal_z_obs):
@@ -291,5 +596,9 @@ def _get_ssp_obsmag_table_pergal(
 
     msg = "ssp_obsmag_table.shape[2]={0} must equal ssp_restmag_table.shape[1]={1}"
     assert n_age == n_age2, msg.format(n_age, n_age2)
+
+    return ssp_obsmag_table_pergal
+
+    return ssp_obsmag_table_pergal
 
     return ssp_obsmag_table_pergal

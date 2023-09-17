@@ -34,6 +34,11 @@ def mc_disk_bulge(ran_key, tarr, sfh_pop):
 
     Returns
     -------
+    fbulge_params : ndarray, shape (n_gals, 3)
+        tcrit_bulge = fbulge_params[:, 0]
+        fbulge_early = fbulge_params[:, 1]
+        fbulge_late = fbulge_params[:, 2]
+
     smh : ndarray, shape (n_gals, n_t)
         Stellar mass history of galaxy in units of Msun
 
@@ -57,15 +62,14 @@ def mc_disk_bulge(ran_key, tarr, sfh_pop):
     t90 = calc_tform_pop(tarr, smh_pop, 0.9)
     logsm0 = smh_pop[:, -1]
 
-    fbulge_params = generate_frac_bulge_params(ran_key, t10, t90, logsm0)
-    tcrit, fbulge_early, fbulge_late = fbulge_params
-    params_pop = np.array((tcrit, fbulge_early, fbulge_late)).T
-    _res = _bulge_sfh_vmap(tarr, sfh_pop, params_pop)
+    fbulge_params = generate_fbulge_params(ran_key, t10, t90, logsm0)
+
+    _res = _bulge_sfh_vmap(tarr, sfh_pop, fbulge_params)
     smh, eff_bulge, sfh_bulge, smh_bulge, bth = _res
-    return smh, eff_bulge, sfh_bulge, smh_bulge, bth
+    return fbulge_params, smh, eff_bulge, sfh_bulge, smh_bulge, bth
 
 
-def generate_frac_bulge_params(
+def generate_fbulge_params(
     ran_key,
     t10,
     t90,
@@ -105,7 +109,8 @@ def generate_frac_bulge_params(
     mc_u_late = jran.normal(late_key, shape=(n,)) * scale_u_late + mu_u_late_pop
 
     u_params = np.array((mc_u_tcrit, mc_u_early, mc_u_late)).T
-    tcrit, fbulge_early, fbulge_late = _get_params_from_u_params_vmap(
+    fbulge_tcrit, fbulge_early, fbulge_late = _get_params_from_u_params_vmap(
         u_params, t10, t90
     )
-    return tcrit, fbulge_early, fbulge_late
+    fbulge_params = np.array((fbulge_tcrit, fbulge_early, fbulge_late)).T
+    return fbulge_params
