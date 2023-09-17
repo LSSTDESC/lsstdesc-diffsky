@@ -152,18 +152,18 @@ def _bulge_fraction_vs_tform(t, t10, t90, params):
 
 
 @jjit
-def _bulge_sfh(tarr, sfh, params):
+def _bulge_sfh(tarr, sfh, fbulge_params):
     dtarr = _jax_get_dt_array(tarr)
     sfh = jnp.where(sfh < SFR_MIN, SFR_MIN, sfh)
     smh = _integrate_sfr(sfh, dtarr)
     fracmh = smh / smh[-1]
     t10 = jnp.interp(0.1, fracmh, tarr)
     t90 = jnp.interp(0.9, fracmh, tarr)
-    fbulge = _bulge_fraction_vs_tform(tarr, t10, t90, params)
-    sfh_bulge = fbulge * sfh
+    eff_bulge = _bulge_fraction_vs_tform(tarr, t10, t90, fbulge_params)
+    sfh_bulge = eff_bulge * sfh
     smh_bulge = _integrate_sfr(sfh_bulge, dtarr)
     bth = smh_bulge / smh
-    return smh, fbulge, sfh_bulge, smh_bulge, bth
+    return smh, eff_bulge, sfh_bulge, smh_bulge, bth
 
 
 DEFAULT_FBULGE_U_PARAMS = _get_u_params_from_params(
