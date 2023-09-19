@@ -21,5 +21,7 @@ setup(
     install_requires=("numpy", "jax"),
     packages=find_packages(),
     url="https://github.com/LSSTDESC/lsstdesc-diffsky",
-    package_data={"lsstdesc_diffsky": ("tests/testing_data/*.dat",)},
+    package_data={
+        "lsstdesc_diffsky": ("tests/testing_data/*.dat", "param_data/*/*.txt")
+    },
 )

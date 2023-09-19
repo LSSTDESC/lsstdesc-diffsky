@@ -1,0 +1,11 @@
+mzr_t0_y0  0.0500
+mzr_t0_x0  10.5000
+mzr_t0_k  1.0000
+mzr_t0_slope_lo  0.4000
+mzr_t0_slope_hi  0.1000
+c0_y_at_tlook_c  -1.4550
+c1_y_at_tlook_c  0.1300
+tlook_c  8.4400
+c0_early_time_slope  -0.9590
+c1_early_time_slope  0.0672
+mzr_scatter  0.1000

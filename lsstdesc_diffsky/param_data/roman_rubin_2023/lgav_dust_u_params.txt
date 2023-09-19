@@ -1,0 +1,9 @@
+lgav_logsm_x0_x0  23.4513
+lgav_logsm_x0_q  24.4511
+lgav_logsm_x0_ms  34.6201
+lgav_logsm_ylo_x0  3.9878
+lgav_logsm_ylo_q  10.0211
+lgav_logsm_ylo_ms  13.2511
+lgav_logsm_yhi_x0  -52.2791
+lgav_logsm_yhi_q  -35.2380
+lgav_logsm_yhi_ms  -2.7659

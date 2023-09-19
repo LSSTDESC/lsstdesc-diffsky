@@ -1,0 +1,12 @@
+burstshape_u_lgyr_peak_x0_logsm_x0  11.8710
+burstshape_u_lgyr_peak_q_logsm_x0  -13.4790
+burstshape_u_lgyr_peak_ms_logsm_x0  -9.8030
+burstshape_u_lgyr_peak_x0_logsm_ylo  14.1799
+burstshape_u_lgyr_peak_q_logsm_ylo  -58.9376
+burstshape_u_lgyr_peak_ms_logsm_ylo  -11.7996
+burstshape_u_lgyr_peak_x0_logsm_yhi  15.2724
+burstshape_u_lgyr_peak_q_logsm_yhi  74.5577
+burstshape_u_lgyr_peak_ms_logsm_yhi  -6.2940
+burstshape_u_lgyr_max_logsm_x0  14.5006
+burstshape_u_lgyr_max_logsm_ylo  -66.2248
+burstshape_u_lgyr_max_logsm_yhi  10.1382
