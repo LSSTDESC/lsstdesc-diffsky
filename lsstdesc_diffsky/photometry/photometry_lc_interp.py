@@ -27,7 +27,7 @@ from dsps.experimental.diffburst import (
 from dsps.experimental.diffburst import (
     _get_params_from_u_params as _get_burst_params_from_u_params,
 )
-from dsps.metallicity.mzr import DEFAULT_MZR_PDICT, mzr_model
+from dsps.metallicity.mzr import mzr_model
 from dsps.sed import calc_ssp_weights_sfh_table_lognormal_mdf
 from dsps.sed.stellar_age_weights import (
     _calc_logsm_table_from_sfh_table,
@@ -69,8 +69,6 @@ _burst_age_weights_from_params_vmap = jjit(
 
 _get_burst_params_from_u_params_vmap = jjit(vmap(_get_burst_params_from_u_params))
 
-DEFAULT_MZR_PARAMS = jnp.array(list(DEFAULT_MZR_PDICT.values()))
-
 
 def get_diffsky_sed_info(
     ran_key,
@@ -93,8 +91,7 @@ def get_diffsky_sed_info(
     lgav_u_params,
     dust_delta_u_params,
     fracuno_pop_u_params,
-    met_params=DEFAULT_MZR_PARAMS,
-    lgmet_scatter=0.2,
+    met_params,
 ):
     """Compute SED and photometry for population of Diffsky galaxies
 
@@ -186,9 +183,8 @@ def get_diffsky_sed_info(
     met_params : ndarray, shape (n_pars_met_pop, ), optional
         Parameters controlling the mass-metallicity scaling relation.
         For typical values, see dsps.metallicity.mzr.DEFAULT_MZR_PDICT
-
-    lgmet_scatter : float, optional
-        Scatter in dex of the metallicity distribution function. Default is 0.2.
+        mzr_params = met_params[:-1]
+        lgmet_scatter = met_params[-1]
 
     Returns
     ----------
@@ -204,7 +200,7 @@ def get_diffsky_sed_info(
         as a function of τ_age and filter bandpass used in rest-frame magnitudes
 
     gal_att_curve_params : ndarray, shape (n_gals, 3)
-        Dust attenuation curve parameters (Eb, δ, Av) for each galaxy
+        Dust attenuation curve parameters (dust_eb, dust_delta, dust_av) for each galaxy
 
     gal_frac_unobs : ndarray, shape (n_gals, n_age)
         Unobscured fraction for every galaxy at every τ_age
@@ -217,8 +213,11 @@ def get_diffsky_sed_info(
         lgyr_peak = gal_burstshape_params[:, 0]
         lgyr_max = gal_burstshape_params[:, 1]
 
+    gal_frac_bulge_t_obs : ndarray, shape (n_gals, )
+        Bulge/total mass ratio at gal_t_obs for every galaxy
+
     gal_fbulge_params : ndarray, shape (n_gals, 3)
-        Bulge efficiency parameters (tcrit, fbulge_early, fbulge_late) for each galaxy
+        Bulge parameters (fbulge_tcrit, fbulge_early, fbulge_late) for each galaxy
 
     gal_fknot : ndarray, shape (n_gals, )
         Fraction of the disk mass in bursty star-forming knots for each galaxy
@@ -252,9 +251,11 @@ def get_diffsky_sed_info(
     n_gals, n_met, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
     n_rest_filters = ssp_restmag_table.shape[-1]
 
+    mzr_params, lgmet_scatter = met_params[:-1], met_params[-1]
+
     # Compute various galaxy properties at z_obs
     _galprops = _get_galprops_at_t_obs(
-        gal_z_obs, gal_t_table, gal_sfr_table, met_params, cosmo_params
+        gal_z_obs, gal_t_table, gal_sfr_table, mzr_params, cosmo_params
     )
     gal_t_obs, gal_logsm_t_obs, gal_logssfr_t_obs, gal_lgmet_t_obs = _galprops[:4]
     gal_t10, gal_t90, gal_logsm0 = _galprops[4:]
@@ -373,6 +374,12 @@ def get_diffsky_sed_info(
     gal_restflux_dust = jnp.sum(prod_rest_dust, axis=(1, 2)) * gal_mstar_obs
     gal_restmags_dust = -2.5 * jnp.log10(gal_restflux_dust)
 
+    _res = _bulge_sfh_vmap(gal_t_table, gal_sfr_table, gal_fbulge_params)
+    smh, eff_bulge, bulge_sfh, smh_bulge, bulge_to_total_history = _res
+
+    bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
+    gal_frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
+
     return (
         gal_weights.reshape((n_gals, n_met, n_age)),
         gal_frac_trans_obs,
@@ -381,6 +388,7 @@ def get_diffsky_sed_info(
         gal_frac_unobs,
         gal_fburst,
         gal_burstshape_params,
+        gal_frac_bulge_t_obs,
         gal_fbulge_params,
         gal_fknot,
         gal_rest_seds,
@@ -460,7 +468,7 @@ def decompose_sfhpop_into_bulge_disk_knots(
     bulge_sfh : ndarray, shape (n_gals, n_t)
         Grid in SFR in Msun/yr for each galaxy bulge tabulated at the input gal_t_table
 
-    frac_bulge_t_obs : ndarray, shape (n_gals, )
+    gal_frac_bulge_t_obs : ndarray, shape (n_gals, )
         Bulge/total mass ratio at gal_t_obs for every galaxy
 
     """
@@ -495,7 +503,7 @@ def _decompose_sfhpop_into_bulge_disk_knots(
     smh, eff_bulge, bulge_sfh, smh_bulge, bulge_to_total_history = _res
 
     bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
-    frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
+    gal_frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
 
     bulge_age_weights = calc_age_weights_from_sfh_table_vmap(
         gal_t_table, bulge_sfh, ssp_lg_age_gyr, gal_t_obs
@@ -517,15 +525,15 @@ def _decompose_sfhpop_into_bulge_disk_knots(
     _knot_info = _disk_knot_vmap(*args)
     mstar_tot, mburst, mdd, mknot, dd_age_weights, knot_age_weights = _knot_info
 
-    mbulge = frac_bulge_t_obs * mstar_tot
+    mbulge = gal_frac_bulge_t_obs * mstar_tot
     masses = mbulge, mdd, mknot, mburst
     age_weights = bulge_age_weights, dd_age_weights, knot_age_weights
-    ret = (*masses, *age_weights, bulge_sfh, frac_bulge_t_obs)
+    ret = (*masses, *age_weights, bulge_sfh, gal_frac_bulge_t_obs)
     return ret
 
 
 def _get_galprops_at_t_obs(
-    gal_z_obs, gal_t_table, gal_sfr_table, met_params, cosmo_params
+    gal_z_obs, gal_t_table, gal_sfr_table, mzr_params, cosmo_params
 ):
     gal_t_obs = _age_at_z_vmap(gal_z_obs, *cosmo_params)
     lgt_obs = jnp.log10(gal_t_obs)
@@ -546,7 +554,7 @@ def _get_galprops_at_t_obs(
     gal_t90 = calc_tform_pop(gal_t_table, gal_smh_table, 0.9)
     gal_logsm0 = gal_smh_table[:, -1]
 
-    gal_lgmet_t_obs = mzr_model(gal_logsm_t_obs, gal_t_obs, *met_params[:-1])
+    gal_lgmet_t_obs = mzr_model(gal_logsm_t_obs, gal_t_obs, *mzr_params)
 
     return (
         gal_t_obs,
