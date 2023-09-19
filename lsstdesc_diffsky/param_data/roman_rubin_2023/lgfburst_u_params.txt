@@ -1,0 +1,9 @@
+lgfburst_logsm_x0_x0  -13.2584
+lgfburst_logsm_x0_q  21.7031
+lgfburst_logsm_x0_ms  6.7481
+lgfburst_logsm_ylo_x0  -10.9195
+lgfburst_logsm_ylo_q  12.6436
+lgfburst_logsm_ylo_ms  52.2205
+lgfburst_logsm_yhi_x0  -7.7689
+lgfburst_logsm_yhi_q  -46.0329
+lgfburst_logsm_yhi_ms  -15.2197

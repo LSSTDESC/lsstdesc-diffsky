@@ -1,0 +1,9 @@
+dust_delta_logsm_x0_x0  17.8501
+dust_delta_logsm_x0_q  13.8409
+dust_delta_logsm_x0_ms  -7.9940
+dust_delta_logsm_ylo_x0  -7.6029
+dust_delta_logsm_ylo_q  -4.8409
+dust_delta_logsm_ylo_ms  0.8748
+dust_delta_logsm_yhi_x0  -31.0174
+dust_delta_logsm_yhi_q  -6.0367
+dust_delta_logsm_yhi_ms  -6.7816
