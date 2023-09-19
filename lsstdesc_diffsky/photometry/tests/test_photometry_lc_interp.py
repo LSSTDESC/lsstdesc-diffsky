@@ -17,6 +17,7 @@ from dsps.experimental.diffburst import (
     _age_weights_from_params,
 )
 from dsps.utils import _jax_get_dt_array
+from dsps.metallicity.mzr import DEFAULT_MZR_PDICT
 from jax import jit as jjit
 from jax import random as jran
 from jax import vmap
@@ -33,6 +34,8 @@ from ..photometry_lc_interp import (
 
 _B = (0, None)
 _integrate_sfr_vmap = jjit(vmap(_integrate_sfr, in_axes=_B))
+
+DEFAULT_MZR_PARAMS = np.array(list(DEFAULT_MZR_PDICT.values()))
 
 
 def test_get_diffsky_sed_info():
@@ -94,6 +97,7 @@ def test_get_diffsky_sed_info():
         DEFAULT_LGAV_U_PARAMS,
         DEFAULT_DUST_DELTA_U_PARAMS,
         DEFAULT_FUNO_U_PARAMS,
+        DEFAULT_MZR_PARAMS,
     )
     for x in _res:
         assert np.all(np.isfinite(x))
@@ -106,6 +110,7 @@ def test_get_diffsky_sed_info():
         gal_frac_unobs,
         gal_fburst,
         gal_burstshape_params,
+        gal_frac_bulge_t_obs,
         gal_fbulge_params,
         gal_fknot,
         gal_rest_seds,
@@ -130,6 +135,9 @@ def test_get_diffsky_sed_info():
     assert np.all(lgyr_max > lgyr_peak + DLGAGE_MIN)
     assert np.all(lgyr_max < LGAGE_MAX)
 
+    assert gal_frac_bulge_t_obs.shape == (n_gals, )
+    assert np.all(gal_frac_bulge_t_obs > 0)
+    assert np.all(gal_frac_bulge_t_obs < 1)
     assert gal_fbulge_params.shape == (n_gals, 3)
     assert gal_fknot.shape == (n_gals,)
     assert np.all(gal_fknot > 0)
