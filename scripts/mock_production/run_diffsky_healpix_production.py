@@ -130,7 +130,7 @@ def process_healpix(args, inputs, healpix_number,
             redshift_list = [float(z) for z in redshift_strings]
 
             for k, v in inputs.items():
-                if k in ['dust_parameters', 'SEDs', 'empirical_models']:
+                if k in ['param_data', 'SEDs', 'empirical_models']:
                     for par, vv in v.items():
                         if 'dirname' in par:
                             SED_pars[par] = os.path.join(input_master_dirname, vv)

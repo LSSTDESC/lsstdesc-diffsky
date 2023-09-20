@@ -303,20 +303,6 @@ def write_umachine_healpix_mock_to_disk(
         for k, v in SED_pars.items():
             SED_params[k] = v
 
-    # check for alt_dustpop_params
-    if (
-        "use_alt_dustpop_params" in SED_params.keys()
-        and SED_params["use_alt_dustpop_params"]
-    ):
-        SED_params = get_alt_dustpop_params(SED_params)
-        print(
-            "\nUsing alt dustpop parameters:\n{}".format(
-                SED_params["alt_dustpop_params"]
-            )
-        )
-    else:
-        print("\nUsing default dustpop parameters")
-
     T0 = cosmology.age(SED_params["z0"]).value
     SED_params["LGT0"] = np.log10(T0)
     print(
@@ -1314,53 +1300,16 @@ def generate_SEDs(
     q_pars="q_params",
     source_galaxy_tag="source_galaxy",
 ):
+
+    check = validate_SED_params(SED_params)
+    assert check==True, "SED_params does not have required contents"
+
+
+    dc2 = substitute_SFH_fit_failures(dc2, SED_params)
+
     """
     assemble params from UM matches and compute required magnitudes
     """
-    # check for fit failures
-    has_fit = dc2[source_galaxy_tag + "has_fit"] == 1
-    # check for replacement
-    nfail = np.count_nonzero(~has_fit)
-    nmissed = -1
-    use_diffmah_pop = SED_params["use_diffmah_pop"]
-    if source_galaxy_tag + "nofit_replace" in dc2.colnames:
-        nofit_replace = dc2[source_galaxy_tag + "nofit_replace"][~has_fit] == 1
-        n_replace = np.count_nonzero(nofit_replace)
-        if n_replace > 0:
-            msg = ".....Replaced {} diffmah/diffstar fit failures with {}"
-            print("{} resampled UM fit successes".format(msg.format(nfail, n_replace)))
-        else:
-            msg = ".....No replacements required; {} fit failures, {} replacements"
-            print(msg.format(nfail, n_replace))
-        nmissed = nfail - n_replace
-    if nmissed > 0 or (nmissed < 0 and nfail > 0) or (use_diffmah_pop and nfail > 0):
-        msg = ".....Replacing parameters for {} fit failures with diffmah{} pop"
-        if nmissed > 0 and not use_diffmah_pop:
-            failed_mask = ~nofit_replace
-            print(".......{}".format(msg.format(nmissed, "/diffstar")))
-        else:
-            failed_mask = ~has_fit
-            txt = "" if use_diffmah_pop else "/diffstar"
-            print(".......{}".format(msg.format(nfail, txt)))
-
-        logmh = np.log10(dc2["target_halo_mass"][failed_mask])
-        ran_key = jran.PRNGKey(seed)
-        t_obs = cosmology.age(snapshot_redshift).value
-        mc_galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-        mc_mah_params, mc_msk_is_quenched, mc_ms_u_params, mc_q_u_params = mc_galpop
-        # copy requested mc_params to dc2 table
-        key_labels = [mah_keys] if use_diffmah_pop else [mah_keys, ms_keys, q_keys]
-        mc_parlist = (
-            [mc_mah_params]
-            if use_diffmah_pop
-            else [mc_mah_params, mc_ms_u_params, mc_q_u_params]
-        )
-        for key_label, mc_params in zip(key_labels, mc_parlist):
-            for i, key in enumerate(
-                SED_params[key_label]
-            ):  # potential bug here if some other subset of fit params selected
-                dc2[key][failed_mask] = mc_params[:, i]
-                print(".......saving pop model parameters {}".format(key))
 
     _res = get_diff_params(
         dc2,
@@ -1447,6 +1396,80 @@ def generate_SEDs(
 
     return dc2
 
+
+def validate_SED_params(SED_params, 
+                        required=["use_diffmah_pop", "LGT0", "t_table"],
+    mah_keys="mah_keys",
+    ms_keys="ms_keys",
+    q_keys="q_keys",
+    mah_pars="mah_params",
+    ms_pars="ms_params",
+    q_pars="q_params",
+                       ):
+    check = True
+    for k in required:
+        if k not in SED_params.keys():
+            print(".....Validate SED_params: {} not found".format(k))
+            check = False
+
+    return check
+
+
+def substitute_SFH_fit_failures(dc2, SED_params, source_galaxy_tag):
+    mah_keys="mah_keys",
+    ms_keys="ms_keys",
+    q_keys="q_keys",
+    mah_pars="mah_params",
+    ms_pars="ms_params",
+    q_pars="q_params",
+
+    # check for fit failures
+    has_fit = dc2[source_galaxy_tag + "has_fit"] == 1
+    # check for replacement
+    nfail = np.count_nonzero(~has_fit)
+    nmissed = -1
+    use_diffmah_pop = SED_params["use_diffmah_pop"]
+    if source_galaxy_tag + "nofit_replace" in dc2.colnames:
+        nofit_replace = dc2[source_galaxy_tag + "nofit_replace"][~has_fit] == 1
+        n_replace = np.count_nonzero(nofit_replace)
+        if n_replace > 0:
+            msg = ".....Replaced {} diffmah/diffstar fit failures with {}"
+            print("{} resampled UM fit successes".format(msg.format(nfail, n_replace)))
+        else:
+            msg = ".....No replacements required; {} fit failures, {} replacements"
+            print(msg.format(nfail, n_replace))
+        nmissed = nfail - n_replace
+    if nmissed > 0 or (nmissed < 0 and nfail > 0) or (use_diffmah_pop and nfail > 0):
+        msg = ".....Replacing parameters for {} fit failures with diffmah{} pop"
+        if nmissed > 0 and not use_diffmah_pop:
+            failed_mask = ~nofit_replace
+            print(".......{}".format(msg.format(nmissed, "/diffstar")))
+        else:
+            failed_mask = ~has_fit
+            txt = "" if use_diffmah_pop else "/diffstar"
+            print(".......{}".format(msg.format(nfail, txt)))
+
+        logmh = np.log10(dc2["target_halo_mass"][failed_mask])
+        ran_key = jran.PRNGKey(seed)
+        t_obs = cosmology.age(snapshot_redshift).value
+        mc_galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
+        mc_mah_params, mc_msk_is_quenched, mc_ms_u_params, mc_q_u_params = mc_galpop
+        # copy requested mc_params to dc2 table
+        key_labels = [mah_keys] if use_diffmah_pop else [mah_keys, ms_keys, q_keys]
+        mc_parlist = (
+            [mc_mah_params]
+            if use_diffmah_pop
+            else [mc_mah_params, mc_ms_u_params, mc_q_u_params]
+        )
+        for key_label, mc_params in zip(key_labels, mc_parlist):
+            for i, key in enumerate(
+                SED_params[key_label]
+            ):  # potential bug here if some other subset of fit params selected
+                dc2[key][failed_mask] = mc_params[:, i]
+                print(".......saving pop model parameters {}".format(key))
+
+    return dc2
+        
 
 def get_galaxy_sizes(SDSS_R, redshift, cosmology):
     if len(redshift) > 0:
