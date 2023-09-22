@@ -8,7 +8,7 @@ from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARA
 from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
 from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
 from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
-from diffstar.fitting_helpers.stars import _integrate_sfr
+from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.experimental.diffburst import DEFAULT_PARAMS as DEFAULT_BURST_PARAMS
 from dsps.experimental.diffburst import (
     DLGAGE_MIN,
@@ -16,8 +16,8 @@ from dsps.experimental.diffburst import (
     LGYR_PEAK_MIN,
     _age_weights_from_params,
 )
-from dsps.utils import _jax_get_dt_array
 from dsps.metallicity.mzr import DEFAULT_MZR_PDICT
+from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
 from jax import random as jran
 from jax import vmap
@@ -135,7 +135,7 @@ def test_get_diffsky_sed_info():
     assert np.all(lgyr_max > lgyr_peak + DLGAGE_MIN)
     assert np.all(lgyr_max < LGAGE_MAX)
 
-    assert gal_frac_bulge_t_obs.shape == (n_gals, )
+    assert gal_frac_bulge_t_obs.shape == (n_gals,)
     assert np.all(gal_frac_bulge_t_obs > 0)
     assert np.all(gal_frac_bulge_t_obs < 1)
     assert gal_fbulge_params.shape == (n_gals, 3)

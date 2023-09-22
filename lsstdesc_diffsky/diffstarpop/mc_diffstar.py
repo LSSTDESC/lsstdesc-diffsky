@@ -5,7 +5,7 @@ from collections import OrderedDict, namedtuple
 import numpy as np
 from diffmah.monte_carlo_diffmah_hiz import mc_diffmah_params_hiz
 from diffstar.defaults import DEFAULT_MS_PDICT, DEFAULT_U_Q_PARAMS, LGT0
-from diffstar.fitting_helpers.stars import _get_unbounded_sfr_params
+from diffstar.kernels.main_sequence_kernels import _get_unbounded_sfr_params
 from jax import random as jran
 
 from .pdf_mainseq import get_smah_means_and_covs_mainseq

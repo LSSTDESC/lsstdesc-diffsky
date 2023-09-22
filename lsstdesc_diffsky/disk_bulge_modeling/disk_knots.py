@@ -1,6 +1,6 @@
 """
 """
-from diffstar.fitting_helpers.stars import _integrate_sfr
+from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.constants import SFR_MIN
 from dsps.sed.stellar_age_weights import calc_age_weights_from_sfh_table
 from dsps.utils import _jax_get_dt_array
