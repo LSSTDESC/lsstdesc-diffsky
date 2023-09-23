@@ -2,7 +2,7 @@
 """
 from diffstar import get_sfh_from_mah_kern, sfh_galpop
 from diffstar.defaults import FB
-from diffstar.fitting_helpers.stars import _integrate_sfr
+from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from diffstar.utils import _jax_get_dt_array
 from jax import jit as jjit
 from jax import numpy as jnp

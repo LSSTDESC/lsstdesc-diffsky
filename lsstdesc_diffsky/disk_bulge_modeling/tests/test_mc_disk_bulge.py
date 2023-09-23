@@ -1,7 +1,7 @@
 """
 """
 import numpy as np
-from diffstar.fitting_helpers.stars import _integrate_sfr
+from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.constants import SFR_MIN
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
