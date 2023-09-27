@@ -31,10 +31,8 @@ cosmology:
 nside: 32
 
 SEDs:
-    filters: ['lsst', 'hsc', 'sdss', 'uvista']
+    filters: ['lsst_imsim', 'hsc', 'sdss', 'uvista', 'roman']
     frames: ['rest', 'obs']
-    lgmet_scatter_min: 0.1
-    lgmet_scatter_max: 0.3
     dz: .02
     t_table_0: .05 
     N_t_table: 100
@@ -43,12 +41,13 @@ SEDs:
     dsps_data_filename: 'ssp_data_fsps_v3.2_lgmet_age.h5'
 
 param_data:
-    roman_rubin_2023/burstshape_u_params.txt
-    roman_rubin_2023/delta_dust_u_params.txt
-    roman_rubin_2023/funo_dust_u_params.txt
-    roman_rubin_2023/lgav_dust_u_params.txt
-    roman_rubin_2023/lgfburst_u_params.txt
-    roman_rubin_2023/lgmet_params.txt
+    param_data_dirname: 'sed_model_param_data'
+    burstshape_fname: 'roman_rubin_2023/burstshape_u_params.txt'
+    delta_dust_fname: 'roman_rubin_2023/delta_dust_u_params.txt'
+    fracuno_pop_fname: 'roman_rubin_2023/funo_dust_u_params.txt'
+    lgav_dust_fname: 'roman_rubin_2023/lgav_dust_u_params.txt'
+    lgfburst_fname: 'roman_rubin_2023/lgfburst_u_params.txt'
+    lgmet_fname: 'roman_rubin_2023/lgmet_params.txt'
 
 empirical_models:
     size_model_mag: 'SDSS_rest_R'

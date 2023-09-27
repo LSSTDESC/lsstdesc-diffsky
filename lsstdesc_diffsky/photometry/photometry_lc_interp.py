@@ -73,7 +73,6 @@ _get_burst_params_from_u_params_vmap = jjit(vmap(_get_burst_params_from_u_params
 def get_diffsky_sed_info(
     ran_key,
     ssp_z_table,
-    ssp_rest_seds,
     ssp_restmag_table,
     ssp_obsmag_table,
     ssp_lgmet,
@@ -102,10 +101,6 @@ def get_diffsky_sed_info(
 
     ssp_z_table : ndarray, shape (n_z_table, )
         Table storing a grid in redshift at which SSP photometry have been precomputed
-
-    ssp_rest_seds : ndarray, shape (n_met, n_age, n_wave_seds)
-        Restframe SEDs of collection of SSPs with fluxes defined
-        in units of [Lsun/Hz/Mstar] on a grid of metallicity and age
 
     ssp_restmag_table : ndarray, shape (n_met, n_age, n_rest_filters)
         Restframe AB magnitude of SSPs integrated across input transmission curves
@@ -310,11 +305,6 @@ def get_diffsky_sed_info(
     _norm = jnp.sum(_w, axis=(1, 2))
     gal_weights = _w / _norm.reshape((n_gals, 1, 1))  # (n_gals, n_met, n_age)
     gal_weights = gal_weights.reshape((n_gals, n_met, n_age, 1))
-
-    # Compute rest SED for each composite galaxy
-    prod_rest_seds_per_mstar = gal_weights * ssp_rest_seds
-    gal_mstar_obs = (10**gal_logsm_t_obs).reshape((n_gals, 1))
-    gal_rest_seds = jnp.sum(prod_rest_seds_per_mstar, axis=(1, 2)) * gal_mstar_obs
 
     # Compute apparent magnitude in each band for each composite galaxy neglecting dust
     ssp_obsflux_table_pergal = 10 ** (-0.4 * ssp_obsmag_table_pergal)
