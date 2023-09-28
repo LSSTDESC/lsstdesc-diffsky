@@ -55,8 +55,8 @@ def test_get_diffsky_sed_info():
     Om0, w0, wa, h = 0.3, -1, 0.0, 0.7
     cosmo_params = np.array((Om0, w0, wa, h))
 
-    n_wave_seds = 300
-    ssp_rest_seds = np.random.uniform(size=(n_met, n_age, n_wave_seds))
+    #n_wave_seds = 300
+    #ssp_rest_seds = np.random.uniform(size=(n_met, n_age, n_wave_seds))
 
     n_rest_filters, n_obs_filters = 2, 3
     n_trans_wave = 40
@@ -79,7 +79,7 @@ def test_get_diffsky_sed_info():
     _res = get_diffsky_sed_info(
         ran_key,
         ssp_z_table,
-        ssp_rest_seds,
+        #ssp_rest_seds,
         ssp_restmag_table,
         ssp_obsmag_table,
         ssp_lgmet,
@@ -113,7 +113,7 @@ def test_get_diffsky_sed_info():
         gal_frac_bulge_t_obs,
         gal_fbulge_params,
         gal_fknot,
-        gal_rest_seds,
+        #gal_rest_seds,
         gal_obsmags_nodust,
         gal_restmags_nodust,
         gal_obsmags_dust,
@@ -143,7 +143,7 @@ def test_get_diffsky_sed_info():
     assert np.all(gal_fknot > 0)
     assert np.all(gal_fknot < FKNOT_MAX)
 
-    assert gal_rest_seds.shape == (n_gals, n_wave_seds)
+    #assert gal_rest_seds.shape == (n_gals, n_wave_seds)
 
     assert gal_obsmags_nodust.shape == (n_gals, n_obs_filters)
     assert gal_restmags_nodust.shape == (n_gals, n_rest_filters)

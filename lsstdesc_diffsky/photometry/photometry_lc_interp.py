@@ -217,9 +217,6 @@ def get_diffsky_sed_info(
     gal_fknot : ndarray, shape (n_gals, )
         Fraction of the disk mass in bursty star-forming knots for each galaxy
 
-    gal_rest_seds : ndarray, shape (n_gals, n_wave_seds)
-        Restframe SEDs of each galaxy in units of Lsun/Hz
-
     gal_obsmags_nodust : ndarray, shape (n_gals, n_obs_filters)
         Apparent AB magnitude of each galaxy through each filter,
         neglecting dust attenuation
@@ -306,6 +303,9 @@ def get_diffsky_sed_info(
     gal_weights = _w / _norm.reshape((n_gals, 1, 1))  # (n_gals, n_met, n_age)
     gal_weights = gal_weights.reshape((n_gals, n_met, n_age, 1))
 
+    #Compute observed stellar mass for each composite galaxy
+    gal_mstar_obs = (10**gal_logsm_t_obs).reshape((n_gals, 1))
+
     # Compute apparent magnitude in each band for each composite galaxy neglecting dust
     ssp_obsflux_table_pergal = 10 ** (-0.4 * ssp_obsmag_table_pergal)
     prod_obs_nodust = gal_weights * ssp_obsflux_table_pergal
@@ -381,7 +381,6 @@ def get_diffsky_sed_info(
         gal_frac_bulge_t_obs,
         gal_fbulge_params,
         gal_fknot,
-        gal_rest_seds,
         gal_obsmags_nodust,
         gal_restmags_nodust,
         gal_obsmags_dust,
