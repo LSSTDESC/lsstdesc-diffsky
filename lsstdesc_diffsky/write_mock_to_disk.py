@@ -25,6 +25,7 @@ from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
 
 # SED generation
 from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
+from dsps.cosmology import flat_wcdm
 from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import DEFAULT_MZR_PDICT, mzr_model
 from galsampler import crossmatch
@@ -1703,4 +1704,5 @@ def write_output_mock_to_disk(
 
     check_time = time()
     hdfFile.close()
+    print(".....time to close file {:.4f} secs".format(time() - check_time))
     print(".....time to close file {:.4f} secs".format(time() - check_time))
