@@ -1433,7 +1433,7 @@ def generate_SEDs(
     )
 
     # save quantities to DC2
-    dc2 = save_sed_info(dc2, _res)
+    dc2 = save_sed_info(dc2, _res, SED_params)
 
     return dc2
 
@@ -1532,14 +1532,13 @@ def substitute_SFH_fit_failures(
     return dc2
 
 
-def save_sed_info(dc2, _res):
+def save_sed_info(dc2, _res, SED_params):
     gal_weights, gal_frac_trans_obs, gal_frac_trans_rest = _res[:3]
     gal_att_curve_params = _res[3]
     gal_frac_unobs, gal_fburst, gal_burstshape_params = _res[4:7]
     gal_frac_bulge_t_obs, gal_fbulge_params, gal_fknot = _res[7:10]
-    gal_rest_seds = _res[10]
-    gal_obsmags_nodust, gal_restmags_nodust = _res[11:13]
-    gal_obsmags_dust, gal_restmags_dust = _res[13:]
+    gal_obsmags_nodust, gal_restmags_nodust = _res[10:12]
+    gal_obsmags_dust, gal_restmags_dust = _res[12:]
 
     # add values to catalog
     dc2["dust_eb"] = gal_att_curve_params[:, 0]
@@ -1552,11 +1551,14 @@ def save_sed_info(dc2, _res):
     dc2["fbulge_tcrit"] = gal_fbulge_params[:, 0]
     dc2["fbulge_early"] = gal_fbulge_params[:, 1]
     dc2["fbulge_late"] = gal_fbulge_params[:, 2]
-    dcq["fknot"] = gal_fknot
+    dc2["fknot"] = gal_fknot
 
     for dustlabel, results in zip(
         ["", "_nodust"],
-        [[gal_restmags, gal_obsmags], [gal_restmags_nodust, gal_obsmags_nodust]],
+        [
+            [gal_restmags_dust, gal_obsmags_dust],
+            [gal_restmags_nodust, gal_obsmags_nodust],
+        ],
     ):
         for fr, vals in zip(["rest", "obs"], results):
             for k in SED_params["filter_keys"]:
