@@ -1308,7 +1308,7 @@ def build_output_snapshot_mock(
         dc2["bulge_stellar_mass"] = dc2[bulge_frac] * np.power(10, dc2["logsm_obs"])
         dc2["blackHoleMass"] = monte_carlo_black_hole_mass(dc2["bulge_stellar_mass"])
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
-            dc2["redshift"], dc2["blackHoleMass"], percentile_sfr
+            snapshot_redshift, dc2["blackHoleMass"], percentile_sfr
         )
         dc2["blackHoleAccretionRate"] = bh_acc_rate * 1e9
         dc2["blackHoleEddingtonRatio"] = eddington_ratio
