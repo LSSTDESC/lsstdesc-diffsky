@@ -1,9 +1,10 @@
 """
 """
-from jax import random as jran
 import numpy as np
-from ..mc_diffstar import mc_diffstarpop
+from jax import random as jran
+
 from ..diffstar_sfh import calculate_diffstar_sfh
+from ..mc_diffstar import mc_diffstarpop
 
 
 def test_mc_diffstar_has_correct_shape():
@@ -169,4 +170,5 @@ def test_mc_diffstar_works_when_tobs_equals_t0():
 
     mean_sfh_q = np.mean(sfh_q, axis=0)
     mean_sfh_ms = np.mean(sfh_ms, axis=0)
+    assert np.all(mean_sfh_q[-10:] <= mean_sfh_ms[-10:])
     assert np.all(mean_sfh_q[-10:] <= mean_sfh_ms[-10:])

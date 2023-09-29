@@ -1,8 +1,7 @@
 """
 """
-from diffstar import get_sfh_from_mah_kern, sfh_galpop
-from diffstar.defaults import FB
 from diffstar.fitting_helpers.stars import _integrate_sfr
+from diffstar.sfh import get_sfh_from_mah_kern
 from diffstar.utils import _jax_get_dt_array
 from jax import jit as jjit
 from jax import numpy as jnp
@@ -17,8 +16,10 @@ def calculate_diffstar_sfh(
     lgt0 = jnp.log10(t0)
     dtarr = _jax_get_dt_array(tarr)
     if method == "scan":
-        sfh_kern = get_sfh_from_mah_kern(tobs_loop="scan", galpop_loop="vmap")
-        sfh = sfh_kern(tarr, mah_params, ms_u_params, q_u_params, lgt0, FB)
+        sfh_kern = get_sfh_from_mah_kern(
+            tobs_loop="scan", galpop_loop="vmap", lgt0=lgt0
+        )
+        sfh = sfh_kern(tarr, mah_params, ms_u_params, q_u_params)
         sfh = jnp.where(sfh <= sfh_min, sfh_min, sfh)
         smh = integrate_sfr_pop(sfh, dtarr)
     elif method == "vmap":
@@ -27,7 +28,10 @@ def calculate_diffstar_sfh(
         mah_early = mah_params[:, 2]
         mah_late = mah_params[:, 3]
         mah_params = jnp.array((mah_logmp, mah_lgtc, mah_early, mah_late)).T
-        sfh = sfh_galpop(tarr, mah_params, ms_u_params, q_u_params, lgt0, FB)
+        sfh_kern = get_sfh_from_mah_kern(
+            tobs_loop="vmap", galpop_loop="vmap", lgt0=lgt0
+        )
+        sfh = sfh_kern(tarr, mah_params, ms_u_params, q_u_params)
         sfh = jnp.where(sfh <= sfh_min, sfh_min, sfh)
         smh = integrate_sfr_pop(sfh, dtarr)
 
