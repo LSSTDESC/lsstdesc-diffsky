@@ -1,6 +1,5 @@
 import numpy as np
 from diffstar.defaults import SFR_MIN
-from diffstar.sfh import get_sfh_from_mah_kern
 from dsps.utils import _jax_get_dt_array
 from jax import numpy as jnp
 
@@ -48,46 +47,6 @@ def get_log_ssfr_array(t_bpl, mstar, sfr):
             print(s, np.count_nonzero(~nmask))
 
     return log_ssfr
-
-
-# Compute SFHs from params
-def get_sfh_from_params(mah_params, ms_params, q_params, LGT0, t_table):
-    """Calculate star-formation history from diffmah and diffstar parameters
-    Parameters
-    ----------
-    mah_params : array of shape (4, n_gals)
-
-    ms_params : array of shape (5, n_gals)
-
-    q_params : array of shape (4, n_gals)
-
-    t_table : array of shape (n_t_table, )
-
-    lgt0 : float
-
-    Returns
-    -------
-    sfh_table : array of shape (n_gals, n_t_table)
-
-    """
-
-    print(
-        ".......computing SFHs from diffmah/star params for {} times".format(
-            len(t_table)
-        )
-    )
-    print(
-        ".......using parameters with shapes {}, {}, {}".format(
-            mah_params.shape, ms_params.shape, q_params.shape
-        )
-    )
-    sfh_from_mah_kern = get_sfh_from_mah_kern(
-        lgt0=LGT0, tobs_loop="scan", galpop_loop="vmap"
-    )
-    sfh_table = sfh_from_mah_kern(t_table, mah_params, ms_params, q_params)
-    sfh_table = jnp.where(sfh_table < SFR_MIN, SFR_MIN, sfh_table)
-
-    return sfh_table
 
 
 def get_logsm_sfr_obs(sfh_table, t_obs, t_table):

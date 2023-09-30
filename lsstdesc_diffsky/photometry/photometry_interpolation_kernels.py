@@ -1,11 +1,6 @@
 """
 """
-from diffmah.individual_halo_assembly import (
-    DEFAULT_MAH_PARAMS as DEFAULT_MAH_PARAM_DICT,
-)
-from diffmah.individual_halo_assembly import _calc_halo_history
 from diffstar.defaults import SFR_MIN
-from diffstar.fitting_helpers.stars import _sfr_history_from_mah
 from dsps.dust.att_curves import _frac_transmission_from_k_lambda, sbl18_k_lambda
 from dsps.photometry.photometry_kernels import calc_obs_mag, calc_rest_mag
 from jax import jit as jjit
@@ -13,24 +8,6 @@ from jax import numpy as jnp
 from jax import vmap
 
 _interp_vmap = jjit(vmap(jnp.interp, in_axes=[0, None, 0]))
-
-
-@jjit
-def _calc_galhalo_history(lgt_gyr, dt_gyr, lgt0, mah_params, u_ms_params, u_q_params):
-    logmp, logtc, early_index, late_index = mah_params
-    k = DEFAULT_MAH_PARAM_DICT["mah_k"]
-    all_mah_params = (logmp, logtc, k, early_index, late_index)
-
-    dmhdt, log_mah = _calc_halo_history(lgt_gyr, lgt0, *all_mah_params)
-
-    sfh = _sfr_history_from_mah(
-        lgt_gyr, dt_gyr, dmhdt, log_mah, u_ms_params, u_q_params
-    )
-    return dmhdt, log_mah, sfh
-
-
-_g = [None, None, None, 0, 0, 0]
-_calc_galhalo_history_vmap = jjit(vmap(_calc_galhalo_history, in_axes=_g))
 
 
 @jjit

@@ -22,12 +22,14 @@ from diffsky.experimental.dspspop.boris_dust import (
 from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
 from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
 from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
+from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
+from diffstar.defaults import FB
+from diffstar.sfh import sfh_galpop
 
 # SED generation
-from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from dsps.cosmology import flat_wcdm
 from dsps.data_loaders import load_ssp_templates
-from dsps.metallicity.mzr import DEFAULT_MZR_PDICT, mzr_model
+from dsps.metallicity.mzr import DEFAULT_MZR_PDICT
 from galsampler import crossmatch
 from galsampler.galmatch import galsample
 from halotools.empirical_models import halo_mass_to_halo_radius
@@ -47,20 +49,15 @@ from .halo_information.get_fof_halo_shapes import get_halo_shapes, get_matched_s
 
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
-from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
 from .pecZ import pecZ
-from .photometry.dustpop import mc_generate_dust_params
-from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
 from .photometry.get_SFH_from_params import (
     get_diff_params,
     get_log_safe_ssfr,
     get_logsm_sfr_obs,
-    get_sfh_from_params,
 )
 from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
 from .photometry.photometry_lc_interp import get_diffsky_sed_info
 from .photometry.precompute_ssp_tables import (
-    precompute_dust_attenuation,
     precompute_ssp_obsmags_on_z_table,
     precompute_ssp_restmags,
 )
@@ -697,7 +694,7 @@ def get_volume_factor(redshift, previous_redshift, Vtotal, cosmology):
 def get_sed_model_params(param_dir, param_file):
     param_filename = os.path.join(param_dir, param_file)
     with open(param_filename) as fh:
-        params = [l.split() for l in fh.readlines()]
+        params = [x.split() for x in fh.readlines()]
         print("\nReading model parameters from file {}".format(param_filename))
     keys = tuple([p[0] for p in params])
     values = tuple([float(p[1]) for p in params])
@@ -1366,7 +1363,7 @@ def generate_SEDs(
         ms_keys=ms_keys,
         q_keys=q_keys,
     )
-    assert check == True, "SED_params does not have required contents"
+    assert check, "SED_params does not have required contents"
 
     dc2 = substitute_SFH_fit_failures(
         dc2,
@@ -1392,8 +1389,13 @@ def generate_SEDs(
     t_obs = cosmology.age(dc2["redshift"]).value
 
     # get SFH table and observed stellar mass
-    sfh_table = get_sfh_from_params(
-        mah_params, u_ms_params, u_q_params, SED_params["LGT0"], SED_params["t_table"]
+    sfh_table = sfh_galpop(
+        SED_params["t_table"],
+        mah_params,
+        u_ms_params,
+        u_q_params,
+        lgt0=SED_params["LGT0"],
+        fb=FB,
     )
     logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
     dc2["logsm_obs"] = logsm_obs
@@ -1404,8 +1406,6 @@ def generate_SEDs(
     cosmo_params = flat_wcdm.CosmoParams(
         cosmology.Om0, w0, wa, cosmology.H0.value / 100
     )
-
-    lgfburst_pop_u_params = SED_params["lgfburst_pop_u_params"]
 
     # compute SEDs
     ran_key = jran.PRNGKey(seed)
