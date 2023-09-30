@@ -10,7 +10,7 @@ version:
 
 file_dirs:  #relative to input_master_dirname, which is a supplied argument to production script
     healpix_cutout_dirname: 'healpix_cutouts'
-    um_sfr_catalogs_dirname: 'smdpl_value_added_catalogs_diffstar_v0p2'
+    um_sfr_catalogs_dirname: 'UM_catalogs/smdpl_value_added_catalogs_diffstar_v0p2'
     output_mock_dirname: 'diffsky_v{}.{}.{}'
     shape_dirname: 'OR_haloshapes'
     pkldirname: 'production'
