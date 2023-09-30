@@ -5,6 +5,9 @@ from collections import OrderedDict, namedtuple
 import numpy as np
 from diffmah.monte_carlo_diffmah_hiz import mc_diffmah_params_hiz
 from diffstar.defaults import DEFAULT_MS_PDICT, DEFAULT_U_Q_PARAMS, LGT0
+from diffstar.fitting_helpers.param_clippers import ms_param_clipper, q_param_clipper
+from diffstar.kernels.main_sequence_kernels import _get_bounded_sfr_params_vmap
+from diffstar.kernels.quenching_kernels import _get_bounded_q_params_vmap
 from diffstar.sfh import _get_unbounded_sfr_params
 from jax import random as jran
 
@@ -13,7 +16,7 @@ from .pdf_quenched import get_smah_means_and_covs_quench
 
 _SFHParams = namedtuple(
     "SFHParams",
-    ["mah_params", "msk_is_quenched", "ms_u_params", "q_u_params"],
+    ["mah_params", "msk_is_quenched", "ms_params", "q_params"],
 )
 
 
@@ -72,11 +75,11 @@ def mc_diffstarpop(
     msk_is_quenched : ndarray of shape (n_halos, )
         Boolean array indicating whether the galaxy experienced a quenching event
 
-    ms_u_params : ndarray of shape (n_halos, 5)
-        Unbounded main sequence parameters
+    ms_params : ndarray of shape (n_halos, 5)
+        Diffstar main sequence parameters
 
-    q_u_params : ndarray of shape (n_halos, 4)
-        Unbounded quenching parameters
+    q_params : ndarray of shape (n_halos, 4)
+        Diffstar quenching parameters
 
     """
     mah_key, q_key, ms_key, frac_q_key = jran.split(ran_key, 4)
@@ -147,5 +150,12 @@ def mc_diffstarpop(
         ms_u_params[~msk_is_quenched] = sfr_params_mainseq
         q_u_params[~msk_is_quenched] = q_params_mainseq
 
-    ret = mah_params, msk_is_quenched, ms_u_params, q_u_params
+    ms_params = _get_bounded_sfr_params_vmap(ms_u_params)
+    q_params = _get_bounded_q_params_vmap(q_u_params)
+
+    ms_params = ms_param_clipper(ms_params)
+    q_params = q_param_clipper(q_params)
+
+    ret = mah_params, msk_is_quenched, ms_params, q_params
+
     return _SFHParams(*ret)

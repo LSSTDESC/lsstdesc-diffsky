@@ -1,9 +1,10 @@
 """
 """
 import numpy as np
+from diffstar import sfh_galpop
+from diffstar.defaults import FB, LGT0
 from jax import random as jran
 
-from ..diffstar_sfh import calculate_diffstar_sfh
 from ..mc_diffstar import mc_diffstarpop
 
 
@@ -47,57 +48,23 @@ def test_mc_diffstar_has_correct_shape2():
         assert q_u_params.shape == (n_halos, 4)
 
 
-def test_mc_diffstar_has_reasonable_sfhs_scan_method():
+def test_mc_diffstar_has_reasonable_sfhs():
     """Test a large number of halos so that there are always both quenched and
-    star-forming galaxies. SFH calculation method is based on lax.scan.
+    star-forming galaxies.
     """
     ran_key = jran.PRNGKey(0)
     n_halos = 1000
     t_obs = 10.0
     logmh = np.zeros(n_halos) + 12
     galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-    mah_params, msk_is_quenched, ms_u_params, q_u_params = galpop
+    mah_params, msk_is_quenched, ms_params, q_params = galpop
 
     n_t = 50
     tarr = np.linspace(1, 13.7, n_t)
-    t0 = 13.8
-    smh, sfh = calculate_diffstar_sfh(
-        tarr, t0, mah_params, ms_u_params, q_u_params, method="scan"
-    )
+    sfh = sfh_galpop(tarr, mah_params, ms_params, q_params, lgt0=LGT0, fb=FB)
     assert sfh.shape == (n_halos, n_t)
-    assert smh.shape == (n_halos, n_t)
+    assert np.all(np.isfinite(sfh))
     assert np.all(sfh > 0)
-    assert np.all(smh > 0)
-
-    sfh_q = sfh[msk_is_quenched]
-    sfh_ms = sfh[~msk_is_quenched]
-
-    mean_sfh_q = np.mean(sfh_q, axis=0)
-    mean_sfh_ms = np.mean(sfh_ms, axis=0)
-    assert np.all(mean_sfh_q[-10:] <= mean_sfh_ms[-10:])
-
-
-def test_mc_diffstar_has_reasonable_sfhs_vmap_method():
-    """Test a large number of halos so that there are always both quenched and
-    star-forming galaxies. SFH calculation method is based on jax.vmap
-    """
-    ran_key = jran.PRNGKey(0)
-    n_halos = 1000
-    t_obs = 10.0
-    logmh = np.zeros(n_halos) + 12
-    galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-    mah_params, msk_is_quenched, ms_u_params, q_u_params = galpop
-
-    n_t = 50
-    tarr = np.linspace(1, 13.7, n_t)
-    t0 = 13.8
-    smh, sfh = calculate_diffstar_sfh(
-        tarr, t0, mah_params, ms_u_params, q_u_params, method="vmap"
-    )
-    assert sfh.shape == (n_halos, n_t)
-    assert smh.shape == (n_halos, n_t)
-    assert np.all(sfh > 0)
-    assert np.all(smh > 0)
 
     sfh_q = sfh[msk_is_quenched]
     sfh_ms = sfh[~msk_is_quenched]
@@ -116,26 +83,22 @@ def test_mc_diffstar_is_consistent_between_logmh_and_mah_params_inputs():
     t_obs = 10.0
     logmh = np.zeros(n_halos) + 12
     galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-    mah_params, msk_is_quenched, ms_u_params, q_u_params = galpop
+    mah_params, msk_is_quenched, ms_params, q_params = galpop
 
     galpop = mc_diffstarpop(ran_key, t_obs, mah_params=mah_params)
     mah_params2, msk_is_quenched2, ms_u_params2, q_u_params2 = galpop
 
     assert np.allclose(mah_params, mah_params2, rtol=1e-4)
     assert np.allclose(msk_is_quenched, msk_is_quenched, rtol=1e-4)
-    assert np.allclose(ms_u_params, ms_u_params, rtol=1e-4)
-    assert np.allclose(q_u_params, q_u_params, rtol=1e-4)
+    assert np.allclose(ms_params, ms_params, rtol=1e-4)
+    assert np.allclose(q_params, q_params, rtol=1e-4)
 
     n_t = 50
     tarr = np.linspace(1, 13.7, n_t)
-    t0 = 13.8
-    smh, sfh = calculate_diffstar_sfh(
-        tarr, t0, mah_params, ms_u_params, q_u_params, method="scan"
-    )
+    sfh = sfh_galpop(tarr, mah_params, ms_params, q_params, lgt0=LGT0, fb=FB)
     assert sfh.shape == (n_halos, n_t)
-    assert smh.shape == (n_halos, n_t)
+    assert np.all(np.isfinite(sfh))
     assert np.all(sfh > 0)
-    assert np.all(smh > 0)
 
     sfh_q = sfh[msk_is_quenched]
     sfh_ms = sfh[~msk_is_quenched]
@@ -153,17 +116,14 @@ def test_mc_diffstar_works_when_tobs_equals_t0():
     t_obs = t0
     logmh = np.zeros(n_halos) + 12
     galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-    mah_params, msk_is_quenched, ms_u_params, q_u_params = galpop
+    mah_params, msk_is_quenched, ms_params, q_params = galpop
 
     n_t = 50
     tarr = np.linspace(1, t0, n_t)
-    smh, sfh = calculate_diffstar_sfh(
-        tarr, t0, mah_params, ms_u_params, q_u_params, method="scan"
-    )
+    sfh = sfh_galpop(tarr, mah_params, ms_params, q_params, lgt0=LGT0, fb=FB)
     assert sfh.shape == (n_halos, n_t)
-    assert smh.shape == (n_halos, n_t)
+    assert np.all(np.isfinite(sfh))
     assert np.all(sfh > 0)
-    assert np.all(smh > 0)
 
     sfh_q = sfh[msk_is_quenched]
     sfh_ms = sfh[~msk_is_quenched]
