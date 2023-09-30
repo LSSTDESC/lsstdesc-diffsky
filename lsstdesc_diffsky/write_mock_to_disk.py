@@ -1385,15 +1385,15 @@ def generate_SEDs(
         ms_keys=SED_params[ms_keys],
         q_keys=SED_params[q_keys],
     )
-    mah_params, u_ms_params, u_q_params = _res
+    mah_params, ms_params, q_params = _res
     t_obs = cosmology.age(dc2["redshift"]).value
 
     # get SFH table and observed stellar mass
     sfh_table = sfh_galpop(
         SED_params["t_table"],
         mah_params,
-        u_ms_params,
-        u_q_params,
+        ms_params,
+        q_params,
         lgt0=SED_params["LGT0"],
         fb=FB,
     )
@@ -1514,13 +1514,13 @@ def substitute_SFH_fit_failures(
         ran_key = jran.PRNGKey(seed)
         t_obs = cosmology.age(snapshot_redshift).value
         mc_galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-        mc_mah_params, mc_msk_is_quenched, mc_ms_u_params, mc_q_u_params = mc_galpop
+        mc_mah_params, mc_msk_is_quenched, mc_ms_params, mc_q_params = mc_galpop
         # copy requested mc_params to dc2 table
         key_labels = [mah_keys] if use_diffmah_pop else [mah_keys, ms_keys, q_keys]
         mc_parlist = (
             [mc_mah_params]
             if use_diffmah_pop
-            else [mc_mah_params, mc_ms_u_params, mc_q_u_params]
+            else [mc_mah_params, mc_ms_params, mc_q_params]
         )
         for key_label, mc_params in zip(key_labels, mc_parlist):
             for i, key in enumerate(

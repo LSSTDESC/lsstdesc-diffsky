@@ -3,15 +3,15 @@ from diffstar.defaults import SFR_MIN
 from dsps.utils import _jax_get_dt_array
 from jax import numpy as jnp
 
-from ..constants import MAH_PNAMES, MS_U_PNAMES, Q_U_PNAMES
+from ..constants import MAH_PNAMES, MS_PNAMES, Q_PNAMES
 from . import photometry_interpolation_kernels as pik
 
 
 def get_diff_params(
     data,
     mah_keys=MAH_PNAMES,
-    ms_keys=MS_U_PNAMES,
-    q_keys=Q_U_PNAMES,
+    ms_keys=MS_PNAMES,
+    q_keys=Q_PNAMES,
 ):
     print(".....Retrieving mah, ms and q params")
 

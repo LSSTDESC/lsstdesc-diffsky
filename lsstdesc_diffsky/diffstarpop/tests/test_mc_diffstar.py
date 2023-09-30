@@ -2,7 +2,7 @@
 """
 import numpy as np
 from diffstar import sfh_galpop
-from diffstar.defaults import FB, LGT0
+from diffstar.defaults import FB, LGT0, MS_PARAM_BOUNDS_PDICT, Q_PARAM_BOUNDS_PDICT
 from jax import random as jran
 
 from ..mc_diffstar import mc_diffstarpop
@@ -17,11 +17,11 @@ def test_mc_diffstar_has_correct_shape():
     t_obs = 10.0
     logmh = np.linspace(10, 15, n_halos)
     galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-    mah_params, msk_is_quenched, ms_u_params, q_u_params = galpop
+    mah_params, msk_is_quenched, ms_params, q_params = galpop
     assert mah_params.shape == (n_halos, 4)
     assert msk_is_quenched.shape == (n_halos,)
-    assert ms_u_params.shape == (n_halos, 5)
-    assert q_u_params.shape == (n_halos, 4)
+    assert ms_params.shape == (n_halos, 5)
+    assert q_params.shape == (n_halos, 4)
 
 
 def test_mc_diffstar_has_correct_shape2():
@@ -41,11 +41,11 @@ def test_mc_diffstar_has_correct_shape2():
         except AssertionError:
             msg = "t_obs = {0}\nlogmh = {1}"
             raise ValueError(msg.format(t_obs, logmh))
-        mah_params, msk_is_quenched, ms_u_params, q_u_params = galpop
+        mah_params, msk_is_quenched, ms_params, q_params = galpop
         assert mah_params.shape == (n_halos, 4)
         assert msk_is_quenched.shape == (n_halos,)
-        assert ms_u_params.shape == (n_halos, 5)
-        assert q_u_params.shape == (n_halos, 4)
+        assert ms_params.shape == (n_halos, 5)
+        assert q_params.shape == (n_halos, 4)
 
 
 def test_mc_diffstar_has_reasonable_sfhs():
@@ -86,7 +86,7 @@ def test_mc_diffstar_is_consistent_between_logmh_and_mah_params_inputs():
     mah_params, msk_is_quenched, ms_params, q_params = galpop
 
     galpop = mc_diffstarpop(ran_key, t_obs, mah_params=mah_params)
-    mah_params2, msk_is_quenched2, ms_u_params2, q_u_params2 = galpop
+    mah_params2, msk_is_quenched2, ms_params2, q_params2 = galpop
 
     assert np.allclose(mah_params, mah_params2, rtol=1e-4)
     assert np.allclose(msk_is_quenched, msk_is_quenched, rtol=1e-4)
@@ -132,3 +132,27 @@ def test_mc_diffstar_works_when_tobs_equals_t0():
     mean_sfh_ms = np.mean(sfh_ms, axis=0)
     assert np.all(mean_sfh_q[-10:] <= mean_sfh_ms[-10:])
     assert np.all(mean_sfh_q[-10:] <= mean_sfh_ms[-10:])
+
+
+def test_mc_diffstar_respects_param_bounds():
+    ran_key = jran.PRNGKey(10)
+    n_halos = 1000
+    t0 = 13.8
+    t_obs = t0
+    logmh = np.zeros(n_halos) + 12
+    galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
+    mah_params, msk_is_quenched, ms_params, q_params = galpop
+
+    pat = "diffstar parameter `{}` does not respect bounds set by MS_PARAM_BOUNDS_PDICT"
+    for ip, key in enumerate(MS_PARAM_BOUNDS_PDICT.keys()):
+        p = ms_params[:, ip]
+        lo, hi = MS_PARAM_BOUNDS_PDICT[key]
+        assert np.all(lo < p), pat.format(key)
+        assert np.all(p < hi), pat.format(key)
+
+    pat = "diffstar parameter `{}` does not respect bounds set by Q_PARAM_BOUNDS_PDICT"
+    for ip, key in enumerate(Q_PARAM_BOUNDS_PDICT.keys()):
+        p = q_params[:, ip]
+        lo, hi = Q_PARAM_BOUNDS_PDICT[key]
+        assert np.all(lo < p), pat.format(key)
+        assert np.all(p < hi), pat.format(key)
