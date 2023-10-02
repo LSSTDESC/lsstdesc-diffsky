@@ -32,7 +32,7 @@ nodes=33
 else
 if [[ "${hpx_group}" =~ "test" ]]
 then
-nodes=4
+nodes=9
 else
 if [ "$hpx_group" -lt "$tot_pix_grp" ]
 then
