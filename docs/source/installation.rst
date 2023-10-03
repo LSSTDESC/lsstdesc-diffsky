@@ -1,48 +1,26 @@
 Installation instructions
 =========================
 
-Dependencies
-------------
+For a typical development environment with conda-forge::
 
-``lsstdesc-diffsky`` requires `numpy <https://numpy.org/>`__ 
-and `jax <https://jax.readthedocs.io/en/latest/>`__, 
+    $ conda create -c conda-forge -n diffsky_env python=3.9 numpy jax pytest ipython jupyter matplotlib scipy h5py diffmah diffstar dsps diffsky lsstdesc-diffsky
+
+Managing dependencies
+---------------------
+
+The above command will create a new environment with all the latest releases
+of the diffsky dependency chain. This includes `numpy <https://numpy.org/>`__ and 
+`jax <https://jax.readthedocs.io/en/latest/>`__, 
 and also a collection of libraries implementing 
 the differentiable modeling ingredients: 
 `Diffmah <https://github.com/ArgonneCPAC/diffmah>`_, 
 `Diffstar <https://github.com/ArgonneCPAC/diffstar>`_, 
-`DSPS <https://github.com/ArgonneCPAC/dsps>`_,
+`DSPS <https://github.com/ArgonneCPAC/dsps>`_, 
 and `Diffsky <https://github.com/ArgonneCPAC/diffsky>`_.
 
-Installation
-------------
+Depending on your analysis, you may need to install a specific branch 
+of lsstdesc-diffsky and/one of its dependencies. You can do this by cloning 
+the GitHub repo of the code for which you need a custom version, 
+checking out the appropriate version, and running::
 
-Installing dependencies
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Beginning from an environment that includes numpy and a recent version of jax, 
-you can install the additional dependencies available on conda-forge as follows:
-
-       conda install -c conda-forge diffmah diffstar dsps
-
-Note that for ``diffsky`` and depending on the mock you are making,
-for one or more of the above dependencies, 
-you may need to install the main branch of the code.
-You can do this by cloning the GitHub repository and running the standard::
-
-       python setup.py install
-
-command or its usual variants, such as::
-
-       python setup.py install --prefix=/PATH/TO/INSTALL/DIRECTORY
-
-or::
-
-       pip install .
-
-Installing lsstdesc-diffsky
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Once you have the dependencies installed, 
-``lsstdesc-diffsky`` can be installed as usual::
-
-       python setup.py install
+    $ pip install . --no-deps
