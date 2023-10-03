@@ -1,3 +1,3 @@
-0.1.0 (in progress)
+0.1.0 (2023-10-03)
 -------------------
-- First release
+- First release. Compatible with diffsky v0.1.0.
