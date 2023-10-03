@@ -9,3 +9,6 @@ healpy
 halotools
 lsstdesc-galsampler
 psutil
+diffmah
+diffstar
+dsps
