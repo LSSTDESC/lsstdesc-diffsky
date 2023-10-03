@@ -1,21 +1,16 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
+"""
+"""
 from pkg_resources import DistributionNotFound, get_distribution
 
 try:
-    __version__ = get_distribution("emcee").version
+    __version__ = get_distribution("lsstdesc_diffsky").version
 except DistributionNotFound:
     __version__ = "unknown version"
 
-
 project = "lsstdesc_diffsky"
-copyright = "2023, Andrew Hearin"
+copyright = "2022, Andrew Hearin"
 author = "Andrew Hearin, Eve Kovacs"
 version = __version__
 release = __version__

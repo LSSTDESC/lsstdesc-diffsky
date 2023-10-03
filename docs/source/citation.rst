@@ -2,7 +2,8 @@ Citation Information
 ====================
 
 If you use this package, please cite each of the papers introducing the core modeling 
-ingredients underlying diffsky-generated mocks, particularly `the Diffstar paper <https://arxiv.org/abs/2205.04273>`_, 
+ingredients underlying diffsky-generated mocks, 
+particularly `the Diffstar paper <https://arxiv.org/abs/2205.04273>`_, 
 and `the DSPS paper <https://arxiv.org/abs/2112.06830>`_.
 
 Bibtex entries for each of these references are copied below for convenience.
