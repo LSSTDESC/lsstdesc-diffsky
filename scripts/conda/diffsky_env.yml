@@ -1,4 +1,4 @@
-name: diffsky
+name: diffsky_v2
 dependencies:
     - python=3.9
     - numpy 
@@ -19,5 +19,3 @@ dependencies:
     - healpy
     - halotools
     - lsstdesc-galsampler
-    - diffmah
-    - diffstar
