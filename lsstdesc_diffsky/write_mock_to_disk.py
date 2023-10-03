@@ -16,8 +16,20 @@ import psutil
 from astropy.cosmology import WMAP7, FlatLambdaCDM
 from astropy.table import Table, vstack
 from astropy.utils.misc import NumpyRNGContext
+from diffsky.experimental.dspspop.boris_dust import (
+    DEFAULT_U_PARAMS as DEFAULT_BORIS_U_PARAMS,
+)
+from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
+from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
+from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
+from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
+from diffstar.defaults import FB
+from diffstar.sfh import sfh_galpop
+
+# SED generation
+from dsps.cosmology import flat_wcdm
 from dsps.data_loaders import load_ssp_templates
-from dsps.metallicity.mzr import DEFAULT_MZR_PDICT, mzr_model
+from dsps.metallicity.mzr import DEFAULT_MZR_PDICT
 from galsampler import crossmatch
 from galsampler.galmatch import galsample
 from halotools.empirical_models import halo_mass_to_halo_radius
@@ -37,21 +49,15 @@ from .halo_information.get_fof_halo_shapes import get_halo_shapes, get_matched_s
 
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
-from .io_utils.dustpop_pscan_helpers import get_alt_dustpop_params
-
-# SED generation
 from .pecZ import pecZ
-from .photometry.dustpop import mc_generate_dust_params
-from .photometry.get_SEDs_from_SFH import get_mag_sed_pars
 from .photometry.get_SFH_from_params import (
     get_diff_params,
     get_log_safe_ssfr,
     get_logsm_sfr_obs,
-    get_sfh_from_params,
 )
 from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
+from .photometry.photometry_lc_interp import get_diffsky_sed_info
 from .photometry.precompute_ssp_tables import (
-    precompute_dust_attenuation,
     precompute_ssp_obsmags_on_z_table,
     precompute_ssp_restmags,
 )
@@ -180,18 +186,8 @@ def write_umachine_healpix_mock_to_disk(
         randomize_redshift_synthetic: boolean
         Flag to control if noise is added to redshifts in UM snapshot
 
-    SED_pars: dict containing values for SED choices
-        filters: list
-        frames: list
-        lgmet_scatter: tuple of floats
-        dz : float
-        Spacing in redshift for precomputing ssp tables
-        N_t_table: integer
-        Size of time array for computing star-formation histories
-        from diffstar parameters
-        t_table_0: float
-        Star time for computing star-formation histories
-        use_diffmah_pop: boolean
+    SED_pars: dict containing values for SED choices read in from configuration file
+        values supplied by calling script
 
     shear_params: dict containing values for shear choices
         add_dummy_shears: boolean
@@ -303,20 +299,6 @@ def write_umachine_healpix_mock_to_disk(
         for k, v in SED_pars.items():
             SED_params[k] = v
 
-    # check for alt_dustpop_params
-    if (
-        "use_alt_dustpop_params" in SED_params.keys()
-        and SED_params["use_alt_dustpop_params"]
-    ):
-        SED_params = get_alt_dustpop_params(SED_params)
-        print(
-            "\nUsing alt dustpop parameters:\n{}".format(
-                SED_params["alt_dustpop_params"]
-            )
-        )
-    else:
-        print("\nUsing default dustpop parameters")
-
     T0 = cosmology.age(SED_params["z0"]).value
     SED_params["LGT0"] = np.log10(T0)
     print(
@@ -333,7 +315,12 @@ def write_umachine_healpix_mock_to_disk(
     ssp_flux = ssp_data.ssp_flux
     filter_data = assemble_filter_data(dsps_data_DRN, SED_params["filters"])
     filter_waves, filter_trans, filter_keys = get_filter_wave_trans(filter_data)
-    print("\nUsing filters and bands: {}".format(", ".join(filter_keys)))
+    print(
+        "\nUsing filters and bands: {} ({} bands)".format(
+            ", ".join(filter_keys), len(filter_keys)
+        )
+    )
+
     # generate precomputed ssp tables
     min_snap = 0 if len(healpix_data[snapshots[0]]["a"]) > 0 else 1
     zmin = 1.0 / np.max(healpix_data[snapshots[min_snap]]["a"][()]) - 1.0
@@ -343,7 +330,7 @@ def write_umachine_healpix_mock_to_disk(
     z_max = zmax + dz
     n_z_table = int(np.ceil((z_max - z_min) / dz))
     ssp_z_table = np.linspace(z_min, z_max, n_z_table)
-    msg = "\nComputing ssp tables for {} z values: {:.2f} < z < {:.2f} (dz={:.2f})"
+    msg = "\nComputing ssp tables for {} z values: {:.2f} < z < {:.2f} (dz={:.2f})\n"
     print(msg.format(n_z_table, z_min, z_max, dz))
     ssp_restmag_table = precompute_ssp_restmags(
         ssp_wave, ssp_flux, filter_waves, filter_trans
@@ -369,7 +356,7 @@ def write_umachine_healpix_mock_to_disk(
     SED_params["filter_keys"] = filter_keys
     SED_params["filter_waves"] = filter_waves
     SED_params["filter_trans"] = filter_trans
-    SED_params["met_params"] = list(DEFAULT_MZR_PDICT.values())[:-1]
+
     for k in SED_params["xkeys"]:
         dims = (
             SED_params[k].shape
@@ -378,6 +365,48 @@ def write_umachine_healpix_mock_to_disk(
         )
         print("...Saving {} to SED_params with shape: {}".format(k, dims))
 
+    default_list = [k for k in SED_params.values() if type(k) is str and "default" in k]
+    for k in default_list:  # placeholder for better code
+        SED_params["lgfburst_pop_u_params"] = DEFAULT_LGFBURST_U_PARAMS
+        SED_params["burstshapepop_u_params"] = DEFAULT_BURSTSHAPE_U_PARAMS
+        SED_params["lgav_dust_u_params"] = DEFAULT_LGAV_U_PARAMS
+        SED_params["dust_delta_u_params"] = DEFAULT_DUST_DELTA_U_PARAMS
+        SED_params["fracuno_pop_u_params"] = DEFAULT_BORIS_U_PARAMS
+        SED_params["lgmet_params"] = list(DEFAULT_MZR_PDICT.values())
+
+    roman_rubin_list = [
+        k.split("roman_rubin_2023/")[1]
+        for k in SED_params.values()
+        if type(k) is str and "roman_rubin" in k
+    ]
+
+    for k in roman_rubin_list:
+        if "lgfburst_u_params.txt" in k:
+            SED_params["lgfburst_pop_u_params"] = get_sed_model_params(
+                SED_params["param_data_dirname"], SED_params["lgfburst_fname"]
+            )
+        if "burstshape_u_params.txt" in k:
+            SED_params["burstshapepop_u_params"] = get_sed_model_params(
+                SED_params["param_data_dirname"], SED_params["burstshape_fname"]
+            )
+        if "lgav_dust_u_params.txt" in k:
+            SED_params["lgav_dust_u_params"] = get_sed_model_params(
+                SED_params["param_data_dirname"], SED_params["lgav_dust_fname"]
+            )
+        if "delta_dust_u_params.txt" in k:
+            SED_params["delta_dust_u_params"] = get_sed_model_params(
+                SED_params["param_data_dirname"], SED_params["delta_dust_fname"]
+            )
+        if "funo_dust_u_params.txt" in k:
+            SED_params["fracuno_pop_u_params"] = get_sed_model_params(
+                SED_params["param_data_dirname"], SED_params["fracuno_pop_fname"]
+            )
+        if "lgmet_params.txt" in k:
+            SED_params["lgmet_params"] = get_sed_model_params(
+                SED_params["param_data_dirname"], SED_params["lgmet_fname"]
+            )
+
+    print()
     model_keys = [k for k in SED_params.keys() if "_model" in k]
     for key in model_keys:
         # parse column name to extract filter, frame and band
@@ -662,6 +691,20 @@ def get_volume_factor(redshift, previous_redshift, Vtotal, cosmology):
     return Vshell / Vtotal
 
 
+def get_sed_model_params(param_dir, param_file):
+    param_filename = os.path.join(param_dir, param_file)
+    with open(param_filename) as fh:
+        params = [x.split() for x in fh.readlines()]
+        print("\nReading model parameters from file {}".format(param_filename))
+    keys = tuple([p[0] for p in params])
+    values = tuple([float(p[1]) for p in params])
+    param_dict = dict(zip(keys, values))
+    for k, v in param_dict.items():
+        print("....{} = {:.4f}".format(k, v))
+
+    return param_dict
+
+
 def get_astropy_table(table_data, halo_unique_id=0, check=False, cosmology=None):
     """ """
     t = Table()
@@ -830,6 +873,7 @@ def build_output_snapshot_mock(
     halo_unique_id=0,
     redshift_method="galaxy",
     source_galaxy_tag="um_source_galaxy_",
+    bulge_frac="bulge_frac",
 ):
     """
     Collect the GalSampled snapshot mock into an astropy table
@@ -1232,9 +1276,9 @@ def build_output_snapshot_mock(
             np.sin(2.0 * pos_angle) * ellip_disk, dtype="f4"
         )
         dc2["positionAngle"] = np.array(pos_angle * 180.0 / np.pi, dtype="f4")
-        if "bulge_to_total_ratio" in dc2.colnames:
-            tot_ellip = (1.0 - dc2["bulge_to_total_ratio"]) * ellip_disk + dc2[
-                "bulge_to_total_ratio"
+        if bulge_frac in dc2.colnames:
+            tot_ellip = (1.0 - dc2[bulge_frac]) * ellip_disk + dc2[
+                bulge_frac
             ] * ellip_spheroid
             dc2["totalEllipticity"] = np.array(tot_ellip, dtype="f4")
             dc2["totalAxisRatio"] = np.array(
@@ -1255,14 +1299,13 @@ def build_output_snapshot_mock(
             # dc2['totalSersicIndex'] = srsc_indx_tot
 
     if SED_params["black_hole_model"]:
-        bulge_to_total_i = np.array([0.5] * Ngals)  # need a model here
-        percentile_sfr = dc2["obs_sfr"]  # TBD check this or use sfr from SED
-        bulge_mass = (
-            dc2["obs_sm"] * bulge_to_total_i
-        )  # check this or use logsm_obs from SED
-        dc2["blackHoleMass"] = monte_carlo_black_hole_mass(bulge_mass)
+        # TBD update this
+        # percentile_sfr = dc2[source_galaxy_tag + "percentile_sfr"]
+        percentile_sfr = np.random.uniform(size=Ngals)
+        dc2["bulge_stellar_mass"] = dc2[bulge_frac] * np.power(10, dc2["logsm_obs"])
+        dc2["blackHoleMass"] = monte_carlo_black_hole_mass(dc2["bulge_stellar_mass"])
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
-            dc2["redshift"], dc2["blackHoleMass"], percentile_sfr
+            snapshot_redshift, dc2["blackHoleMass"], percentile_sfr
         )
         dc2["blackHoleAccretionRate"] = bh_acc_rate * 1e9
         dc2["blackHoleEddingtonRatio"] = eddington_ratio
@@ -1314,9 +1357,132 @@ def generate_SEDs(
     q_pars="q_params",
     source_galaxy_tag="source_galaxy",
 ):
+    check = validate_SED_params(
+        SED_params,
+        mah_keys=mah_keys,
+        ms_keys=ms_keys,
+        q_keys=q_keys,
+    )
+    assert check, "SED_params does not have required contents"
+
+    dc2 = substitute_SFH_fit_failures(
+        dc2,
+        SED_params,
+        source_galaxy_tag,
+        seed,
+        cosmology,
+        snapshot_redshift,
+        mah_keys=mah_keys,
+        ms_keys=ms_keys,
+        q_keys=q_keys,
+    )
     """
-    assemble params from UM matches and compute required magnitudes
+    assemble params from UM matches and compute SFH
     """
+    _res = get_diff_params(
+        dc2,
+        mah_keys=SED_params[mah_keys],
+        ms_keys=SED_params[ms_keys],
+        q_keys=SED_params[q_keys],
+    )
+    mah_params, ms_params, q_params = _res
+    t_obs = cosmology.age(dc2["redshift"]).value
+
+    # get SFH table and observed stellar mass
+    sfh_table = sfh_galpop(
+        SED_params["t_table"],
+        mah_params,
+        ms_params,
+        q_params,
+        lgt0=SED_params["LGT0"],
+        fb=FB,
+    )
+    logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
+    dc2["logsm_obs"] = logsm_obs
+    dc2["sfr"] = sfr_obs
+    log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
+    dc2["log_ssfr"] = log_ssfr
+
+    cosmo_params = flat_wcdm.CosmoParams(
+        cosmology.Om0, w0, wa, cosmology.H0.value / 100
+    )
+
+    # compute SEDs
+    ran_key = jran.PRNGKey(seed)
+    _res = get_diffsky_sed_info(
+        ran_key,
+        SED_params["ssp_z_table"],
+        SED_params["ssp_restmag_table"],
+        SED_params["ssp_obsmag_table"],
+        SED_params["ssp_lgmet"],
+        SED_params["ssp_lg_age_gyr"],
+        SED_params["t_table"],
+        dc2["redshift"],
+        sfh_table,
+        cosmo_params,
+        SED_params["filter_waves"],
+        SED_params["filter_trans"],
+        SED_params["filter_waves"],
+        SED_params["filter_trans"],
+        np.array(list(SED_params["lgfburst_pop_u_params"].values())),
+        np.array(list(SED_params["burstshapepop_u_params"].values())),
+        np.array(list(SED_params["lgav_dust_u_params"].values())),
+        np.array(list(SED_params["delta_dust_u_params"].values())),
+        np.array(list(SED_params["fracuno_pop_u_params"].values())),
+        np.array(list(SED_params["lgmet_params"].values())),
+    )
+
+    # save quantities to DC2
+    dc2 = save_sed_info(dc2, _res, SED_params)
+
+    return dc2
+
+
+def validate_SED_params(
+    SED_params,
+    required=[
+        "use_diffmah_pop",
+        "LGT0",
+        "t_table",
+        "ssp_z_table",
+        "ssp_restmag_table",
+        "ssp_obsmag_table",
+        "ssp_lgmet",
+        "ssp_lg_age_gyr",
+        "t_table",
+        "filter_waves",
+        "filter_trans",
+        "lgfburst_pop_u_params",
+        "burstshapepop_u_params",
+        "lgav_dust_u_params",
+        "delta_dust_u_params",
+        "fracuno_pop_u_params",
+        "lgmet_params",
+    ],
+    mah_keys="mah_keys",
+    ms_keys="ms_keys",
+    q_keys="q_keys",
+):
+    check = True
+    for k in required + [mah_keys] + [ms_keys] + [q_keys]:
+        if k not in SED_params.keys():
+            print(".....Validate SED_params: {} not found".format(k))
+            check = False
+
+    return check
+
+
+def substitute_SFH_fit_failures(
+    dc2,
+    SED_params,
+    source_galaxy_tag,
+    seed,
+    cosmology,
+    snapshot_redshift,
+    mah_keys="mah_keys",
+    ms_keys="ms_keys",
+    q_keys="q_keys",
+):
     # check for fit failures
     has_fit = dc2[source_galaxy_tag + "has_fit"] == 1
     # check for replacement
@@ -1343,17 +1509,18 @@ def generate_SEDs(
             txt = "" if use_diffmah_pop else "/diffstar"
             print(".......{}".format(msg.format(nfail, txt)))
 
-        logmh = np.log10(dc2["target_halo_mass"][failed_mask])
+        logmh = np.array(np.log10(dc2["target_halo_mass"][failed_mask]))
+        logmh = logmh.astype(np.float32)
         ran_key = jran.PRNGKey(seed)
         t_obs = cosmology.age(snapshot_redshift).value
         mc_galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
-        mc_mah_params, mc_msk_is_quenched, mc_ms_u_params, mc_q_u_params = mc_galpop
+        mc_mah_params, mc_msk_is_quenched, mc_ms_params, mc_q_params = mc_galpop
         # copy requested mc_params to dc2 table
         key_labels = [mah_keys] if use_diffmah_pop else [mah_keys, ms_keys, q_keys]
         mc_parlist = (
             [mc_mah_params]
             if use_diffmah_pop
-            else [mc_mah_params, mc_ms_u_params, mc_q_u_params]
+            else [mc_mah_params, mc_ms_params, mc_q_params]
         )
         for key_label, mc_params in zip(key_labels, mc_parlist):
             for i, key in enumerate(
@@ -1362,88 +1529,45 @@ def generate_SEDs(
                 dc2[key][failed_mask] = mc_params[:, i]
                 print(".......saving pop model parameters {}".format(key))
 
-    _res = get_diff_params(
-        dc2,
-        mah_keys=SED_params[mah_keys],
-        ms_keys=SED_params[ms_keys],
-        q_keys=SED_params[q_keys],
-    )
-    mah_params, u_ms_params, u_q_params = _res
-    t_obs = cosmology.age(dc2["redshift"]).value
+    return dc2
 
-    # get SFH table and observed stellar mass
-    sfh_table = get_sfh_from_params(
-        mah_params, u_ms_params, u_q_params, SED_params["LGT0"], SED_params["t_table"]
-    )
-    logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
-    dc2["logsm_obs"] = logsm_obs
-    dc2["sfr"] = sfr_obs
-    log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
-    dc2["log_ssfr"] = log_ssfr
 
-    # generate metallicities
-    lg_met_mean = mzr_model(logsm_obs, t_obs, *SED_params["met_params"])
-    # lg_met_scatt = np.random.uniform(low=SED_params['lgmet_scatter_min'],
-    #                                 high=SED_params['lgmet_scatter_max'],
-    #                                 size=Ngals)
-    lg_met_scatt = (
-        float(SED_params["lgmet_scatter_min"]) + float(SED_params["lgmet_scatter_max"])
-    ) / 2
-    dc2["lg_met_mean"] = lg_met_mean
-    dc2["lg_met_scatter"] = np.array([lg_met_scatt] * Ngals)
+def save_sed_info(dc2, _res, SED_params):
+    gal_weights, gal_frac_trans_obs, gal_frac_trans_rest = _res[:3]
+    gal_att_curve_params = _res[3]
+    gal_frac_unobs, gal_fburst, gal_burstshape_params = _res[4:7]
+    gal_frac_bulge_t_obs, gal_fbulge_params, gal_fknot = _res[7:10]
+    gal_obsmags_nodust, gal_restmags_nodust = _res[10:12]
+    gal_obsmags_dust, gal_restmags_dust = _res[12:]
 
-    # generate dust parameters
-    if SED_params["dust"]:
-        print(".....Evaluating dust attenuation factors")
-        ran_key = jran.PRNGKey(seed)
-        if SED_params["use_alt_dustpop_params"]:
-            alt_dustpop_params = SED_params["alt_dustpop_params"]
-            print(".......with alt_dustpop_parameters")
-            dust_params = mc_generate_dust_params(
-                ran_key,
-                logsm_obs,
-                log_ssfr,
-                dc2["redshift"],
-                tau_pdict=alt_dustpop_params,
-            )
-        else:
-            dust_params = mc_generate_dust_params(
-                ran_key, logsm_obs, log_ssfr, dc2["redshift"]
-            )
+    # add values to catalog
+    dc2["dust_eb"] = gal_att_curve_params[:, 0]
+    dc2["dust_delta"] = gal_att_curve_params[:, 1]
+    dc2["dust_av"] = gal_att_curve_params[:, 2]
+    dc2["fburst"] = gal_fburst
+    dc2["burstshape_lgyr_peak"] = gal_burstshape_params[:, 0]
+    dc2["burstshape_lgyr_max"] = gal_burstshape_params[:, 1]
+    dc2["bulge_frac"] = gal_frac_bulge_t_obs
+    dc2["fbulge_tcrit"] = gal_fbulge_params[:, 0]
+    dc2["fbulge_early"] = gal_fbulge_params[:, 1]
+    dc2["fbulge_late"] = gal_fbulge_params[:, 2]
+    dc2["fknot"] = gal_fknot
 
-        attenuation_factors = precompute_dust_attenuation(
-            SED_params["filter_waves"],
-            SED_params["filter_trans"],
-            dc2["redshift"],
-            dust_params,
-        )
-        # save dust factors in mock
-        dc2["dust_Eb"] = dust_params[:, 0]
-        dc2["dust_delta"] = dust_params[:, 1]
-        dc2["dust_Av"] = dust_params[:, 2]
-        dc2["attenuation_factors"] = attenuation_factors
-    else:
-        print(".....Not using dust attenuation factors")
-        attenuation_factors = None
-
-    mags, seds = get_mag_sed_pars(
-        SED_params,
-        dc2["redshift"],
-        logsm_obs,
-        sfh_table,
-        lg_met_mean,
-        lg_met_scatt,
-        cosmology,
-        w0,
-        wa,
-        dust_trans_factors_obs=attenuation_factors,
-    )
-    # save to output
-    if len(seds) > 0:
-        dc2["SEDs"] = seds
-    for col in mags.colnames:
-        dc2[col] = mags[col]
-    # print('Catalog colnames: ',dc2.colnames)
+    for dustlabel, results in zip(
+        ["", "_nodust"],
+        [
+            [gal_restmags_dust, gal_obsmags_dust],
+            [gal_restmags_nodust, gal_obsmags_nodust],
+        ],
+    ):
+        for fr, vals in zip(["rest", "obs"], results):
+            for k in SED_params["filter_keys"]:
+                filt = k.split("_")[0]
+                band = k.split("_")[1]
+                band = band.upper() if fr == "rest" else band
+                colname = "{}_{}_{}{}".format(filt, fr, band, dustlabel)
+                column = SED_params["filter_keys"].index(k)
+                dc2[colname] = vals[:, column]
 
     return dc2
 
@@ -1582,4 +1706,5 @@ def write_output_mock_to_disk(
 
     check_time = time()
     hdfFile.close()
+    print(".....time to close file {:.4f} secs".format(time() - check_time))
     print(".....time to close file {:.4f} secs".format(time() - check_time))

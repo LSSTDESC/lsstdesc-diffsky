@@ -5,28 +5,35 @@ MAH_PNAMES = [
     "diffmah_early_index",
     "diffmah_late_index",
 ]
-MS_U_PNAMES = [
-    "diffstar_u_lgmcrit",
-    "diffstar_u_lgy_at_mcrit",
-    "diffstar_u_indx_lo",
-    "diffstar_u_indx_hi",
-    "diffstar_u_tau_dep",
+MS_PNAMES = [
+    "diffstar_lgmcrit",
+    "diffstar_lgy_at_mcrit",
+    "diffstar_indx_lo",
+    "diffstar_indx_hi",
+    "diffstar_tau_dep",
 ]
-Q_U_PNAMES = [
-    "diffstar_u_qt",
-    "diffstar_u_qs",
-    "diffstar_u_q_drop",
-    "diffstar_u_q_rejuv",
+Q_PNAMES = [
+    "diffstar_lg_qt",
+    "diffstar_qlglgdt",
+    "diffstar_lg_drop",
+    "diffstar_lg_rejuv",
 ]
 SED_params = {
-    'mah_keys': MAH_PNAMES,
-    'ms_keys': MS_U_PNAMES,
-    'q_keys': Q_U_PNAMES,
-    'sfh_keys': ['mstar', 'sfr', 'fstar', 'dmhdt', 'log_mah'],
-    'z0': 0.,
-    't_start': .05,
-    'N_t': 100,
-    'xkeys': ['ssp_z_table', 'ssp_restmag_table', 'ssp_obsmag_table',
-              'ssp_lgmet', 'ssp_lg_age_gyr', 'filter_keys',
-              'filter_waves', 'filter_trans', 'met_params'],
+    "mah_keys": MAH_PNAMES,
+    "ms_keys": MS_PNAMES,
+    "q_keys": Q_PNAMES,
+    "sfh_keys": ["mstar", "sfr", "fstar", "dmhdt", "log_mah"],
+    "z0": 0.0,
+    "t_start": 0.05,
+    "N_t": 100,
+    "xkeys": [
+        "ssp_z_table",
+        "ssp_restmag_table",
+        "ssp_obsmag_table",
+        "ssp_lgmet",
+        "ssp_lg_age_gyr",
+        "filter_keys",
+        "filter_waves",
+        "filter_trans",
+    ],
 }

@@ -8,3 +8,4 @@ astropy
 healpy
 halotools
 lsstdesc-galsampler
+psutil

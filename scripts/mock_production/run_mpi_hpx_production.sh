@@ -25,16 +25,14 @@ xtra_args=""
 fi
 fi
 
-source activate diffsky
-PYTHONPATH=/home/ekovacs/.conda/envs/diffsky/bin/python
-export PYTHONPATH
+source activate diffsky_v3
 
 #retrive number of pixels in list file
 total_pix_num="`wc -l < ${pixels_list}`"
 echo "total_pix_num=${total_pix_num}"
 
 script_name=run_diffsky_healpix_production.py
-pythonpath=/home/ekovacs/.conda/envs/diffsky/bin/python
+pythonpath=/home/ekovacs/.conda/envs/diffsky_v3/bin/python
 args="${pixels_list} -zrange_value ${z_range} ${xtra_args}"
 
 mpiexec -n ${total_pix_num} ${pythonpath} ${script_name} ${args}
