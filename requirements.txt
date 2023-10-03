@@ -11,4 +11,3 @@ lsstdesc-galsampler
 psutil
 diffmah
 diffstar
-dsps
