@@ -5,10 +5,21 @@ Code for producing mock catalogs tailored to LSST DESC requirements.
 
 Installation
 ------------
+The latest release of diffsky is available for installation with pip or conda::
+
+    $ conda install lsstdesc-diffsky
+
+
 To install lsstdesc_diffsky into your environment from the source code::
 
     $ cd /path/to/root/lsstdesc_diffsky
-    $ python setup.py install
+    $ pip install .
+
+Conda environment
+~~~~~~~~~~~~~~~~~
+For a typical development environment in conda::
+
+    $ conda create -n diffstuff python=3.9 numpy jax pytest ipython jupyter matplotlib scipy h5py diffmah diffstar dsps diffsky lsstdesc-diffsky
 
 Testing
 -------
