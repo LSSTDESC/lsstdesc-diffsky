@@ -32,7 +32,7 @@ license = {file = "LICENSE.rst"}
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-dependencies = ["numpy", "jax", "h5py", "diffmah", "diffstar", "dsps", "diffsky"]
+dependencies = ["numpy", "jax", "h5py", "diffmah", "diffstar", "dsps"]
 dynamic = ["version"]
 
 [tool.black]
