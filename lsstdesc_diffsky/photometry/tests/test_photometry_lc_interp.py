@@ -16,7 +16,7 @@ from dsps.experimental.diffburst import (
     LGYR_PEAK_MIN,
     _age_weights_from_params,
 )
-from dsps.metallicity.mzr import DEFAULT_MZR_PDICT
+from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
 from jax import random as jran
@@ -35,7 +35,7 @@ from ..photometry_lc_interp import (
 _B = (0, None)
 _integrate_sfr_vmap = jjit(vmap(_integrate_sfr, in_axes=_B))
 
-DEFAULT_MZR_PARAMS = np.array(list(DEFAULT_MZR_PDICT.values()))
+DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
 
 
 def test_get_diffsky_sed_info():
@@ -97,7 +97,7 @@ def test_get_diffsky_sed_info():
         DEFAULT_LGAV_U_PARAMS,
         DEFAULT_DUST_DELTA_U_PARAMS,
         DEFAULT_FUNO_U_PARAMS,
-        DEFAULT_MZR_PARAMS,
+        DEFAULT_MET_PARAMS,
     )
     for x in _res:
         assert np.all(np.isfinite(x))

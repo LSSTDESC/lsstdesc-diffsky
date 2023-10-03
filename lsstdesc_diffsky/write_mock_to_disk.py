@@ -29,7 +29,7 @@ from diffstar.sfh import sfh_galpop
 # SED generation
 from dsps.cosmology import flat_wcdm
 from dsps.data_loaders import load_ssp_templates
-from dsps.metallicity.mzr import DEFAULT_MZR_PDICT
+from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from galsampler import crossmatch
 from galsampler.galmatch import galsample
 from halotools.empirical_models import halo_mass_to_halo_radius
@@ -372,7 +372,7 @@ def write_umachine_healpix_mock_to_disk(
         SED_params["lgav_dust_u_params"] = DEFAULT_LGAV_U_PARAMS
         SED_params["dust_delta_u_params"] = DEFAULT_DUST_DELTA_U_PARAMS
         SED_params["fracuno_pop_u_params"] = DEFAULT_BORIS_U_PARAMS
-        SED_params["lgmet_params"] = list(DEFAULT_MZR_PDICT.values())
+        SED_params["lgmet_params"] = list(DEFAULT_MET_PDICT.values())
 
     roman_rubin_list = [
         k.split("roman_rubin_2023/")[1]
