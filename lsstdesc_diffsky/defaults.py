@@ -2,7 +2,8 @@
 """
 import typing
 
-from diffstar.defaults import FB
+from diffmah.defaults import DEFAULT_MAH_PARAMS
+from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS, FB
 from dsps.cosmology.defaults import DEFAULT_COSMOLOGY as DEFAULT_DSPS_COSMOLOGY
 from jax import numpy as jnp
 
@@ -18,3 +19,6 @@ class CosmoParams(typing.NamedTuple):
 
 
 DEFAULT_COSMO_PARAMS = CosmoParams(*DEFAULT_DSPS_COSMOLOGY, FB)
+
+
+DEFAULT_DIFFGAL_PARAMS = DEFAULT_MAH_PARAMS, DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
