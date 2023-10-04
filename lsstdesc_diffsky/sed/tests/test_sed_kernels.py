@@ -13,10 +13,11 @@ from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
 from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
 from dsps.metallicity.defaults import DEFAULT_MET_PARAMS
 
+from ... import read_mock_params
 from ..sed_kernels import calc_rest_sed_singlegal
 
 
-def test_calc_rest_sed_evaluates():
+def test_calc_rest_sed_evaluates_with_default_params():
     z_obs = 0.1
 
     ssp_data = load_fake_ssp_data()
@@ -35,6 +36,41 @@ def test_calc_rest_sed_evaluates():
         DEFAULT_DUST_DELTA_U_PARAMS,
         DEFAULT_FUNO_U_PARAMS,
         DEFAULT_MET_PARAMS,
+    )
+    (
+        rest_sed,
+        rest_sed_nodust,
+        logsm_t_obs,
+        lgmet_t_obs,
+    ) = _res
+    for x in _res:
+        assert np.all(np.isfinite(x))
+
+    n_met, n_age, n_wave = ssp_data.ssp_flux.shape
+
+    assert np.all(rest_sed <= rest_sed_nodust)
+    assert np.any(rest_sed < rest_sed_nodust)
+
+    assert rest_sed.shape == rest_sed_nodust.shape
+    assert rest_sed.shape == (n_wave,)
+
+
+def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
+    all_params = read_mock_params("roman_rubin_2023")
+
+    z_obs = 0.1
+
+    ssp_data = load_fake_ssp_data()
+    _res = calc_rest_sed_singlegal(
+        z_obs,
+        DEFAULT_MAH_PARAMS,
+        DEFAULT_MS_PARAMS,
+        DEFAULT_Q_PARAMS,
+        ssp_data.ssp_lgmet,
+        ssp_data.ssp_lg_age_gyr,
+        ssp_data.ssp_wave,
+        ssp_data.ssp_flux,
+        *all_params,
     )
     (
         rest_sed,
