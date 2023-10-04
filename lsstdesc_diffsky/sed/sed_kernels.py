@@ -255,8 +255,6 @@ def calc_rest_sed_galpop(
     dust_delta_pop_u_params,
     fracuno_pop_u_params,
     met_params,
-    t_birth_min=T_BIRTH_MIN,
-    n_t=N_T_LGSM_INTEGRATION,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of a population of diffsky galaxies
