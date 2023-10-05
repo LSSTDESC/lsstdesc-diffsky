@@ -155,6 +155,8 @@ def calc_rest_sed_singlegal(
         t_obs, t_table, sfh_table, mzr_params, ssp_lg_age_gyr
     )
     logsm_t_obs, logssfr_t_obs, lgmet_t_obs, smooth_age_weights = _galprops_at_t_obs[:4]
+    mstar_t_obs = 10**logsm_t_obs
+
     lgmet_weights = calc_lgmet_weights_from_lognormal_mdf(
         lgmet_t_obs, lgmet_scatter, ssp_lgmet
     )
@@ -180,7 +182,7 @@ def calc_rest_sed_singlegal(
 
     n_met, n_age, n_wave = ssp_flux.shape
     weights = lgmet_weights.reshape((n_met, 1, 1)) * age_weights.reshape((1, n_age, 1))
-    rest_sed_nodust = jnp.sum(weights * ssp_flux, axis=(0, 1))
+    rest_sed_nodust = jnp.sum(weights * ssp_flux, axis=(0, 1)) * mstar_t_obs
 
     lgav = _get_lgav_galpop_from_u_params(logsm_t_obs, logssfr_t_obs, lgav_pop_u_params)
     dust_delta = _get_dust_delta_galpop_from_u_params(
@@ -200,7 +202,7 @@ def calc_rest_sed_singlegal(
         k_lambda, dust_Av, frac_unobscured
     )
     frac_dust_trans = frac_dust_trans.reshape((1, n_age, n_wave))
-    rest_sed = jnp.sum(weights * ssp_flux * frac_dust_trans, axis=(0, 1))
+    rest_sed = jnp.sum(weights * ssp_flux * frac_dust_trans, axis=(0, 1)) * mstar_t_obs
 
     return (rest_sed, rest_sed_nodust, logsm_t_obs, lgmet_t_obs)
 
