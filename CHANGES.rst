@@ -1,4 +1,4 @@
-0.1.2 (unreleased)
+0.1.2 (2023-10-06)
 -------------------
 - Add convenience functions for computing SEDs
 
