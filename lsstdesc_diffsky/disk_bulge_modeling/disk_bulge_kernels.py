@@ -5,11 +5,17 @@ from collections import OrderedDict
 import numpy as np
 from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.constants import SFR_MIN
+from dsps.experimental.diffburst import (
+    _age_weights_from_params as _burst_age_weights_from_params,
+)
+from dsps.sed.stellar_age_weights import calc_age_weights_from_sfh_table
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
 from jax import lax
 from jax import numpy as jnp
 from jax import vmap
+
+from ..disk_bulge_modeling.disk_knots import _disk_knot_vmap
 
 FBULGE_MIN = 0.05
 FBULGE_MAX = 0.95
@@ -23,6 +29,19 @@ DEFAULT_FBULGE_LATE = 0.15
 DEFAULT_T10, DEFAULT_T90 = 2.0, 9.0
 DEFAULT_FBULGE_PDICT = OrderedDict(fbulge_tcrit=8.0, fbulge_early=0.5, fbulge_late=0.1)
 DEFAULT_FBULGE_PARAMS = np.array(list(DEFAULT_FBULGE_PDICT.values()))
+
+
+_linterp_vmap = jjit(vmap(jnp.interp, in_axes=(0, None, 0)))
+
+_A = (None, 0)
+_burst_age_weights_from_params_vmap = jjit(
+    vmap(_burst_age_weights_from_params, in_axes=_A)
+)
+
+_D = (None, 0, None, 0)
+calc_age_weights_from_sfh_table_vmap = jjit(
+    vmap(calc_age_weights_from_sfh_table, in_axes=_D)
+)
 
 
 @jjit
@@ -164,6 +183,143 @@ def _bulge_sfh(tarr, sfh, fbulge_params):
     smh_bulge = _integrate_sfr(sfh_bulge, dtarr)
     bth = smh_bulge / smh
     return smh, eff_bulge, sfh_bulge, smh_bulge, bth
+
+
+_B = (None, 0, 0)
+_bulge_sfh_vmap = jjit(vmap(_bulge_sfh, in_axes=_B))
+
+
+def decompose_sfhpop_into_bulge_disk_knots(
+    gal_fbulge_params,
+    gal_fknot,
+    gal_t_obs,
+    gal_t_table,
+    gal_sfh,
+    gal_fburst,
+    gal_burstshape_params,
+    ssp_lg_age_gyr,
+):
+    """Decompose the SFH of a Diffsky galaxy into three components:
+    bulges, diffuse disk, and star-forming knots in the disks
+
+    Parameters
+    ----------
+    gal_fbulge_params : ndarray, shape (n_gals, 3)
+        Bulge efficiency parameters (tcrit, fbulge_early, fbulge_late) for each galaxy
+
+    gal_fknot : ndarray, shape (n_gals, )
+        Fraction of the disk mass in bursty star-forming knots for each galaxy
+
+    gal_t_obs : ndarray, shape (n_gals, )
+        Age of the universe in Gyr at the redshift of each galaxy
+
+    gal_t_table : ndarray, shape (n_t, )
+        Grid in cosmic time t in Gyr at which SFH of the galaxy population is tabulated
+        gal_t_table should increase monotonically and it should span the
+        full range of gal_t_obs, including some padding of a few million years
+
+    gal_sfh : ndarray, shape (n_gals, n_t)
+        Grid in SFR in Msun/yr for each galaxy tabulated at the input gal_t_table
+
+    gal_fburst : ndarray, shape (n_gals, )
+        Fraction of stellar mass in the burst population of each galaxy
+
+    gal_burstshape_params : ndarray, shape (n_gals, 2)
+        Parameters controlling P(τ) for burst population in each galaxy
+        lgyr_peak = gal_burstshape_params[:, 0]
+        lgyr_max = gal_burstshape_params[:, 1]
+
+    ssp_lg_age_gyr : ndarray, shape (n_age, )
+        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+
+    Returns
+    -------
+    mbulge : ndarray, shape (n_gals, )
+        Total stellar mass in Msun formed in the bulge at time gal_t_obs
+
+    mdd : ndarray, shape (n_gals, )
+        Total stellar mass in Msun formed in the diffuse disk at time gal_t_obs
+
+    mknot : ndarray, shape (n_gals, )
+        Total stellar mass in Msun formed in star-forming knots at time gal_t_obs
+
+    mburst : ndarray, shape (n_gals, )
+        Total stellar mass in Msun in the burst population at time gal_t_obs
+
+    bulge_age_weights : ndarray, shape (n_gals, n_age)
+        Probability distribution P(τ_age) for bulge of each galaxy
+
+    dd_age_weights : ndarray, shape (n_gals, n_age)
+        Probability distribution P(τ_age) for diffuse disk of each galaxy
+
+    knot_age_weights : ndarray, shape (n_gals, n_age)
+        Probability distribution P(τ_age) for star-forming knots of each galaxy
+
+    bulge_sfh : ndarray, shape (n_gals, n_t)
+        Grid in SFR in Msun/yr for each galaxy bulge tabulated at the input gal_t_table
+
+    gal_frac_bulge_t_obs : ndarray, shape (n_gals, )
+        Bulge/total mass ratio at gal_t_obs for every galaxy
+
+    """
+    ssp_lg_age_yr = ssp_lg_age_gyr + 9.0
+    gal_burst_age_weights = _burst_age_weights_from_params_vmap(
+        ssp_lg_age_yr, gal_burstshape_params
+    )
+    return _decompose_sfhpop_into_bulge_disk_knots(
+        gal_fbulge_params,
+        gal_fknot,
+        gal_t_obs,
+        gal_t_table,
+        gal_sfh,
+        gal_fburst,
+        gal_burst_age_weights,
+        ssp_lg_age_gyr,
+    )
+
+
+@jjit
+def _decompose_sfhpop_into_bulge_disk_knots(
+    gal_fbulge_params,
+    gal_fknot,
+    gal_t_obs,
+    gal_t_table,
+    gal_sfh,
+    gal_fburst,
+    age_weights_burst,
+    ssp_lg_age_gyr,
+):
+    _res = _bulge_sfh_vmap(gal_t_table, gal_sfh, gal_fbulge_params)
+    smh, eff_bulge, bulge_sfh, smh_bulge, bulge_to_total_history = _res
+
+    bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
+    gal_frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
+
+    bulge_age_weights = calc_age_weights_from_sfh_table_vmap(
+        gal_t_table, bulge_sfh, ssp_lg_age_gyr, gal_t_obs
+    )
+
+    disk_sfh = gal_sfh - bulge_sfh
+    disk_sfh = jnp.where(disk_sfh < SFR_MIN, SFR_MIN, disk_sfh)
+
+    args = (
+        gal_t_table,
+        gal_t_obs,
+        gal_sfh,
+        disk_sfh,
+        gal_fburst,
+        gal_fknot,
+        age_weights_burst,
+        ssp_lg_age_gyr,
+    )
+    _knot_info = _disk_knot_vmap(*args)
+    mstar_tot, mburst, mdd, mknot, dd_age_weights, knot_age_weights = _knot_info
+
+    mbulge = gal_frac_bulge_t_obs * mstar_tot
+    masses = mbulge, mdd, mknot, mburst
+    age_weights = bulge_age_weights, dd_age_weights, knot_age_weights
+    ret = (*masses, *age_weights, bulge_sfh, gal_frac_bulge_t_obs)
+    return ret
 
 
 DEFAULT_FBULGE_U_PARAMS = _get_u_params_from_params(
