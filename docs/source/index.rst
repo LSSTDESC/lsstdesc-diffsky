@@ -1,4 +1,4 @@
-Welcome to the lsstdesc_diffsky documentation
+Welcome to the lsstdesc-diffsky documentation
 =============================================
 
 lsstdesc-diffsky is a python library providing 
@@ -22,13 +22,6 @@ User Guide
    :caption: Contents
 
    installation.rst
-
-.. toctree::
-    :maxdepth: 1
-
-    reference.rst
-
-.. toctree::
-    :maxdepth: 1
-
-    citation.rst
+   demos.rst
+   reference.rst
+   citation.rst

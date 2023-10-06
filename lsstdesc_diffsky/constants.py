@@ -1,4 +1,6 @@
 """This module stores globals used throughout the repository."""
+from .disk_bulge_modeling.disk_bulge_kernels import DEFAULT_FBULGE_PDICT
+
 MAH_PNAMES = [
     "diffmah_logmp_fit",
     "diffmah_mah_logtc",
@@ -18,6 +20,9 @@ Q_PNAMES = [
     "diffstar_lg_drop",
     "diffstar_lg_rejuv",
 ]
+FBULGE_PNAMES = list(DEFAULT_FBULGE_PDICT.keys())
+BURSTSHAPE_PNAMES = ["burstshape_lgyr_peak", "burstshape_lgyr_max"]
+
 SED_params = {
     "mah_keys": MAH_PNAMES,
     "ms_keys": MS_PNAMES,

@@ -9,13 +9,10 @@ from jax import random as jran
 from jax import vmap
 
 from .disk_bulge_kernels import (
-    _bulge_sfh,
+    _bulge_sfh_vmap,
     _get_params_from_u_params_vmap,
     calc_tform_pop,
 )
-
-_A = (None, 0, 0)
-_bulge_sfh_vmap = jjit(vmap(_bulge_sfh, in_axes=_A))
 
 _B = (0, None)
 _integrate_sfr_vmap = jjit(vmap(_integrate_sfr, in_axes=_B))
