@@ -1,11 +1,15 @@
 """
 """
+# flake8: noqa
+
 import typing
 
 from diffmah.defaults import DEFAULT_MAH_PARAMS
 from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS, FB
 from dsps.cosmology.defaults import DEFAULT_COSMOLOGY as DEFAULT_DSPS_COSMOLOGY
 from jax import numpy as jnp
+
+from .disk_bulge_modeling.disk_bulge_kernels import DEFAULT_FBULGE_PARAMS
 
 
 class CosmoParams(typing.NamedTuple):

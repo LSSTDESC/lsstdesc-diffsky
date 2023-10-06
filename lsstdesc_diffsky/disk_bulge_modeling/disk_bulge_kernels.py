@@ -15,7 +15,7 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from .disk_knots import _disk_knot_vmap
+from .disk_knots import _disk_knot_kern, _disk_knot_vmap
 
 FBULGE_MIN = 0.05
 FBULGE_MAX = 0.95
@@ -276,6 +276,49 @@ def decompose_sfhpop_into_bulge_disk_knots(
         gal_burst_age_weights,
         ssp_lg_age_gyr,
     )
+
+
+@jjit
+def _decompose_sfh_singlegal_into_bulge_disk_knots(
+    fbulge_params,
+    fknot,
+    t_obs,
+    t_table,
+    sfh_table,
+    fburst,
+    age_weights_burst,
+    ssp_lg_age_gyr,
+):
+    _res = _bulge_sfh(t_table, sfh_table, fbulge_params)
+    smh, eff_bulge, bulge_sfh, smh_bulge, bulge_to_total_history = _res
+
+    bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
+    frac_bulge_t_obs = jnp.interp(t_obs, t_table, bulge_to_total_history)
+
+    bulge_age_weights = calc_age_weights_from_sfh_table(
+        t_table, bulge_sfh, ssp_lg_age_gyr, t_obs
+    )
+    disk_sfh = sfh_table - bulge_sfh
+    disk_sfh = jnp.where(disk_sfh < SFR_MIN, SFR_MIN, disk_sfh)
+
+    args = (
+        t_table,
+        t_obs,
+        sfh_table,
+        disk_sfh,
+        fburst,
+        fknot,
+        age_weights_burst,
+        ssp_lg_age_gyr,
+    )
+    _knot_info = _disk_knot_kern(*args)
+    mstar_tot, mburst, mdd, mknot, dd_age_weights, knot_age_weights = _knot_info
+
+    mbulge = frac_bulge_t_obs * mstar_tot
+    masses = mbulge, mdd, mknot, mburst
+    age_weights = bulge_age_weights, dd_age_weights, knot_age_weights
+    ret = (*masses, *age_weights, bulge_sfh, frac_bulge_t_obs)
+    return ret
 
 
 @jjit
