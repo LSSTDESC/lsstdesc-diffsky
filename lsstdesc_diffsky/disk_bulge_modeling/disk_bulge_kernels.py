@@ -21,7 +21,7 @@ DEFAULT_FBULGE_LATE = 0.15
 
 
 DEFAULT_T10, DEFAULT_T90 = 2.0, 9.0
-DEFAULT_FBULGE_PDICT = OrderedDict(tcrit=8.0, fbulge_early=0.5, fbulge_late=0.1)
+DEFAULT_FBULGE_PDICT = OrderedDict(fbulge_tcrit=8.0, fbulge_early=0.5, fbulge_late=0.1)
 DEFAULT_FBULGE_PARAMS = np.array(list(DEFAULT_FBULGE_PDICT.values()))
 
 
@@ -72,10 +72,10 @@ def _bulge_fraction_kernel(t, thalf, frac_early, frac_late, dt):
 
 @jjit
 def _get_u_params_from_params(params, t10, t90):
-    tcrit, fbulge_early, fbulge_late = params
+    fbulge_tcrit, fbulge_early, fbulge_late = params
 
     t50 = (t10 + t90) / 2
-    u_tcrit = _inverse_sigmoid(tcrit, t50, BOUNDING_K, t10, t90)
+    u_fbulge_tcrit = _inverse_sigmoid(fbulge_tcrit, t50, BOUNDING_K, t10, t90)
 
     x0 = (FBULGE_MIN + FBULGE_MAX) / 2
     u_fbulge_early = _inverse_sigmoid(
@@ -87,16 +87,16 @@ def _get_u_params_from_params(params, t10, t90):
         fbulge_late, x0_late, BOUNDING_K, fbulge_early, FBULGE_MIN
     )
 
-    u_params = u_tcrit, u_fbulge_early, u_fbulge_late
+    u_params = u_fbulge_tcrit, u_fbulge_early, u_fbulge_late
     return u_params
 
 
 @jjit
 def _get_params_from_u_params(u_params, t10, t90):
-    u_tcrit, u_fbulge_early, u_fbulge_late = u_params
+    u_fbulge_tcrit, u_fbulge_early, u_fbulge_late = u_params
 
     t50 = (t10 + t90) / 2
-    tcrit = _sigmoid(u_tcrit, t50, BOUNDING_K, t10, t90)
+    fbulge_tcrit = _sigmoid(u_fbulge_tcrit, t50, BOUNDING_K, t10, t90)
 
     x0 = (FBULGE_MIN + FBULGE_MAX) / 2
     fbulge_early = _sigmoid(u_fbulge_early, x0, BOUNDING_K, FBULGE_MIN, FBULGE_MAX)
@@ -104,16 +104,16 @@ def _get_params_from_u_params(u_params, t10, t90):
     x0_late = (fbulge_early + FBULGE_MIN) / 2
     fbulge_late = _sigmoid(u_fbulge_late, x0_late, BOUNDING_K, fbulge_early, FBULGE_MIN)
 
-    params = tcrit, fbulge_early, fbulge_late
+    params = fbulge_tcrit, fbulge_early, fbulge_late
     return params
 
 
 @jjit
 def _bulge_fraction_vs_tform_u_params(t, t10, t90, u_params):
     params = _get_params_from_u_params(u_params, t10, t90)
-    tcrit, fbulge_early, fbulge_late = params
+    fbulge_tcrit, fbulge_early, fbulge_late = params
     dt = t90 - t10
-    return _bulge_fraction_kernel(t, tcrit, fbulge_early, fbulge_late, dt)
+    return _bulge_fraction_kernel(t, fbulge_tcrit, fbulge_early, fbulge_late, dt)
 
 
 @jjit
@@ -145,9 +145,9 @@ def calc_tform_pop(tarr, smh_pop, tform_frac):
 
 @jjit
 def _bulge_fraction_vs_tform(t, t10, t90, params):
-    tcrit, fbulge_early, fbulge_late = params
+    fbulge_tcrit, fbulge_early, fbulge_late = params
     dt = t90 - t10
-    fbulge = _bulge_fraction_kernel(t, tcrit, fbulge_early, fbulge_late, dt)
+    fbulge = _bulge_fraction_kernel(t, fbulge_tcrit, fbulge_early, fbulge_late, dt)
     return fbulge
 
 

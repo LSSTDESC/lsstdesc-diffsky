@@ -28,6 +28,14 @@ def test_diffstar_pnames():
     ]
 
 
+def test_bulge_pnames():
+    assert constants.FBULGE_PNAMES == [
+        "fbulge_tcrit",
+        "fbulge_early",
+        "fbulge_late",
+    ]
+
+
 def test_SED_params_contents():
     assert constants.SED_params == {
         "mah_keys": constants.MAH_PNAMES,
