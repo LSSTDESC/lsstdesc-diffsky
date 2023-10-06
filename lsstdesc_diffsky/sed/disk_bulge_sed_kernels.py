@@ -50,6 +50,8 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     diffmah_params,
     diffstar_ms_params,
     diffstar_q_params,
+    fbulge_params,
+    fknot,
     ssp_lgmet,
     ssp_lg_age_gyr,
     ssp_wave_ang,
@@ -60,8 +62,6 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     dust_delta_pop_u_params,
     fracuno_pop_u_params,
     met_params,
-    fbulge_params,
-    fknot,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     Om0, w0, wa, h, fb = cosmo_params
