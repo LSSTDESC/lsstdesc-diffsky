@@ -2,7 +2,7 @@
 """
 from diffsky.experimental.dspspop.boris_dust import _get_funo_from_u_params_singlegal
 from diffsky.experimental.dspspop.burstshapepop import (
-    _get_burstshape_galpop_from_params,
+    _get_burstshape_galpop_from_u_params,
 )
 from diffsky.experimental.dspspop.dust_deltapop import (
     _get_dust_delta_galpop_from_u_params,
@@ -95,7 +95,7 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     )
     fburst = 10**lgfburst
 
-    diffburst_u_params = _get_burstshape_galpop_from_params(
+    diffburst_u_params = _get_burstshape_galpop_from_u_params(
         logsm_t_obs, logssfr_t_obs, burstshapepop_u_params
     )
     burstshape_params = jnp.array(

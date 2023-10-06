@@ -8,7 +8,7 @@ bulge, diffuse disk, star-forming knots
 
 """
 from diffsky.experimental.dspspop.burstshapepop import (
-    _get_burstshape_galpop_from_params,
+    _get_burstshape_galpop_from_u_params,
 )
 from diffsky.experimental.dspspop.dustpop import (
     _frac_dust_transmission_lightcone_kernel,
@@ -263,7 +263,7 @@ def get_diffsky_sed_info(
     gal_fburst = 10**gal_lgf_burst
 
     # Compute P(τ) for each bursting population
-    gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_params(
+    gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_u_params(
         gal_logsm_t_obs, gal_logssfr_t_obs, burstshapepop_u_params
     )
     burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
