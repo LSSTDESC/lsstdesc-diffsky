@@ -48,10 +48,10 @@ class DiffskySEDInfo(typing.NamedTuple):
     """NamedTuple with info about SSPs, filter data and cosmology"""
 
     rest_sed_bulge: jnp.ndarray
-    rest_sed_dd: jnp.ndarray
+    rest_sed_diffuse_disk: jnp.ndarray
     rest_sed_knot: jnp.ndarray
     rest_sed_bulge_nodust: jnp.ndarray
-    rest_sed_dd_nodust: jnp.ndarray
+    rest_sed_diffuse_disk_nodust: jnp.ndarray
     rest_sed_knot_nodust: jnp.ndarray
     mstar_bulge: jnp.ndarray
     mstar_diffuse_disk: jnp.ndarray

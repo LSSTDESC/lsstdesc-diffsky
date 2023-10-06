@@ -1,4 +1,8 @@
 lsstdesc_diffsky/_version.py
+docs/source/*.h5
+docs/source/*.hdf5
+docs/source/*/*.h5
+docs/source/*/*.hdf5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
