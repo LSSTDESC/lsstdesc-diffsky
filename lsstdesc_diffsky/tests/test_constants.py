@@ -36,6 +36,13 @@ def test_bulge_pnames():
     ]
 
 
+def test_burstshape_pnames():
+    assert constants.BURSTSHAPE_PNAMES == [
+        "burstshape_lgyr_peak",
+        "burstshape_lgyr_max",
+    ]
+
+
 def test_SED_params_contents():
     assert constants.SED_params == {
         "mah_keys": constants.MAH_PNAMES,

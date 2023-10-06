@@ -21,6 +21,7 @@ Q_PNAMES = [
     "diffstar_lg_rejuv",
 ]
 FBULGE_PNAMES = list(DEFAULT_FBULGE_PDICT.keys())
+BURSTSHAPE_PNAMES = ["burstshape_lgyr_peak", "burstshape_lgyr_max"]
 
 SED_params = {
     "mah_keys": MAH_PNAMES,
