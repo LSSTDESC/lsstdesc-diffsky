@@ -23,9 +23,6 @@ from dsps.experimental.diffburst import (
     _age_weights_from_params as _burst_age_weights_from_params,
 )
 from dsps.experimental.diffburst import (
-    _age_weights_from_u_params as _burst_age_weights_from_u_params,
-)
-from dsps.experimental.diffburst import (
     _get_params_from_u_params as _get_diffburst_params_from_u_params,
 )
 from dsps.sed.metallicity_weights import calc_lgmet_weights_from_lognormal_mdf
@@ -167,3 +164,49 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
 
     ret = (*rest_seds, *rest_seds_nodust, *masses, gal_frac_bulge_t_obs)
     return ret
+
+
+_DBK = (*[0] * 6, *[None] * 11)
+_calc_rest_sed_disk_bulge_knot_vmap = jjit(
+    vmap(calc_rest_sed_disk_bulge_knot_singlegal, in_axes=_DBK)
+)
+
+
+def calc_rest_sed_disk_bulge_knot_galpop(
+    z_obs,
+    diffmah_params,
+    diffstar_ms_params,
+    diffstar_q_params,
+    fbulge_params,
+    fknot,
+    ssp_lgmet,
+    ssp_lg_age_gyr,
+    ssp_wave_ang,
+    ssp_flux,
+    lgfburst_pop_u_params,
+    burstshapepop_u_params,
+    lgav_pop_u_params,
+    dust_delta_pop_u_params,
+    fracuno_pop_u_params,
+    met_params,
+    cosmo_params=DEFAULT_COSMO_PARAMS,
+):
+    return _calc_rest_sed_disk_bulge_knot_vmap(
+        z_obs,
+        diffmah_params,
+        diffstar_ms_params,
+        diffstar_q_params,
+        fbulge_params,
+        fknot,
+        ssp_lgmet,
+        ssp_lg_age_gyr,
+        ssp_wave_ang,
+        ssp_flux,
+        lgfburst_pop_u_params,
+        burstshapepop_u_params,
+        lgav_pop_u_params,
+        dust_delta_pop_u_params,
+        fracuno_pop_u_params,
+        met_params,
+        cosmo_params,
+    )
