@@ -15,7 +15,7 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
-from ..disk_bulge_modeling.disk_knots import _disk_knot_vmap
+from .disk_knots import _disk_knot_vmap
 
 FBULGE_MIN = 0.05
 FBULGE_MAX = 0.95
