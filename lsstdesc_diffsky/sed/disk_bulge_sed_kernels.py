@@ -1,5 +1,7 @@
 """
 """
+import typing
+
 from diffsky.experimental.dspspop.boris_dust import _get_funo_from_u_params_singlegal
 from diffsky.experimental.dspspop.burstshapepop import (
     _get_burstshape_galpop_from_u_params,
@@ -42,6 +44,22 @@ _frac_transmission_from_k_lambda_age_vmap = jjit(
 )
 
 
+class DiffskySEDInfo(typing.NamedTuple):
+    """NamedTuple with info about SSPs, filter data and cosmology"""
+
+    rest_sed_bulge: jnp.ndarray
+    rest_sed_dd: jnp.ndarray
+    rest_sed_knot: jnp.ndarray
+    rest_sed_bulge_nodust: jnp.ndarray
+    rest_sed_dd_nodust: jnp.ndarray
+    rest_sed_knot_nodust: jnp.ndarray
+    mstar_bulge: jnp.ndarray
+    mstar_diffuse_disk: jnp.ndarray
+    mstar_knot: jnp.ndarray
+    mstar_burst: jnp.ndarray
+    mstar_total: jnp.ndarray
+
+
 def calc_rest_sed_disk_bulge_knot_singlegal(
     z_obs,
     diffmah_params,
@@ -80,7 +98,7 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
         t_obs, t_table, sfh_table, mzr_params, ssp_lg_age_gyr
     )
     logsm_t_obs, logssfr_t_obs, lgmet_t_obs, smooth_age_weights = _galprops_at_t_obs[:4]
-    mstar_t_obs = 10**logsm_t_obs
+    mstar_total = 10**logsm_t_obs
 
     lgmet_weights = calc_lgmet_weights_from_lognormal_mdf(
         lgmet_t_obs, lgmet_scatter, ssp_lgmet
@@ -116,7 +134,6 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     )
     mbulge, mdd, mknot, mburst = _res[:4]
     bulge_age_weights, dd_age_weights, knot_age_weights = _res[4:7]
-    bulge_sfh, gal_frac_bulge_t_obs = _res[7:]
 
     # Compute SED of each component, neglecting dust attenuation
     n_met, n_age, n_wave = ssp_flux.shape
@@ -158,12 +175,12 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
         jnp.sum(knot_weights * ssp_flux * frac_dust_trans, axis=(0, 1)) * mknot
     )
 
-    rest_seds_nodust = rest_sed_bulge_nodust, rest_sed_dd_nodust, rest_sed_knot_nodust
     rest_seds = rest_sed_bulge, rest_sed_dd, rest_sed_knot
-    masses = mbulge, mdd, mknot, mburst, mstar_t_obs
+    rest_seds_nodust = rest_sed_bulge_nodust, rest_sed_dd_nodust, rest_sed_knot_nodust
+    masses = mbulge, mdd, mknot, mburst, mstar_total
 
-    ret = (*rest_seds, *rest_seds_nodust, *masses, gal_frac_bulge_t_obs)
-    return ret
+    ret = (*rest_seds, *rest_seds_nodust, *masses)
+    return DiffskySEDInfo(*ret)
 
 
 _DBK = (*[0] * 6, *[None] * 11)
@@ -191,22 +208,24 @@ def calc_rest_sed_disk_bulge_knot_galpop(
     met_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
-    return _calc_rest_sed_disk_bulge_knot_vmap(
-        z_obs,
-        diffmah_params,
-        diffstar_ms_params,
-        diffstar_q_params,
-        fbulge_params,
-        fknot,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
-        ssp_wave_ang,
-        ssp_flux,
-        lgfburst_pop_u_params,
-        burstshapepop_u_params,
-        lgav_pop_u_params,
-        dust_delta_pop_u_params,
-        fracuno_pop_u_params,
-        met_params,
-        cosmo_params,
+    return DiffskySEDInfo(
+        *_calc_rest_sed_disk_bulge_knot_vmap(
+            z_obs,
+            diffmah_params,
+            diffstar_ms_params,
+            diffstar_q_params,
+            fbulge_params,
+            fknot,
+            ssp_lgmet,
+            ssp_lg_age_gyr,
+            ssp_wave_ang,
+            ssp_flux,
+            lgfburst_pop_u_params,
+            burstshapepop_u_params,
+            lgav_pop_u_params,
+            dust_delta_pop_u_params,
+            fracuno_pop_u_params,
+            met_params,
+            cosmo_params,
+        )
     )
