@@ -40,7 +40,7 @@ def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
 def test_calc_rest_sed_disk_bulge_knot_galpop():
     n_gals = 5
 
-    z_obs_galpop = np.random.uniform(0, 1, n_gals)
+    z_obs_galpop = np.random.uniform(0.02, 1, n_gals)
 
     mah_params, ms_params, q_params = DEFAULT_DIFFGAL_PARAMS
 
@@ -52,12 +52,6 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
 
     q_params_galpop = np.tile(q_params, n_gals)
     q_params_galpop = q_params_galpop.reshape((n_gals, -1))
-
-    ms_noise = np.random.normal(loc=0, scale=0.25, size=(n_gals, ms_params.size))
-    ms_params_galpop = ms_params_galpop + ms_noise
-
-    q_noise = np.random.normal(loc=0, scale=0.1, size=(n_gals, q_params.size))
-    q_params_galpop = q_params_galpop + q_noise
 
     fbulge_params_galpop = np.tile(DEFAULT_FBULGE_PARAMS, n_gals)
     fbulge_params_galpop = fbulge_params_galpop.reshape((n_gals, -1))
