@@ -1,3 +1,8 @@
+0.1.2 (unreleased)
+-------------------
+- Add convenience functions for computing SEDs
+
+
 0.1.1 (2023-10-03)
 -------------------
 - Update calls to dsps v0.3.4

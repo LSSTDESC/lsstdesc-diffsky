@@ -1,4 +1,4 @@
-lsstdesc_diffsky
+lsstdesc-diffsky
 ================
 
 lsstdesc-diffsky is a python library based on JAX
