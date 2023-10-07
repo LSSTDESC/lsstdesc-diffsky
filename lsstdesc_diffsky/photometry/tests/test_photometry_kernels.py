@@ -21,7 +21,7 @@ from ..precompute_ssp_tables import (
 
 
 def test_precompute_and_exact_photometry_agree():
-    n_gals = 10
+    n_gals = 2
 
     ran_key = jran.PRNGKey(0)
     z_obs_key, morphology_key = jran.split(ran_key, 2)
@@ -51,23 +51,23 @@ def test_precompute_and_exact_photometry_agree():
     n_obs_filters = 6
     n_rest_filters = 6
 
+    args = (
+        z_obs_galpop,
+        mah_params_galpop,
+        ms_params_galpop,
+        q_params_galpop,
+        *ssp_data,
+        *diffskypop_params,
+        rest_filter_waves,
+        rest_filter_trans,
+        obs_filter_waves,
+        obs_filter_trans,
+        OUTER_RIM_COSMO_PARAMS,
+    )
 
-#     args = (
-#         z_obs_galpop,
-#         mah_params_galpop,
-#         ms_params_galpop,
-#         q_params_galpop,
-#         *ssp_data,
-#         *diffskypop_params,
-#         rest_filter_waves,
-#         rest_filter_trans,
-#         obs_filter_waves,
-#         obs_filter_trans,
-#         OUTER_RIM_COSMO_PARAMS,
-#     )
+    _res = calc_photometry_galpop(*args)
+    rest_mags, obs_mags, rest_mags_nodust, obs_mags_nodust = _res
 
-#     _res = calc_photometry_galpop(*args)
-#     rest_mags, obs_mags, rest_mags_nodust, obs_mags_nodust = _res
 
 #     ssp_z_table = np.linspace(z_obs_galpop.min() / 2, z_obs_galpop.max() + 0.1, 51)
 
