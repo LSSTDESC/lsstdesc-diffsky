@@ -104,14 +104,6 @@ def test_calc_rest_sed_galpop():
     q_params_galpop = np.tile(DEFAULT_Q_PARAMS, n_gals)
     q_params_galpop = q_params_galpop.reshape((n_gals, -1))
 
-    ms_noise = np.random.normal(
-        loc=0, scale=0.25, size=(n_gals, DEFAULT_MS_PARAMS.size)
-    )
-    ms_params_galpop = ms_params_galpop + ms_noise
-
-    q_noise = np.random.normal(loc=0, scale=0.1, size=(n_gals, DEFAULT_Q_PARAMS.size))
-    q_params_galpop = q_params_galpop + q_noise
-
     ssp_data = load_fake_ssp_data()
     n_met, n_age, n_wave = ssp_data.ssp_flux.shape
 

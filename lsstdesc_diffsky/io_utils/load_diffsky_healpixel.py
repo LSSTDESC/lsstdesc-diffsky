@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 import h5py
 import numpy as np
-from astropy.table import Table
 
 from ..constants import (
     BURSTSHAPE_PNAMES,
@@ -38,7 +37,7 @@ def load_healpixel(fn):
 
     Returns
     -------
-    data : astropy.table.Table
+    data : dict
 
     metadata : dict
 
@@ -158,7 +157,7 @@ def _flatten_data_collection(data_collection):
 
         ifirst = ilast
 
-    mockout = Table()
+    mockout = OrderedDict()
     mockout["snapnum"] = snapshot_ndarray
     for ndarray, key in zip(scalar_ndarrays, data_colnames):
         mockout[key] = ndarray
