@@ -27,7 +27,6 @@ from diffstar.defaults import FB
 from diffstar.sfh import sfh_galpop
 
 # SED generation
-from dsps.cosmology import flat_wcdm
 from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from galsampler import crossmatch
@@ -41,6 +40,7 @@ from jax import random as jran
 
 from .black_hole_modeling.black_hole_accretion_rate import monte_carlo_bh_acc_rate
 from .black_hole_modeling.black_hole_mass import monte_carlo_black_hole_mass
+from .defaults import CosmoParams
 from .diffstarpop.mc_diffstar import mc_diffstarpop
 from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
 
@@ -1403,23 +1403,23 @@ def generate_SEDs(
     log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
     dc2["log_ssfr"] = log_ssfr
 
-    cosmo_params = flat_wcdm.CosmoParams(
-        cosmology.Om0, w0, wa, cosmology.H0.value / 100
-    )
+    fb = cosmology.Ob0 / cosmology.Om0
+    cosmo_params = CosmoParams(cosmology.Om0, w0, wa, cosmology.H0.value / 100, fb)
 
     # compute SEDs
     ran_key = jran.PRNGKey(seed)
     _res = get_diffsky_sed_info(
         ran_key,
+        dc2["redshift"],
+        mah_params,
+        ms_params,
+        q_params,
         SED_params["ssp_z_table"],
         SED_params["ssp_restmag_table"],
         SED_params["ssp_obsmag_table"],
         SED_params["ssp_lgmet"],
         SED_params["ssp_lg_age_gyr"],
         SED_params["t_table"],
-        dc2["redshift"],
-        sfh_table,
-        cosmo_params,
         SED_params["filter_waves"],
         SED_params["filter_trans"],
         SED_params["filter_waves"],
@@ -1430,6 +1430,7 @@ def generate_SEDs(
         np.array(list(SED_params["delta_dust_u_params"].values())),
         np.array(list(SED_params["fracuno_pop_u_params"].values())),
         np.array(list(SED_params["lgmet_params"].values())),
+        cosmo_params,
     )
 
     # save quantities to DC2

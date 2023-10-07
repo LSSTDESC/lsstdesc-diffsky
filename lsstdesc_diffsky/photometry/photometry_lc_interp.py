@@ -7,6 +7,8 @@ a population of diffsky galaxies
 bulge, diffuse disk, star-forming knots
 
 """
+import typing
+
 from diffsky.experimental.dspspop.burstshapepop import (
     _get_burstshape_galpop_from_u_params,
 )
@@ -16,8 +18,9 @@ from diffsky.experimental.dspspop.dustpop import (
 )
 from diffsky.experimental.dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
 from diffsky.experimental.photometry_interpolation import interpolate_ssp_photmag_table
+from diffstar import sfh_galpop
 from diffstar.defaults import SFR_MIN
-from dsps.cosmology.flat_wcdm import _age_at_z_vmap
+from dsps.cosmology.flat_wcdm import _age_at_z_vmap, age_at_z0
 from dsps.experimental.diffburst import (
     _age_weights_from_u_params as _burst_age_weights_from_u_params,
 )
@@ -56,17 +59,35 @@ _burst_age_weights_from_u_params_vmap = jjit(
 _get_burst_params_from_u_params_vmap = jjit(vmap(_get_burst_params_from_u_params))
 
 
+class DiffskySEDinfo(typing.NamedTuple):
+    gal_ssp_weights: jnp.ndarray
+    gal_frac_trans_obs: jnp.ndarray
+    gal_frac_trans_rest: jnp.ndarray
+    gal_att_curve_params: jnp.ndarray
+    gal_frac_unobs: jnp.ndarray
+    gal_fburst: jnp.ndarray
+    gal_burstshape_params: jnp.ndarray
+    gal_frac_bulge_t_obs: jnp.ndarray
+    gal_fbulge_params: jnp.ndarray
+    gal_fknot: jnp.ndarray
+    gal_obsmags_nodust: jnp.ndarray
+    gal_restmags_nodust: jnp.ndarray
+    gal_obsmags_dust: jnp.ndarray
+    gal_restmags_dust: jnp.ndarray
+
+
 def get_diffsky_sed_info(
     ran_key,
+    gal_z_obs,
+    mah_params,
+    ms_params,
+    q_params,
     ssp_z_table,
     ssp_restmag_table,
     ssp_obsmag_table,
     ssp_lgmet,
     ssp_lg_age_gyr,
     gal_t_table,
-    gal_z_obs,
-    gal_sfr_table,
-    cosmo_params,
     rest_filter_waves,
     rest_filter_trans,
     obs_filter_waves,
@@ -77,6 +98,7 @@ def get_diffsky_sed_info(
     dust_delta_u_params,
     fracuno_pop_u_params,
     met_params,
+    cosmo_params,
 ):
     """Compute SED and photometry for population of Diffsky galaxies
 
@@ -84,6 +106,20 @@ def get_diffsky_sed_info(
     ----------
     ran_key : jax.random.PRNGKey
         Random number seed used to assign values for disk/bulge/knot decomposition
+
+    gal_z_obs : ndarray, shape (n_gals, )
+        Redshift of each galaxy
+
+    mah_params : ndarray, shape (n_gals, 4)
+        Diffmah params specifying the mass assembly of the dark matter halo
+        diffmah_params = (logm0, logtc, early_index, late_index)
+
+    ms_params : ndarray, shape (n_gals, 5)
+        Diffstar params for the star-formation effiency and gas consumption timescale
+        ms_params = (lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep)
+
+    q_params : ndarray, shape (n_gals, 4)
+        Diffstar quenching params, (lg_qt, qlglgdt, lg_drop, lg_rejuv)
 
     ssp_z_table : ndarray, shape (n_z_table, )
         Table storing a grid in redshift at which SSP photometry have been precomputed
@@ -106,15 +142,6 @@ def get_diffsky_sed_info(
         Grid in cosmic time t in Gyr at which SFH of the galaxy population is tabulated
         gal_t_table should increase monotonically and it should span the
         full range of gal_t_obs, including some padding of a few million years
-
-    gal_z_obs : ndarray, shape (n_gals, )
-        Redshift of each galaxy
-
-    gal_sfr_table : ndarray, shape (n_gals, n_t)
-        Grid in SFR in Msun/yr for each galaxy tabulated at the input gal_t_table
-
-    cosmo_params : ndarray, shape (n_cosmo, )
-        In dsps.cosmology.flat_wcdm, cosmo_params = (Om0, w0, wa, h)
 
     rest_filter_waves : ndarray, shape (n_rest_filters, n_trans_wave)
         Grid in λ in angstroms at which n_rest_filters filter transmission
@@ -166,6 +193,9 @@ def get_diffsky_sed_info(
         For typical values, see dsps.metallicity.mzr.DEFAULT_MZR_PDICT
         mzr_params = met_params[:-1]
         lgmet_scatter = met_params[-1]
+
+    cosmo_params : ndarray, shape (n_cosmo, )
+        Defined in lsstdesc_diffsky.defaults, cosmo_params = (Om0, w0, wa, h, fb)
 
     Returns
     ----------
@@ -222,6 +252,13 @@ def get_diffsky_sed_info(
     """
     # Bounds check input arguments and extract array shapes and sizes
     _check_ssp_info_shapes(ssp_z_table, gal_z_obs)
+
+    fb = cosmo_params[-1]
+    t0 = age_at_z0(*cosmo_params[:-1])
+    lgt0 = jnp.log10(t0)
+    gal_sfr_table = sfh_galpop(
+        gal_t_table, mah_params, ms_params, q_params, lgt0=lgt0, fb=fb
+    )
 
     ssp_obsmag_table_pergal = _get_ssp_obsmag_table_pergal(
         gal_z_obs, ssp_z_table, ssp_obsmag_table, ssp_restmag_table, gal_sfr_table
@@ -356,8 +393,9 @@ def get_diffsky_sed_info(
     bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
     gal_frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
 
-    return (
-        gal_weights.reshape((n_gals, n_met, n_age)),
+    gal_ssp_weights = gal_weights.reshape((n_gals, n_met, n_age))
+    sed_info = DiffskySEDinfo(
+        gal_ssp_weights,
         gal_frac_trans_obs,
         gal_frac_trans_rest,
         gal_att_curve_params,
@@ -372,12 +410,14 @@ def get_diffsky_sed_info(
         gal_obsmags_dust,
         gal_restmags_dust,
     )
+    return sed_info
 
 
 def _get_galprops_at_t_obs(
     gal_z_obs, gal_t_table, gal_sfr_table, mzr_params, cosmo_params
 ):
-    gal_t_obs = _age_at_z_vmap(gal_z_obs, *cosmo_params)
+    Om0, w0, wa, h, fb = cosmo_params
+    gal_t_obs = _age_at_z_vmap(gal_z_obs, Om0, w0, wa, h)
     lgt_obs = jnp.log10(gal_t_obs)
     lgt_table = jnp.log10(gal_t_table)
 

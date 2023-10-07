@@ -15,6 +15,7 @@ from jax import jit as jjit
 from jax import random as jran
 from jax import vmap
 
+from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
 from ..photometry_lc_interp import get_diffsky_sed_info
 
@@ -36,10 +37,18 @@ def test_get_diffsky_sed_info():
     n_gals = 150
     gal_z_obs = np.random.uniform(0.01, 2.5, n_gals)
 
-    gal_sfr_table = np.random.uniform(0, 100, n_gals * n_t).reshape((n_gals, n_t))
+    mah_params, ms_params, q_params = DEFAULT_DIFFGAL_PARAMS
+    mah_params_galpop = np.tile(mah_params, n_gals)
+    mah_params_galpop = mah_params_galpop.reshape((n_gals, -1))
 
-    Om0, w0, wa, h = 0.3, -1, 0.0, 0.7
-    cosmo_params = np.array((Om0, w0, wa, h))
+    ms_params_galpop = np.tile(ms_params, n_gals)
+    ms_params_galpop = ms_params_galpop.reshape((n_gals, -1))
+
+    q_params_galpop = np.tile(q_params, n_gals)
+    q_params_galpop = q_params_galpop.reshape((n_gals, -1))
+
+    Om0, w0, wa, h, fb = 0.3, -1, 0.0, 0.7, 0.16
+    cosmo_params = np.array((Om0, w0, wa, h, fb))
 
     # n_wave_seds = 300
     # ssp_rest_seds = np.random.uniform(size=(n_met, n_age, n_wave_seds))
@@ -64,16 +73,16 @@ def test_get_diffsky_sed_info():
     ran_key = jran.PRNGKey(0)
     _res = get_diffsky_sed_info(
         ran_key,
+        gal_z_obs,
+        mah_params_galpop,
+        ms_params_galpop,
+        q_params_galpop,
         ssp_z_table,
-        # ssp_rest_seds,
         ssp_restmag_table,
         ssp_obsmag_table,
         ssp_lgmet,
         ssp_lg_age_gyr,
         gal_t_table,
-        gal_z_obs,
-        gal_sfr_table,
-        cosmo_params,
         rest_filter_waves,
         rest_filter_trans,
         obs_filter_waves,
@@ -84,6 +93,7 @@ def test_get_diffsky_sed_info():
         DEFAULT_DUST_DELTA_U_PARAMS,
         DEFAULT_FUNO_U_PARAMS,
         DEFAULT_MET_PARAMS,
+        cosmo_params,
     )
     for x in _res:
         assert np.all(np.isfinite(x))
