@@ -2,4 +2,4 @@
 """
 # flake8: noqa
 
-from .param_reader import read_mock_params
+from .param_reader import read_diffskypop_params

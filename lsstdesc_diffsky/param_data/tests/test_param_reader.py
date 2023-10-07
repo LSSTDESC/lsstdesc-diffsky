@@ -8,10 +8,10 @@ from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_PDICT
 from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_PDICT
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 
-from ..param_reader import read_mock_param_dictionaries, read_mock_params
+from ..param_reader import read_diffskypop_params, read_mock_param_dictionaries
 
 
-def test_read_mock_params_roman_rubin_2023():
+def test_read_diffskypop_params_roman_rubin_2023():
     all_pdicts = read_mock_param_dictionaries("roman_rubin_2023")
     (
         lgfburst_u_pdict,
@@ -30,8 +30,8 @@ def test_read_mock_params_roman_rubin_2023():
     assert set(DEFAULT_MET_PDICT.keys()) == set(met_pdict.keys())
 
 
-def test_read_mock_params():
-    all_params = read_mock_params("roman_rubin_2023")
+def test_read_diffskypop_params():
+    all_params = read_diffskypop_params("roman_rubin_2023")
     all_pdicts = read_mock_param_dictionaries("roman_rubin_2023")
     for p, d in zip(all_params, all_pdicts):
         assert np.allclose(p, np.array(list(d.values())))
