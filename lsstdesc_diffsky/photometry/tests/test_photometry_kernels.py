@@ -46,6 +46,8 @@ def test_precompute_and_exact_photometry_agree():
     obs_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
     rest_filter_trans = np.array((u, g, r, i, z, y))
     obs_filter_trans = np.array((u, g, r, i, z, y))
+    n_obs_filters = 6
+    n_rest_filters = 6
 
     args = (
         z_obs_galpop,
@@ -107,3 +109,8 @@ def test_precompute_and_exact_photometry_agree():
     assert np.allclose(sed_info.gal_restmags_dust, rest_mags, atol=atol)
     assert np.allclose(sed_info.gal_obsmags_nodust, obs_mags_nodust, atol=atol)
     assert np.allclose(sed_info.gal_restmags_nodust, rest_mags_nodust, atol=atol)
+
+    assert obs_mags.shape == (n_gals, n_obs_filters)
+    assert rest_mags.shape == (n_gals, n_rest_filters)
+    assert obs_mags_nodust.shape == (n_gals, n_obs_filters)
+    assert rest_mags_nodust.shape == (n_gals, n_rest_filters)

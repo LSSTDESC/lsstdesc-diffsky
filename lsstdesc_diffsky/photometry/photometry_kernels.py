@@ -17,9 +17,9 @@ calc_rest_mag_vmap = jjit(vmap(calc_rest_mag, in_axes=_R))
 @jjit
 def calc_photometry_singlegal(
     z_obs,
-    diffmah_params,
-    diffstar_ms_params,
-    diffstar_q_params,
+    mah_params,
+    ms_params,
+    q_params,
     ssp_lgmet,
     ssp_lg_age_gyr,
     ssp_wave_ang,
@@ -39,9 +39,9 @@ def calc_photometry_singlegal(
     """Calculate the photometry of an individual diffsky galaxy"""
     _res = calc_rest_sed_singlegal(
         z_obs,
-        diffmah_params,
-        diffstar_ms_params,
-        diffstar_q_params,
+        mah_params,
+        ms_params,
+        q_params,
         ssp_lgmet,
         ssp_lg_age_gyr,
         ssp_wave_ang,
@@ -94,9 +94,9 @@ _calc_photometry_galpop_kern = jjit(vmap(calc_photometry_singlegal, in_axes=_P))
 @jjit
 def calc_photometry_galpop(
     z_obs,
-    diffmah_params,
-    diffstar_ms_params,
-    diffstar_q_params,
+    mah_params,
+    ms_params,
+    q_params,
     ssp_lgmet,
     ssp_lg_age_gyr,
     ssp_wave_ang,
@@ -113,11 +113,106 @@ def calc_photometry_galpop(
     obs_filter_trans,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
+    """Compute SED and photometry for population of Diffsky galaxies
+
+    Parameters
+    ----------
+    z_obs : ndarray, shape (n_gals, )
+        Redshift of each galaxy
+
+    mah_params : ndarray, shape (n_gals, 4)
+        Diffmah params specifying the mass assembly of the dark matter halo
+        diffmah_params = (logm0, logtc, early_index, late_index)
+
+    ms_params : ndarray, shape (n_gals, 5)
+        Diffstar params for the star-formation effiency and gas consumption timescale
+        ms_params = (lgmcrit, lgy_at_mcrit, indx_lo, indx_hi, tau_dep)
+
+    q_params : ndarray, shape (n_gals, 4)
+        Diffstar quenching params, (lg_qt, qlglgdt, lg_drop, lg_rejuv)
+
+    ssp_lgmet : ndarray, shape (n_met, )
+        Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
+
+    ssp_lg_age_gyr : ndarray, shape (n_age, )
+        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+
+    ssp_wave_ang : ndarray, shape (n_wave, )
+        Array of wavelengths in angstroms at which the SSP SEDs are tabulated
+
+    ssp_flux : ndarray, shape (n_met, n_age, n_wave)
+        Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
+
+    lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
+        Unbounded parameters controlling Fburst, which sets the fractional contribution
+        of a recent burst to the smooth SFH of a galaxy. For typical values, see
+        diffsky.experimental.dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
+
+    burstshapepop_u_params : ndarray, shape (n_pars_burstshape_pop, )
+        Unbounded parameters controlling the distribution of stellar ages
+        of stars formed in a recent burst. For typical values, see
+        diffsky.experimental.dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
+
+    lgav_u_params : ndarray, shape (n_pars_lgav_pop, )
+        Unbounded parameters controlling the distribution of dust parameter Av,
+        the normalization of the attenuation curve at λ_V=5500 angstrom.
+        For typical values, see
+        diffsky.experimental.dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
+
+    dust_delta_u_params : ndarray, shape (n_pars_dust_delta_pop, )
+        Unbounded parameters controlling the distribution of dust parameter δ,
+        which modifies the power-law slope of the attenuation curve. For typical values,
+        see diffsky.experimental.dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
+
+    fracuno_pop_u_params : ndarray, shape (n_pars_fracuno_pop, )
+        Unbounded parameters controlling the fraction of sightlines unobscured by dust.
+        For typical values, see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
+
+    met_params : ndarray, shape (n_pars_met_pop, ), optional
+        Parameters controlling the mass-metallicity scaling relation.
+        For typical values, see dsps.metallicity.mzr.DEFAULT_MZR_PDICT
+        mzr_params = met_params[:-1]
+        lgmet_scatter = met_params[-1]
+
+    rest_filter_waves : ndarray, shape (n_rest_filters, n_trans_wave)
+        Grid in λ in angstroms at which n_rest_filters filter transmission
+        curves are defined.
+
+        Note that each observer- and rest-frame filter transmission curve must be
+        specified by a λ-grid with the same number of points.
+
+    rest_filter_trans : ndarray, shape (n_rest_filters, n_trans_wave)
+        Transmission curves of n_rest_filters for photometry restframe absolute mags
+
+    obs_filter_waves : ndarray, shape (n_obs_filters, n_trans_wave)
+        Grid in λ in angstroms at which n_obs_filters filter transmission
+        curves are defined
+
+        Note that each observer- and rest-frame filter transmission curve must be
+        specified by a λ-grid with the same number of points.
+
+    obs_filter_trans : ndarray, shape (n_obs_filters, n_trans_wave)
+        Transmission curves of n_obs_filters for photometry apparent mags
+
+    cosmo_params : ndarray, shape (n_cosmo, )
+        Defined in lsstdesc_diffsky.defaults, cosmo_params = (Om0, w0, wa, h, fb)
+
+    Returns
+    ----------
+    rest_mags : ndarray, shape (n_gals, n_rest_filters)
+
+    obs_mags : ndarray, shape (n_gals, n_obs_filters)
+
+    rest_mags_nodust : ndarray, shape (n_gals, n_rest_filters)
+
+    obs_mags_nodust : ndarray, shape (n_gals, n_obs_filters)
+
+    """
     return _calc_photometry_galpop_kern(
         z_obs,
-        diffmah_params,
-        diffstar_ms_params,
-        diffstar_q_params,
+        mah_params,
+        ms_params,
+        q_params,
         ssp_lgmet,
         ssp_lg_age_gyr,
         ssp_wave_ang,
