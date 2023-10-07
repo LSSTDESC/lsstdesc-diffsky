@@ -12,4 +12,4 @@ def compute_shasum(fn):
     return shasum
 
 
-from .load_diffsky_healpixel import load_diffsky_healpixel, load_diffsky_params
+from .load_diffsky_healpixel import load_diffsky_params, load_healpixel

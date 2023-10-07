@@ -28,7 +28,7 @@ class DiffskyParams(typing.NamedTuple):
     fknot: np.float32
 
 
-def load_diffsky_healpixel(fn):
+def load_healpixel(fn):
     """Load a Diffsky healpixel from hdf5, concatenating data stored by snapshot
 
     Parameters

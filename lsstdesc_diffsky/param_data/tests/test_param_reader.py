@@ -11,7 +11,7 @@ from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from ..param_reader import read_mock_param_dictionaries, read_mock_params
 
 
-def test_read_mock_params_roman_rubin_2023():
+def test_read_diffskypop_params_roman_rubin_2023():
     all_pdicts = read_mock_param_dictionaries("roman_rubin_2023")
     (
         lgfburst_u_pdict,
