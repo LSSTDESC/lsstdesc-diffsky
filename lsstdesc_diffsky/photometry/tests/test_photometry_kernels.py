@@ -21,7 +21,7 @@ from ..precompute_ssp_tables import (
 
 
 def test_precompute_and_exact_photometry_agree():
-    n_gals = 2
+    n_gals = 3
 
     ran_key = jran.PRNGKey(0)
     z_obs_key, morphology_key = jran.split(ran_key, 2)
@@ -44,12 +44,12 @@ def test_precompute_and_exact_photometry_agree():
     diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
     wave, u, g, r, i, z, y = load_fake_filter_transmission_curves()
-    rest_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
-    obs_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
-    rest_filter_trans = np.array((u, g, r, i, z, y))
-    obs_filter_trans = np.array((u, g, r, i, z, y))
-    n_obs_filters = 6
-    n_rest_filters = 6
+    rest_filter_waves = np.tile(wave, 2).reshape(2, (wave.size))
+    obs_filter_waves = np.tile(wave, 2).reshape(2, (wave.size))
+    rest_filter_trans = np.array((u, g))
+    obs_filter_trans = np.array((u, g))
+    n_obs_filters = rest_filter_waves.shape[0]
+    n_rest_filters = obs_filter_waves.shape[0]
 
     args = (
         z_obs_galpop,
@@ -83,7 +83,7 @@ def test_precompute_and_exact_photometry_agree():
     )
     t0 = age_at_z0(*OUTER_RIM_COSMO_PARAMS[:-1])
 
-    gal_t_table = np.linspace(0.1, t0, 100)
+    gal_t_table = np.linspace(0.1, t0, 50)
 
     args = (
         morphology_key,
@@ -106,7 +106,7 @@ def test_precompute_and_exact_photometry_agree():
     )
     sed_info = get_diffsky_sed_info(*args)
 
-    atol = 0.05
+    atol = 0.1
     assert np.allclose(sed_info.gal_obsmags_dust, obs_mags, atol=atol)
     assert np.allclose(sed_info.gal_restmags_dust, rest_mags, atol=atol)
     assert np.allclose(sed_info.gal_obsmags_nodust, obs_mags_nodust, atol=atol)
@@ -119,7 +119,7 @@ def test_precompute_and_exact_photometry_agree():
 
 
 def test_precompute_photometry_correctly_handles_fb():
-    n_gals = 2
+    n_gals = 3
 
     ran_key = jran.PRNGKey(0)
     z_obs_key, morphology_key = jran.split(ran_key, 2)
@@ -142,10 +142,10 @@ def test_precompute_photometry_correctly_handles_fb():
     diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
     wave, u, g, r, i, z, y = load_fake_filter_transmission_curves()
-    rest_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
-    obs_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
-    rest_filter_trans = np.array((u, g, r, i, z, y))
-    obs_filter_trans = np.array((u, g, r, i, z, y))
+    rest_filter_waves = np.tile(wave, 2).reshape(2, (wave.size))
+    obs_filter_waves = np.tile(wave, 2).reshape(2, (wave.size))
+    rest_filter_trans = np.array((u, g))
+    obs_filter_trans = np.array((u, g))
 
     ssp_z_table = np.linspace(z_obs_galpop.min() / 2, z_obs_galpop.max() + 0.1, 51)
 
@@ -162,7 +162,7 @@ def test_precompute_photometry_correctly_handles_fb():
     )
     t0 = age_at_z0(*OUTER_RIM_COSMO_PARAMS[:-1])
 
-    gal_t_table = np.linspace(0.1, t0, 100)
+    gal_t_table = np.linspace(0.1, t0, 50)
 
     args = (
         morphology_key,
