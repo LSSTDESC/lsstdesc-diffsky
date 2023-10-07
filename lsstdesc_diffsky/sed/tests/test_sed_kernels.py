@@ -13,7 +13,7 @@ from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
 from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
 from dsps.metallicity.defaults import DEFAULT_MET_PARAMS
 
-from ... import read_mock_params
+from ... import read_diffskypop_params
 from ..sed_kernels import calc_rest_sed_galpop, calc_rest_sed_singlegal
 
 
@@ -56,7 +56,7 @@ def test_calc_rest_sed_evaluates_with_default_params():
 
 
 def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
-    all_params = read_mock_params("roman_rubin_2023")
+    all_params = read_diffskypop_params("roman_rubin_2023")
 
     z_obs = 0.1
 
@@ -115,7 +115,7 @@ def test_calc_rest_sed_galpop():
     ssp_data = load_fake_ssp_data()
     n_met, n_age, n_wave = ssp_data.ssp_flux.shape
 
-    all_mock_params = read_mock_params("roman_rubin_2023")
+    all_mock_params = read_diffskypop_params("roman_rubin_2023")
 
     _res = calc_rest_sed_galpop(
         z_obs_galpop,

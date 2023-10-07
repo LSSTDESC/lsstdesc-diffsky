@@ -64,7 +64,7 @@ def read_mock_param_dictionaries(mock_name):
     return all_param_dictionaries
 
 
-def read_mock_params(mock_name):
+def read_diffskypop_params(mock_name):
     """Read the parameter arrays defining the model used to generate a diffsky mock
 
     Parameters
