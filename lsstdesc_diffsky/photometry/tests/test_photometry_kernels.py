@@ -114,3 +114,96 @@ def test_precompute_and_exact_photometry_agree():
     assert rest_mags.shape == (n_gals, n_rest_filters)
     assert obs_mags_nodust.shape == (n_gals, n_obs_filters)
     assert rest_mags_nodust.shape == (n_gals, n_rest_filters)
+
+
+def test_precompute_photometry_correctly_handles_fb():
+    n_gals = 10
+
+    ran_key = jran.PRNGKey(0)
+    z_obs_key, morphology_key = jran.split(ran_key, 2)
+    z_obs_galpop = jran.uniform(z_obs_key, minval=0.02, maxval=1, shape=(n_gals,))
+
+    DEFAULT_MAH_PARAMS, DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS = DEFAULT_DIFFGAL_PARAMS
+
+    mah_params_galpop = np.tile(DEFAULT_MAH_PARAMS, n_gals)
+    mah_params_galpop = mah_params_galpop.reshape((n_gals, -1))
+
+    ms_params_galpop = np.tile(DEFAULT_MS_PARAMS, n_gals)
+    ms_params_galpop = ms_params_galpop.reshape((n_gals, -1))
+
+    q_params_galpop = np.tile(DEFAULT_Q_PARAMS, n_gals)
+    q_params_galpop = q_params_galpop.reshape((n_gals, -1))
+
+    ssp_data = load_fake_ssp_data()
+    n_met, n_age, n_wave = ssp_data.ssp_flux.shape
+
+    diffskypop_params = read_diffskypop_params("roman_rubin_2023")
+
+    wave, u, g, r, i, z, y = load_fake_filter_transmission_curves()
+    rest_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
+    obs_filter_waves = np.tile(wave, 6).reshape(6, (wave.size))
+    rest_filter_trans = np.array((u, g, r, i, z, y))
+    obs_filter_trans = np.array((u, g, r, i, z, y))
+
+    ssp_z_table = np.linspace(z_obs_galpop.min() / 2, z_obs_galpop.max() + 0.1, 51)
+
+    ssp_restmag_table = precompute_ssp_restmags(
+        ssp_data.ssp_wave, ssp_data.ssp_flux, rest_filter_waves, rest_filter_trans
+    )
+    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table(
+        ssp_data.ssp_wave,
+        ssp_data.ssp_flux,
+        obs_filter_waves,
+        obs_filter_trans,
+        ssp_z_table,
+        *OUTER_RIM_COSMO_PARAMS[:-1]
+    )
+    t0 = age_at_z0(*OUTER_RIM_COSMO_PARAMS[:-1])
+
+    gal_t_table = np.linspace(0.1, t0, 100)
+
+    args = (
+        morphology_key,
+        z_obs_galpop,
+        mah_params_galpop,
+        ms_params_galpop,
+        q_params_galpop,
+        ssp_z_table,
+        ssp_restmag_table,
+        ssp_obsmag_table,
+        ssp_data.ssp_lgmet,
+        ssp_data.ssp_lg_age_gyr,
+        gal_t_table,
+        rest_filter_waves,
+        rest_filter_trans,
+        obs_filter_waves,
+        obs_filter_trans,
+        *diffskypop_params,
+        OUTER_RIM_COSMO_PARAMS,
+    )
+    sed_info = get_diffsky_sed_info(*args)
+
+    cosmo_pars2 = (*OUTER_RIM_COSMO_PARAMS[:-1], 0.1)
+    args = (
+        morphology_key,
+        z_obs_galpop,
+        mah_params_galpop,
+        ms_params_galpop,
+        q_params_galpop,
+        ssp_z_table,
+        ssp_restmag_table,
+        ssp_obsmag_table,
+        ssp_data.ssp_lgmet,
+        ssp_data.ssp_lg_age_gyr,
+        gal_t_table,
+        rest_filter_waves,
+        rest_filter_trans,
+        obs_filter_waves,
+        obs_filter_trans,
+        *diffskypop_params,
+        cosmo_pars2,
+    )
+    sed_info2 = get_diffsky_sed_info(*args)
+
+    # fb2 < fb so there galaxies should be fainter in cosmo2
+    assert np.all(sed_info.gal_restmags_dust < sed_info2.gal_restmags_dust)
