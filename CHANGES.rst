@@ -1,3 +1,8 @@
+0.1.3 (2023-10-07)
+-------------------
+- Add convenience functions for computing photometry and loading healpixels of data
+
+
 0.1.2 (2023-10-06)
 -------------------
 - Add convenience functions for computing SEDs
