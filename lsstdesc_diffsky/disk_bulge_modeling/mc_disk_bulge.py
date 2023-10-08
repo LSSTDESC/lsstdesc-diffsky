@@ -73,14 +73,16 @@ def generate_fbulge_params(
     logsm0,
     mu_u_tcrit=2,
     delta_mu_u_tcrit=3,
-    mu_u_early=20,
+    mu_u_early=5,
     delta_mu_u_early=0.1,
-    mu_u_late=20,
+    mu_u_late=5,
     delta_mu_u_late=3,
+    scale_u_early=10,
+    scale_u_late=8,
+    scale_u_tcrit=20,
 ):
     n = t10.size
     tcrit_key, early_key, late_key = jran.split(ran_key, 3)
-    scale_u_tcrit = 10
     u_tcrit_table = [
         mu_u_tcrit - delta_mu_u_tcrit * scale_u_tcrit,
         mu_u_tcrit + delta_mu_u_tcrit * scale_u_tcrit,
@@ -89,7 +91,6 @@ def generate_fbulge_params(
     mu_u_tcrit_pop = np.interp(logsm0, logsm_table, u_tcrit_table)
     mc_u_tcrit = jran.normal(tcrit_key, shape=(n,)) * scale_u_tcrit + mu_u_tcrit_pop
 
-    scale_u_early = 5
     u_early_table = [
         mu_u_early - delta_mu_u_early * scale_u_early,
         mu_u_early + delta_mu_u_early * scale_u_early,
@@ -97,7 +98,6 @@ def generate_fbulge_params(
     mu_u_early_pop = np.interp(logsm0, logsm_table, u_early_table)
     mc_u_early = jran.normal(early_key, shape=(n,)) * scale_u_early + mu_u_early_pop
 
-    scale_u_late = 8
     u_late_table = [
         mu_u_late + delta_mu_u_late * scale_u_late,
         mu_u_late - delta_mu_u_late * scale_u_late,
