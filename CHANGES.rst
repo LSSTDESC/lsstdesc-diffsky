@@ -1,3 +1,8 @@
+0.1.4 (2023-10-08)
+-------------------
+- Improve diversity in morphology: https://github.com/LSSTDESC/lsstdesc-diffsky/pull/66
+
+
 0.1.3 (2023-10-07)
 -------------------
 - Add convenience functions for computing photometry and loading healpixels of data
