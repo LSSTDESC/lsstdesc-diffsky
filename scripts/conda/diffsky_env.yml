@@ -1,4 +1,4 @@
-name: diffsky_v2
+name: diffsky_v3
 dependencies:
     - python=3.9
     - numpy 
