@@ -1,0 +1,65 @@
+description: 'Config file for producing diffsky mock catalog'
+
+version:
+    versionMajor: 0
+    versionMinor: 1
+    versionMinorMinor: 0
+
+file_dirs:  #relative to input_master_dirname, which is a supplied argument to production script
+    healpix_cutout_dirname: 'healpix_cutouts'
+    um_sfr_catalogs_dirname: 'UM_catalogs/smdpl_value_added_catalogs_diffstar_v0p2'
+    output_mock_dirname: 'roman_rubin_2023_v{}.{}.{}'
+    shape_dirname: 'OR_haloshapes'
+    pkldirname: 'production'
+    logdirname: 'production/logfiles'
+
+output_mock_subdirname:
+    ''
+
+file_names:
+    healpix_fname: 'cutout_{}.hdf5'
+    log_filename_template: 'cutout_{}_z_{}_{}_{}.log'
+
+parse_str:
+    um_split_fname: '.diffstar_fits'
+
+cosmology:
+    H0: 71.0
+    OmegaM: 0.2648
+    OmegaB: 0.0448
+    w0: -1.0
+    wa: 0.0
+
+nside: 32
+
+SEDs:
+    filters: ['lsst', 'sdss']
+    frames: ['rest', 'obs']
+    dz: .02
+    t_table_0: .05 
+    N_t_table: 100
+    use_diffmah_pop: True
+    dsps_data_dirname: 'dsps_data/FSPS_ssp_data'
+    dsps_data_filename: 'ssp_data_fsps_v3.2_lgmet_age.h5'
+
+param_data:
+    param_data_dirname: 'sed_model_param_data'
+    burstshape_fname: 'roman_rubin_2023/burstshape_u_params.txt'
+    delta_dust_fname: 'roman_rubin_2023/delta_dust_u_params.txt'
+    fracuno_pop_fname: 'roman_rubin_2023/funo_dust_u_params.txt'
+    lgav_dust_fname: 'roman_rubin_2023/lgav_dust_u_params.txt'
+    lgfburst_fname: 'roman_rubin_2023/lgfburst_u_params.txt'
+    lgmet_fname: 'roman_rubin_2023/lgmet_params.txt'
+
+empirical_models:
+    size_model_mag: 'SDSS_rest_R'
+    ellipticity_model_mag: 'SDSS_rest_R'
+    black_hole_model: 'SDSS_rest_R'
+
+synthetic_ultra_faints:
+    skip_synthetics: True
+    synthetic_halo_minimum_mass: 9.8
+    randomize_redshift_synthetic: True
+
+shears:
+    add_dummy_shears: True
