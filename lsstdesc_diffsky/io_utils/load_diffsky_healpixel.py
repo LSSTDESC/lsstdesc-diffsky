@@ -14,6 +14,14 @@ from ..constants import (
     Q_PNAMES,
 )
 
+ALL_DIFFSKY_PNAMES = []
+ALL_DIFFSKY_PNAMES.extend(MAH_PNAMES)
+ALL_DIFFSKY_PNAMES.extend(MS_PNAMES)
+ALL_DIFFSKY_PNAMES.extend(Q_PNAMES)
+ALL_DIFFSKY_PNAMES.extend(FBULGE_PNAMES)
+ALL_DIFFSKY_PNAMES.extend(BURSTSHAPE_PNAMES)
+ALL_DIFFSKY_PNAMES.extend(["fknot", "fburst"])
+
 
 class DiffskyParams(typing.NamedTuple):
     """NamedTuple storing parameters of a Diffsky galaxy"""
@@ -27,13 +35,19 @@ class DiffskyParams(typing.NamedTuple):
     fknot: np.float32
 
 
-def load_healpixel(fn):
+def load_healpixel(fn, patlist=tuple()):
     """Load a Diffsky healpixel from hdf5, concatenating data stored by snapshot
 
     Parameters
     ----------
     fn : string
         Path to the hdf5 file storing the healpixel
+
+    patlist : list of strings, optional
+        List of column name patterns used to retrieve extra columns from the healpixel
+        beyond only the Diffsky parameters. Default is None.
+        A common example would be patlist=('LSST', ) to retrieve all columns storing
+        some form of LSST photometry
 
     Returns
     -------
@@ -56,9 +70,16 @@ def load_healpixel(fn):
     see lsstdesc-diffsky/notebooks/demo_load_catalog.ipynb
 
     """
-    data_collection, metadata = collect_healpixel_data(fn)
+    data_collection, metadata = collect_healpixel_data(fn, patlist=patlist)
     data = _flatten_data_collection(data_collection)
     return data, metadata
+
+
+def _get_extra_colnames(all_keys, patlist):
+    extra_colnames = []
+    for pat in patlist:
+        extra_colnames.extend([key for key in all_keys if pat in key])
+    return extra_colnames
 
 
 def load_diffsky_params(cat):
@@ -112,7 +133,7 @@ def load_diffsky_params(cat):
     )
 
 
-def collect_healpixel_data(fn):
+def collect_healpixel_data(fn, patlist):
     with h5py.File(fn, "r") as hdf:
         metadataset = hdf["metaData"]
         metadata = dict()
@@ -121,13 +142,20 @@ def collect_healpixel_data(fn):
 
         _snaplist = [key for key in hdf.keys() if key != "metaData"]
         snapnums = sorted([int(key) for key in _snaplist])[::-1]
+        snapkey0 = str(snapnums[0])
+        dataset = hdf[snapkey0]
+        all_keys = list(dataset.keys())
+        extra_colnames = _get_extra_colnames(all_keys, patlist)
+        desired_dataset_colnames = ALL_DIFFSKY_PNAMES.copy()
+        desired_dataset_colnames.extend(extra_colnames)
+
         data_collection = OrderedDict()
         for snapnum in snapnums:
             snapkey = str(snapnum)
             dataset = hdf[snapkey]
             d = OrderedDict()
 
-            for key in dataset.keys():
+            for key in desired_dataset_colnames:
                 d[key] = dataset[key][...]
 
             data_collection[snapkey] = d
