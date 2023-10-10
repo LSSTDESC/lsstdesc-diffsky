@@ -20,7 +20,7 @@ ALL_DIFFSKY_PNAMES.extend(MS_PNAMES)
 ALL_DIFFSKY_PNAMES.extend(Q_PNAMES)
 ALL_DIFFSKY_PNAMES.extend(FBULGE_PNAMES)
 ALL_DIFFSKY_PNAMES.extend(BURSTSHAPE_PNAMES)
-ALL_DIFFSKY_PNAMES.extend(["fknot", "fburst"])
+ALL_DIFFSKY_PNAMES.extend(["fknot", "fburst", "redshift"])
 
 
 class DiffskyParams(typing.NamedTuple):
@@ -35,7 +35,7 @@ class DiffskyParams(typing.NamedTuple):
     fknot: np.float32
 
 
-def load_healpixel(fn, patlist=tuple()):
+def load_healpixel(fn, patlist=("LSST",)):
     """Load a Diffsky healpixel from hdf5, concatenating data stored by snapshot
 
     Parameters
@@ -46,7 +46,7 @@ def load_healpixel(fn, patlist=tuple()):
     patlist : list of strings, optional
         List of column name patterns used to retrieve extra columns from the healpixel
         beyond only the Diffsky parameters. Default is None.
-        A common example would be patlist=('LSST', ) to retrieve all columns storing
+        Default is patlist=('LSST', ) to retrieve all columns storing
         some form of LSST photometry
 
     Returns
