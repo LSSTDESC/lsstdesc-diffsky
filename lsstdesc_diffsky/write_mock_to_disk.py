@@ -379,27 +379,27 @@ def write_umachine_healpix_mock_to_disk(
     ]
 
     for k in roman_rubin_list:
-        if "lgfburst_u_params.txt" in k:
+        if "lgfburst_u_params" in k:
             SED_params["lgfburst_pop_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["lgfburst_fname"]
             )
-        if "burstshape_u_params.txt" in k:
+        if "burstshape_u_params" in k:
             SED_params["burstshapepop_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["burstshape_fname"]
             )
-        if "lgav_dust_u_params.txt" in k:
+        if "lgav_dust_u_params" in k:
             SED_params["lgav_dust_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["lgav_dust_fname"]
             )
-        if "delta_dust_u_params.txt" in k:
+        if "delta_dust_u_params" in k:
             SED_params["delta_dust_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["delta_dust_fname"]
             )
-        if "funo_dust_u_params.txt" in k:
+        if "funo_dust_u_params" in k:
             SED_params["fracuno_pop_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["fracuno_pop_fname"]
             )
-        if "lgmet_params.txt" in k:
+        if "lgmet_params" in k:
             SED_params["lgmet_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["lgmet_fname"]
             )
