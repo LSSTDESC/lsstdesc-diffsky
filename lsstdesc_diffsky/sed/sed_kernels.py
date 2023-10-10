@@ -2,7 +2,7 @@
 """
 from diffsky.experimental.dspspop.boris_dust import _get_funo_from_u_params_singlegal
 from diffsky.experimental.dspspop.burstshapepop import (
-    _get_burstshape_galpop_from_u_params,
+    _get_burstshape_galpop_from_params,
 )
 from diffsky.experimental.dspspop.dust_deltapop import (
     _get_dust_delta_galpop_from_u_params,
@@ -168,7 +168,7 @@ def calc_rest_sed_singlegal(
     fburst = 10**lgfburst
 
     # Compute P(τ) for each bursting population
-    gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_u_params(
+    gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_params(
         logsm_t_obs, logssfr_t_obs, burstshapepop_u_params
     )
     burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
