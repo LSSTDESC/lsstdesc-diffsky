@@ -263,6 +263,7 @@ def model_synthetic_cluster_satellites(
             source_galaxy_tag + "is_main_branch",
             source_galaxy_tag + "obs_sm",
             source_galaxy_tag + "obs_sfr",
+            source_galaxy_tag + "sfr_percentile",
         ] + list(SFH_keys)
         # initialize
         for k in keys:

@@ -80,6 +80,9 @@ from .triaxial_satellite_distributions.monte_carlo_triaxial_profile import (
     generate_triaxial_satellite_distribution,
 )
 
+# metadata
+from .infer_diffcode_versions import infer_software_versions
+
 fof_halo_mass = "fof_halo_mass"
 # fof halo mass in healpix cutouts
 fof_mass = "fof_mass"
@@ -1011,6 +1014,7 @@ def build_output_snapshot_mock(
         "is_main_branch",
         "obs_sm",
         "obs_sfr",
+        "sfr_percentile",
     )
     source_galaxy_pv_keys = (
         "host_dx",
@@ -1299,9 +1303,8 @@ def build_output_snapshot_mock(
             # dc2['totalSersicIndex'] = srsc_indx_tot
 
     if SED_params["black_hole_model"]:
-        # TBD update this
-        # percentile_sfr = dc2[source_galaxy_tag + "percentile_sfr"]
-        percentile_sfr = np.random.uniform(size=Ngals)
+        percentile_sfr = dc2[source_galaxy_tag + "sfr_percentile"]
+        #percentile_sfr = np.random.uniform(size=Ngals)
         dc2["bulge_stellar_mass"] = dc2[bulge_frac] * np.power(10, dc2["logsm_obs"])
         dc2["blackHoleMass"] = monte_carlo_black_hole_mass(dc2["bulge_stellar_mass"])
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
@@ -1693,6 +1696,10 @@ def write_output_mock_to_disk(
     if synthetic_params and not synthetic_params["skip_synthetics"]:
         synthetic_halo_minimum_mass = synthetic_params["synthetic_halo_minimum_mass"]
         hdfFile["metaData"]["synthetic_halo_minimum_mass"] = synthetic_halo_minimum_mass
+    # save software versions
+    versions = infer_software_versions()
+    for k, v in versions.items():
+        hdfFile["metaData"][k] = v
 
     for k, v in output_mock.items():
         gGroup = hdfFile.create_group(k)
