@@ -14,7 +14,7 @@ from ..disk_bulge_sed_kernels_singlemet import (
 
 
 def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
-    all_params = read_diffskypop_params("roman_rubin_2023")[:-1]
+    diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
     z_obs = 0.1
 
@@ -30,7 +30,7 @@ def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
         DEFAULT_FBULGE_PARAMS,
         fknot,
         ssp_data,
-        *all_params,
+        diffskypop_params,
     )
     for x in _res:
         assert np.all(np.isfinite(x))
@@ -60,7 +60,7 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
     ssp_data = load_fake_ssp_data_singlemet()
     n_age, n_wave = ssp_data.ssp_flux.shape
 
-    all_mock_params = read_diffskypop_params("roman_rubin_2023")[:-1]
+    diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
     _res = calc_rest_sed_disk_bulge_knot_galpop(
         z_obs_galpop,
@@ -70,7 +70,7 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
         fbulge_params_galpop,
         fknot_galpop,
         ssp_data,
-        *all_mock_params,
+        diffskypop_params,
     )
     for x in _res:
         assert np.all(np.isfinite(x))

@@ -67,11 +67,7 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     fbulge_params,
     fknot,
     ssp_data,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_pop_u_params,
-    dust_delta_pop_u_params,
-    fracuno_pop_u_params,
+    diffskypop_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     Om0, w0, wa, h, fb = cosmo_params
@@ -96,12 +92,12 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
 
     # Compute burst fraction and burst shape
     lgfburst = _get_lgfburst_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, lgfburst_pop_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.lgfburst_u_params
     )
     fburst = 10**lgfburst
 
     diffburst_u_params = _get_burstshape_galpop_from_params(
-        logsm_t_obs, logssfr_t_obs, burstshapepop_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.burstshape_u_params
     )
     burstshape_params = jnp.array(
         _get_diffburst_params_from_u_params(diffburst_u_params)
@@ -138,16 +134,18 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     rest_sed_knot_nodust = jnp.sum(knot_weights * ssp_data.ssp_flux, axis=(0,)) * mknot
 
     # Compute transmission curve (assumed same for all components)
-    lgav = _get_lgav_galpop_from_u_params(logsm_t_obs, logssfr_t_obs, lgav_pop_u_params)
+    lgav = _get_lgav_galpop_from_u_params(
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.lgav_dust_u_params
+    )
     dust_delta = _get_dust_delta_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, dust_delta_pop_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.delta_dust_u_params
     )
     frac_unobscured = _get_funo_from_u_params_singlegal(
         logsm_t_obs,
         lgfburst,
         logssfr_t_obs,
         ssp_data.ssp_lg_age_gyr,
-        fracuno_pop_u_params,
+        diffskypop_params.funo_dust_u_params,
     )
 
     ssp_wave_micron = ssp_data.ssp_wave / 1e4
@@ -180,7 +178,7 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     return DiffskySEDInfo(*ret)
 
 
-_DBK = (*[0] * 6, *[None] * 7)
+_DBK = (*[0] * 6, *[None] * 3)
 _calc_rest_sed_disk_bulge_knot_vmap = jjit(
     vmap(calc_rest_sed_disk_bulge_knot_singlegal, in_axes=_DBK)
 )
@@ -194,11 +192,7 @@ def calc_rest_sed_disk_bulge_knot_galpop(
     fbulge_params,
     fknot,
     ssp_data,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_pop_u_params,
-    dust_delta_pop_u_params,
-    fracuno_pop_u_params,
+    diffskypop_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     return DiffskySEDInfo(
@@ -210,11 +204,7 @@ def calc_rest_sed_disk_bulge_knot_galpop(
             fbulge_params,
             fknot,
             ssp_data,
-            lgfburst_pop_u_params,
-            burstshapepop_u_params,
-            lgav_pop_u_params,
-            dust_delta_pop_u_params,
-            fracuno_pop_u_params,
+            diffskypop_params,
             cosmo_params,
         )
     )
