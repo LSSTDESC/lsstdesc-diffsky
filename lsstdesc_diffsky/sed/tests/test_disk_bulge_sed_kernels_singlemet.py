@@ -1,10 +1,12 @@
 """
 """
 import numpy as np
-from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
 
 from ... import read_diffskypop_params
 from ...defaults import DEFAULT_DIFFGAL_PARAMS, DEFAULT_FBULGE_PARAMS
+from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
+    load_fake_ssp_data_singlemet,
+)
 from ..disk_bulge_sed_kernels_singlemet import (
     calc_rest_sed_disk_bulge_knot_galpop,
     calc_rest_sed_disk_bulge_knot_singlegal,
@@ -12,11 +14,11 @@ from ..disk_bulge_sed_kernels_singlemet import (
 
 
 def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
-    all_params = read_diffskypop_params("roman_rubin_2023")
+    all_params = read_diffskypop_params("roman_rubin_2023")[:-1]
 
     z_obs = 0.1
 
-    ssp_data = load_fake_ssp_data()
+    ssp_data = load_fake_ssp_data_singlemet()
     mah_params, ms_params, q_params = DEFAULT_DIFFGAL_PARAMS
 
     fknot = 0.05
@@ -27,10 +29,7 @@ def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
         q_params,
         DEFAULT_FBULGE_PARAMS,
         fknot,
-        ssp_data.ssp_lgmet,
-        ssp_data.ssp_lg_age_gyr,
-        ssp_data.ssp_wave,
-        ssp_data.ssp_flux,
+        ssp_data,
         *all_params,
     )
     for x in _res:
@@ -58,10 +57,10 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
 
     fknot_galpop = np.random.uniform(0, 0.1, n_gals)
 
-    ssp_data = load_fake_ssp_data()
-    n_met, n_age, n_wave = ssp_data.ssp_flux.shape
+    ssp_data = load_fake_ssp_data_singlemet()
+    n_age, n_wave = ssp_data.ssp_flux.shape
 
-    all_mock_params = read_diffskypop_params("roman_rubin_2023")
+    all_mock_params = read_diffskypop_params("roman_rubin_2023")[:-1]
 
     _res = calc_rest_sed_disk_bulge_knot_galpop(
         z_obs_galpop,
@@ -70,10 +69,7 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
         q_params_galpop,
         fbulge_params_galpop,
         fknot_galpop,
-        ssp_data.ssp_lgmet,
-        ssp_data.ssp_lg_age_gyr,
-        ssp_data.ssp_wave,
-        ssp_data.ssp_flux,
+        ssp_data,
         *all_mock_params,
     )
     for x in _res:
