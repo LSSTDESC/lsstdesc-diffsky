@@ -17,6 +17,9 @@ from jax import vmap
 
 from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
+from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
+    load_fake_ssp_data,
+)
 from ..photometry_lc_interp_singlemet import get_diffsky_sed_info
 
 _B = (0, None)
@@ -26,10 +29,9 @@ DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
 
 
 def test_get_diffsky_sed_info():
-    n_met, n_age = 12, 40
-
-    ssp_lgmet = np.linspace(-3, -1, n_met)
-    ssp_lg_age_gyr = np.linspace(5, 10.25, n_age) - 9.0
+    ssp_data = load_fake_ssp_data()
+    n_met = ssp_data.ssp_lgmet.shape[0]
+    n_age = ssp_data.ssp_lg_age_gyr.shape[0]
 
     n_t = 100
     gal_t_table = np.linspace(0.1, 13.8, n_t)
@@ -49,9 +51,6 @@ def test_get_diffsky_sed_info():
 
     Om0, w0, wa, h, fb = 0.3, -1, 0.0, 0.7, 0.16
     cosmo_params = np.array((Om0, w0, wa, h, fb))
-
-    # n_wave_seds = 300
-    # ssp_rest_seds = np.random.uniform(size=(n_met, n_age, n_wave_seds))
 
     n_rest_filters, n_obs_filters = 2, 3
     n_trans_wave = 40
@@ -80,8 +79,7 @@ def test_get_diffsky_sed_info():
         ssp_z_table,
         ssp_restmag_table,
         ssp_obsmag_table,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
+        ssp_data,
         gal_t_table,
         rest_filter_waves,
         rest_filter_trans,
