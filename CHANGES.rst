@@ -1,3 +1,8 @@
+0.1.5 (2023-10-13)
+-------------------
+- Modify default behavior of load_diffsky_healpixel
+
+
 0.1.4 (2023-10-08)
 -------------------
 - Improve diversity in morphology: https://github.com/LSSTDESC/lsstdesc-diffsky/pull/66
