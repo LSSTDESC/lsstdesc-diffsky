@@ -1,13 +1,6 @@
 """
 """
 import numpy as np
-from diffsky.experimental.dspspop.boris_dust import (
-    DEFAULT_U_PARAMS as DEFAULT_FUNO_U_PARAMS,
-)
-from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
-from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
-from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
-from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.experimental.diffburst import DLGAGE_MIN, LGAGE_MAX, LGYR_PEAK_MIN
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
@@ -15,6 +8,7 @@ from jax import jit as jjit
 from jax import random as jran
 from jax import vmap
 
+from ... import read_diffskypop_params
 from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
 from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
@@ -69,6 +63,8 @@ def test_get_diffsky_sed_info():
     ssp_restmag_table = np.random.uniform(size=(n_met, n_age, n_rest_filters))
     ssp_obsmag_table = np.random.uniform(size=(n_z_table, n_met, n_age, n_obs_filters))
 
+    diffskypop_params = read_diffskypop_params("roman_rubin_2023")
+
     ran_key = jran.PRNGKey(0)
     _res = get_diffsky_sed_info(
         ran_key,
@@ -85,12 +81,7 @@ def test_get_diffsky_sed_info():
         rest_filter_trans,
         obs_filter_waves,
         obs_filter_trans,
-        DEFAULT_LGFBURST_U_PARAMS,
-        DEFAULT_BURSTSHAPE_U_PARAMS,
-        DEFAULT_LGAV_U_PARAMS,
-        DEFAULT_DUST_DELTA_U_PARAMS,
-        DEFAULT_FUNO_U_PARAMS,
-        DEFAULT_MET_PARAMS,
+        diffskypop_params,
         cosmo_params,
     )
     for x in _res:
