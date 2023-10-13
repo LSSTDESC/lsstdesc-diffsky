@@ -43,7 +43,7 @@ def calc_rest_sed_singlegal(
     diffstar_ms_params,
     diffstar_q_params,
     ssp_data,
-    diffskypop_data,
+    diffskypop_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of an individual diffsky galaxy
@@ -139,13 +139,13 @@ def calc_rest_sed_singlegal(
 
     # Compute burst fraction for every galaxy
     lgfburst = _get_lgfburst_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, diffskypop_data.lgfburst_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.lgfburst_u_params
     )
     fburst = 10**lgfburst
 
     # Compute P(τ) for each bursting population
     gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_params(
-        logsm_t_obs, logssfr_t_obs, diffskypop_data.burstshape_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.burstshape_u_params
     )
     burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
     ssp_lg_age_yr = ssp_data.ssp_lg_age_gyr + 9
@@ -161,17 +161,17 @@ def calc_rest_sed_singlegal(
     rest_sed_nodust = jnp.sum(weights * ssp_data.ssp_flux, axis=(0,)) * mstar_t_obs
 
     lgav = _get_lgav_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, diffskypop_data.lgav_dust_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.lgav_dust_u_params
     )
     dust_delta = _get_dust_delta_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, diffskypop_data.delta_dust_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.delta_dust_u_params
     )
     frac_unobscured = _get_funo_from_u_params_singlegal(
         logsm_t_obs,
         lgfburst,
         logssfr_t_obs,
         ssp_data.ssp_lg_age_gyr,
-        diffskypop_data.funo_dust_u_params,
+        diffskypop_params.funo_dust_u_params,
     )
 
     ssp_wave_micron = ssp_data.ssp_wave / 1e4
@@ -227,7 +227,7 @@ def calc_rest_sed_galpop(
     diffstar_ms_params,
     diffstar_q_params,
     ssp_data,
-    diffskypop_data,
+    diffskypop_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of a population of diffsky galaxies
@@ -307,6 +307,6 @@ def calc_rest_sed_galpop(
         diffstar_ms_params,
         diffstar_q_params,
         ssp_data,
-        diffskypop_data,
+        diffskypop_params,
         cosmo_params,
     )
