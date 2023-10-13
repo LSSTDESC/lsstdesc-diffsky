@@ -35,7 +35,7 @@ class DiffskyParams(typing.NamedTuple):
     fknot: np.float32
 
 
-def load_healpixel(fn, patlist=("LSST",)):
+def load_healpixel(fn, patlist=None):
     """Load a Diffsky healpixel from hdf5, concatenating data stored by snapshot
 
     Parameters
@@ -44,16 +44,18 @@ def load_healpixel(fn, patlist=("LSST",)):
         Path to the hdf5 file storing the healpixel
 
     patlist : list of strings, optional
-        List of column name patterns used to retrieve extra columns from the healpixel
-        beyond only the Diffsky parameters. Default is None.
-        Default is patlist=('LSST', ) to retrieve all columns storing
-        some form of LSST photometry
+        List of column name patterns used to retrieve extra columns from the healpixel.
+        For example, to select all columns related to LSST photometry,
+        setting patlist=('LSST', ) will retrieve all columns in which
+        'LSST' appears somewhere in the column name.
+        Default behavior is to return all available columns.
+        Note that all the Diffsky model parameters are always returned.
 
     Returns
     -------
-    data : dict
+    data : OrderedDict
 
-    metadata : dict
+    metadata : OrderedDict
 
     Notes
     -----
@@ -61,7 +63,7 @@ def load_healpixel(fn, patlist=("LSST",)):
     Each healpixel of lsstdesc-diffsky data is stored on disk such that galaxies
     at different simulation snapshots are partitioned into separate hdf5 datasets.
     The load_diffsky_healpixel function concatenates all these separate datasets
-    into a flat ndarrays.
+    into flat ndarrays.
 
     DESC members working at NERSC can instead use the GCR:
     https://github.com/yymao/generic-catalog-reader
@@ -76,10 +78,13 @@ def load_healpixel(fn, patlist=("LSST",)):
 
 
 def _get_extra_colnames(all_keys, patlist):
-    extra_colnames = []
-    for pat in patlist:
-        extra_colnames.extend([key for key in all_keys if pat in key])
-    return extra_colnames
+    if patlist is None:
+        return all_keys
+    else:
+        extra_colnames = []
+        for pat in patlist:
+            extra_colnames.extend([key for key in all_keys if pat in key])
+        return extra_colnames
 
 
 def load_diffsky_params(cat):
@@ -136,7 +141,7 @@ def load_diffsky_params(cat):
 def collect_healpixel_data(fn, patlist):
     with h5py.File(fn, "r") as hdf:
         metadataset = hdf["metaData"]
-        metadata = dict()
+        metadata = OrderedDict()
         for key in metadataset.keys():
             metadata[key] = metadataset[key][...]
 
