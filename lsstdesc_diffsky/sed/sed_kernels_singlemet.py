@@ -22,7 +22,6 @@ from dsps.dust.att_curves import (
 from dsps.experimental.diffburst import (
     _age_weights_from_u_params as _burst_age_weights_from_u_params,
 )
-from dsps.metallicity.mzr import mzr_model
 from dsps.sed.stellar_age_weights import _calc_age_weights_from_logsm_table
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
@@ -49,7 +48,6 @@ def calc_rest_sed_singlegal(
     lgav_pop_u_params,
     dust_delta_pop_u_params,
     fracuno_pop_u_params,
-    met_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of an individual diffsky galaxy
@@ -70,17 +68,17 @@ def calc_rest_sed_singlegal(
     diffstar_q_params : ndarray, shape (4, )
         Diffstar quenching params, (lg_qt, qlglgdt, lg_drop, lg_rejuv)
 
-    ssp_lgmet : ndarray, shape (n_met, )
-        Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
+    ssp_data : namedtuple, shape (3, )
+        NamedTuple with the following three entries:
 
-    ssp_lg_age_gyr : ndarray, shape (n_age, )
-        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+        ssp_lg_age_gyr : ndarray, shape (n_age, )
+            Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
 
-    ssp_wave_ang : ndarray, shape (n_wave, )
-        Array of wavelengths in angstroms at which the SSP SEDs are tabulated
+        ssp_wave_ang : ndarray, shape (n_wave, )
+            Array of wavelengths in angstroms at which the SSP SEDs are tabulated
 
-    ssp_flux : ndarray, shape (n_met, n_age, n_wave)
-        Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
+        ssp_flux : ndarray, shape (n_age, n_wave)
+            Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
 
     lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
         Unbounded parameters controlling Fburst, which sets the fractional contribution
@@ -107,12 +105,6 @@ def calc_rest_sed_singlegal(
         Unbounded parameters controlling the fraction of sightlines unobscured by dust.
         For typical values, see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
 
-    met_params : ndarray, shape (n_pars_met_pop, ), optional
-        Parameters controlling the mass-metallicity scaling relation.
-        For typical values, see dsps.metallicity.mzr.DEFAULT_MZR_PDICT
-        mzr_params = met_params[:-1]
-        lgmet_scatter = met_params[-1]
-
     cosmo_params : optional, ndarray, shape (5, )
         cosmo_params = (Om0, w0, wa, h, fb)
         Defaults set in lsstdesc_diffsky.defaults.DEFAULT_COSMO_PARAMS
@@ -127,9 +119,6 @@ def calc_rest_sed_singlegal(
 
     logsm_t_obs : float
         Total stellar mass formed at z_obs in units of Msun
-
-    lgmet_t_obs : float
-        Stellar metallicity at z_obs (dimensionless)
 
     """
     Om0, w0, wa, h, fb = cosmo_params
@@ -146,11 +135,10 @@ def calc_rest_sed_singlegal(
         fb=fb,
     )
 
-    mzr_params, lgmet_scatter = met_params[:-1], met_params[-1]
     _galprops_at_t_obs = _get_galprops_at_t_obs_singlegal(
-        t_obs, t_table, sfh_table, mzr_params, ssp_data.ssp_lg_age_gyr
+        t_obs, t_table, sfh_table, ssp_data.ssp_lg_age_gyr
     )
-    logsm_t_obs, logssfr_t_obs, lgmet_t_obs, smooth_age_weights = _galprops_at_t_obs[:4]
+    logsm_t_obs, logssfr_t_obs, smooth_age_weights = _galprops_at_t_obs[:3]
     mstar_t_obs = 10**logsm_t_obs
 
     # Compute burst fraction for every galaxy
@@ -202,13 +190,11 @@ def calc_rest_sed_singlegal(
         jnp.sum(weights * ssp_data.ssp_flux * frac_dust_trans, axis=(0,)) * mstar_t_obs
     )
 
-    return (rest_sed, rest_sed_nodust, logsm_t_obs, lgmet_t_obs)
+    return (rest_sed, rest_sed_nodust, logsm_t_obs)
 
 
 @jjit
-def _get_galprops_at_t_obs_singlegal(
-    t_obs, t_table, sfr_table, mzr_params, ssp_lg_age_gyr
-):
+def _get_galprops_at_t_obs_singlegal(t_obs, t_table, sfr_table, ssp_lg_age_gyr):
     lgt_obs = jnp.log10(t_obs)
     lgt_table = jnp.log10(t_table)
 
@@ -221,8 +207,6 @@ def _get_galprops_at_t_obs_singlegal(
     logsfr_t_obs = jnp.interp(lgt_obs, lgt_table, logsfr_table)
     logssfr_t_obs = logsfr_t_obs - logsm_t_obs
 
-    lgmet_t_obs = mzr_model(logsm_t_obs, t_obs, *mzr_params)
-
     __, sfr_table_age_weights = _calc_age_weights_from_logsm_table(
         lgt_table, logsmh_table, ssp_lg_age_gyr, t_obs
     )
@@ -230,12 +214,11 @@ def _get_galprops_at_t_obs_singlegal(
     return (
         logsm_t_obs,
         logssfr_t_obs,
-        lgmet_t_obs,
         sfr_table_age_weights,
     )
 
 
-_G = (0, *[0] * 3, *[None] * 8)
+_G = (0, *[0] * 3, *[None] * 7)
 _calc_rest_sed_vmap = jjit(vmap(calc_rest_sed_singlegal, in_axes=_G))
 
 
@@ -251,7 +234,6 @@ def calc_rest_sed_galpop(
     lgav_pop_u_params,
     dust_delta_pop_u_params,
     fracuno_pop_u_params,
-    met_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of a population of diffsky galaxies
@@ -272,17 +254,17 @@ def calc_rest_sed_galpop(
     diffstar_q_params : ndarray, shape (n_gals, 4)
         Diffstar quenching params, (lg_qt, qlglgdt, lg_drop, lg_rejuv)
 
-    ssp_lgmet : ndarray, shape (n_met, )
-        Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
+    ssp_data : namedtuple, shape (3, )
+        NamedTuple with the following three entries:
 
-    ssp_lg_age_gyr : ndarray, shape (n_age, )
-        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+        ssp_lg_age_gyr : ndarray, shape (n_age, )
+            Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
 
-    ssp_wave_ang : ndarray, shape (n_wave, )
-        Array of wavelengths in angstroms at which the SSP SEDs are tabulated
+        ssp_wave_ang : ndarray, shape (n_wave, )
+            Array of wavelengths in angstroms at which the SSP SEDs are tabulated
 
-    ssp_flux : ndarray, shape (n_met, n_age, n_wave)
-        Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
+        ssp_flux : ndarray, shape (n_age, n_wave)
+            Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
 
     lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
         Unbounded parameters controlling Fburst, which sets the fractional contribution
@@ -309,12 +291,6 @@ def calc_rest_sed_galpop(
         Unbounded parameters controlling the fraction of sightlines unobscured by dust.
         For typical values, see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
 
-    met_params : ndarray, shape (n_pars_met_pop, ), optional
-        Parameters controlling the mass-metallicity scaling relation.
-        For typical values, see dsps.metallicity.mzr.DEFAULT_MZR_PDICT
-        mzr_params = met_params[:-1]
-        lgmet_scatter = met_params[-1]
-
     cosmo_params : optional, ndarray, shape (5, )
         cosmo_params = (Om0, w0, wa, h, fb)
         Defaults set in lsstdesc_diffsky.defaults.DEFAULT_COSMO_PARAMS
@@ -330,9 +306,6 @@ def calc_rest_sed_galpop(
     logsm_t_obs : ndarray, shape (n_gals, )
         Total stellar mass formed at z_obs in units of Msun
 
-    lgmet_t_obs : ndarray, shape (n_gals, )
-        Stellar metallicity at z_obs (dimensionless)
-
     """
     return _calc_rest_sed_vmap(
         z_obs,
@@ -345,6 +318,5 @@ def calc_rest_sed_galpop(
         lgav_pop_u_params,
         dust_delta_pop_u_params,
         fracuno_pop_u_params,
-        met_params,
         cosmo_params,
     )

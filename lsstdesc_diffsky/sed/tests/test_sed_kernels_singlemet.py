@@ -10,7 +10,6 @@ from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARA
 from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
 from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
-from dsps.metallicity.defaults import DEFAULT_MET_PARAMS
 
 from ... import read_diffskypop_params
 from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
@@ -34,13 +33,11 @@ def test_calc_rest_sed_evaluates_with_default_params():
         DEFAULT_LGAV_U_PARAMS,
         DEFAULT_DUST_DELTA_U_PARAMS,
         DEFAULT_FUNO_U_PARAMS,
-        DEFAULT_MET_PARAMS,
     )
     (
         rest_sed,
         rest_sed_nodust,
         logsm_t_obs,
-        lgmet_t_obs,
     ) = _res
     for x in _res:
         assert np.all(np.isfinite(x))
@@ -55,7 +52,7 @@ def test_calc_rest_sed_evaluates_with_default_params():
 
 
 def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
-    all_params = read_diffskypop_params("roman_rubin_2023")
+    all_params = read_diffskypop_params("roman_rubin_2023")[:-1]
 
     z_obs = 0.1
 
@@ -72,7 +69,6 @@ def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
         rest_sed,
         rest_sed_nodust,
         logsm_t_obs,
-        lgmet_t_obs,
     ) = _res
     for x in _res:
         assert np.all(np.isfinite(x))
@@ -103,7 +99,7 @@ def test_calc_rest_sed_galpop():
     ssp_data = load_fake_ssp_data_singlemet()
     n_age, n_wave = ssp_data.ssp_flux.shape
 
-    all_mock_params = read_diffskypop_params("roman_rubin_2023")
+    all_mock_params = read_diffskypop_params("roman_rubin_2023")[:-1]
 
     _res = calc_rest_sed_galpop(
         z_obs_galpop,
@@ -116,14 +112,10 @@ def test_calc_rest_sed_galpop():
     for x in _res:
         assert np.all(np.isfinite(x))
 
-    rest_sed_galpop, rest_sed_nodust_galpop = _res[:2]
-    logsm_t_obs_galpop, lgmet_t_obs_galpop = _res[2:]
+    rest_sed_galpop, rest_sed_nodust_galpop, logsm_t_obs_galpop = _res[:3]
     assert rest_sed_galpop.shape == (n_gals, n_wave)
 
     assert np.all(rest_sed_galpop <= rest_sed_nodust_galpop)
     assert np.any(rest_sed_galpop < rest_sed_nodust_galpop)
     assert np.all(logsm_t_obs_galpop > 0)
     assert np.all(logsm_t_obs_galpop < 15)
-
-    assert np.all(lgmet_t_obs_galpop > -4)
-    assert np.all(lgmet_t_obs_galpop < 1)
