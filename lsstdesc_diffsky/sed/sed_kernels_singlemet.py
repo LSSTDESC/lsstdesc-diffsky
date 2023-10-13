@@ -23,7 +23,6 @@ from dsps.experimental.diffburst import (
     _age_weights_from_u_params as _burst_age_weights_from_u_params,
 )
 from dsps.metallicity.mzr import mzr_model
-from dsps.sed.metallicity_weights import calc_lgmet_weights_from_lognormal_mdf
 from dsps.sed.stellar_age_weights import _calc_age_weights_from_logsm_table
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
@@ -157,10 +156,6 @@ def calc_rest_sed_singlegal(
     logsm_t_obs, logssfr_t_obs, lgmet_t_obs, smooth_age_weights = _galprops_at_t_obs[:4]
     mstar_t_obs = 10**logsm_t_obs
 
-    lgmet_weights = calc_lgmet_weights_from_lognormal_mdf(
-        lgmet_t_obs, lgmet_scatter, ssp_lgmet
-    )
-
     # Compute burst fraction for every galaxy
     lgfburst = _get_lgfburst_galpop_from_u_params(
         logsm_t_obs, logssfr_t_obs, lgfburst_pop_u_params
@@ -181,7 +176,7 @@ def calc_rest_sed_singlegal(
     age_weights = fburst * burst_age_weights + (1 - fburst) * smooth_age_weights
 
     n_met, n_age, n_wave = ssp_flux.shape
-    weights = lgmet_weights.reshape((n_met, 1, 1)) * age_weights.reshape((1, n_age, 1))
+    weights = age_weights.reshape((1, n_age, 1))
     rest_sed_nodust = jnp.sum(weights * ssp_flux, axis=(0, 1)) * mstar_t_obs
 
     lgav = _get_lgav_galpop_from_u_params(logsm_t_obs, logssfr_t_obs, lgav_pop_u_params)
