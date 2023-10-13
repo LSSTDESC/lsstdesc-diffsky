@@ -1,10 +1,11 @@
 """
 """
+import os
+
 import numpy as np
 from jax.scipy.stats import norm
-import os
-from .defaults import SSPData
 
+from .defaults import SSPData, SSPDataSingleMet
 
 _THIS_DRNAME = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,6 +16,13 @@ def load_fake_ssp_data():
     ssp_wave = _get_ssp_wave()
     ssp_flux = _get_spec_ssp()
     return SSPData(ssp_lgmet, ssp_lg_age_gyr, ssp_wave, ssp_flux)
+
+
+def load_fake_ssp_data_singlemet():
+    ssp_lg_age_gyr = _get_log_age_gyr()
+    ssp_wave = _get_ssp_wave()
+    ssp_flux = _get_spec_ssp()[-1, :, :]
+    return SSPDataSingleMet(ssp_lg_age_gyr, ssp_wave, ssp_flux)
 
 
 def load_fake_filter_transmission_curves():
