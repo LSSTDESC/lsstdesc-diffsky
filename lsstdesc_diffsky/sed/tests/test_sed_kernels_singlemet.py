@@ -2,13 +2,6 @@
 """
 import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS
-from diffsky.experimental.dspspop.boris_dust import (
-    DEFAULT_U_PARAMS as DEFAULT_FUNO_U_PARAMS,
-)
-from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
-from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
-from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
-from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
 
 from ... import read_diffskypop_params
@@ -22,17 +15,14 @@ def test_calc_rest_sed_evaluates_with_default_params():
     z_obs = 0.1
 
     ssp_data = load_fake_ssp_data_singlemet()
+    diffskypop_data = read_diffskypop_params("roman_rubin_2023")
     _res = calc_rest_sed_singlegal(
         z_obs,
         DEFAULT_MAH_PARAMS,
         DEFAULT_MS_PARAMS,
         DEFAULT_Q_PARAMS,
         ssp_data,
-        DEFAULT_LGFBURST_U_PARAMS,
-        DEFAULT_BURSTSHAPE_U_PARAMS,
-        DEFAULT_LGAV_U_PARAMS,
-        DEFAULT_DUST_DELTA_U_PARAMS,
-        DEFAULT_FUNO_U_PARAMS,
+        diffskypop_data,
     )
     (
         rest_sed,
@@ -52,7 +42,7 @@ def test_calc_rest_sed_evaluates_with_default_params():
 
 
 def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
-    all_params = read_diffskypop_params("roman_rubin_2023")[:-1]
+    all_params = read_diffskypop_params("roman_rubin_2023")
 
     z_obs = 0.1
 
@@ -63,7 +53,7 @@ def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
         DEFAULT_MS_PARAMS,
         DEFAULT_Q_PARAMS,
         ssp_data,
-        *all_params,
+        all_params,
     )
     (
         rest_sed,
@@ -99,7 +89,7 @@ def test_calc_rest_sed_galpop():
     ssp_data = load_fake_ssp_data_singlemet()
     n_age, n_wave = ssp_data.ssp_flux.shape
 
-    all_mock_params = read_diffskypop_params("roman_rubin_2023")[:-1]
+    diffskypop_data = read_diffskypop_params("roman_rubin_2023")
 
     _res = calc_rest_sed_galpop(
         z_obs_galpop,
@@ -107,7 +97,7 @@ def test_calc_rest_sed_galpop():
         ms_params_galpop,
         q_params_galpop,
         ssp_data,
-        *all_mock_params,
+        diffskypop_data,
     )
     for x in _res:
         assert np.all(np.isfinite(x))
