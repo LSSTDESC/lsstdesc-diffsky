@@ -47,6 +47,9 @@ from .halo_information.get_fof_halo_shapes import get_halo_shapes, get_matched_s
 
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
+
+# metadata
+from .infer_diffcode_versions import infer_software_versions
 from .pecZ import pecZ
 from .photometry.get_SFH_from_params import (
     get_diff_params,
@@ -379,27 +382,27 @@ def write_umachine_healpix_mock_to_disk(
     ]
 
     for k in roman_rubin_list:
-        if "lgfburst_u_params.txt" in k:
+        if "lgfburst_u_params" in k:
             SED_params["lgfburst_pop_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["lgfburst_fname"]
             )
-        if "burstshape_u_params.txt" in k:
+        if "burstshape_u_params" in k:
             SED_params["burstshapepop_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["burstshape_fname"]
             )
-        if "lgav_dust_u_params.txt" in k:
+        if "lgav_dust_u_params" in k:
             SED_params["lgav_dust_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["lgav_dust_fname"]
             )
-        if "delta_dust_u_params.txt" in k:
+        if "delta_dust_u_params" in k:
             SED_params["delta_dust_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["delta_dust_fname"]
             )
-        if "funo_dust_u_params.txt" in k:
+        if "funo_dust_u_params" in k:
             SED_params["fracuno_pop_u_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["fracuno_pop_fname"]
             )
-        if "lgmet_params.txt" in k:
+        if "lgmet_params" in k:
             SED_params["lgmet_params"] = get_sed_model_params(
                 SED_params["param_data_dirname"], SED_params["lgmet_fname"]
             )
@@ -1009,6 +1012,7 @@ def build_output_snapshot_mock(
         "is_main_branch",
         "obs_sm",
         "obs_sfr",
+        "sfr_percentile",
     )
     source_galaxy_pv_keys = (
         "host_dx",
@@ -1297,9 +1301,8 @@ def build_output_snapshot_mock(
             # dc2['totalSersicIndex'] = srsc_indx_tot
 
     if SED_params["black_hole_model"]:
-        # TBD update this
-        # percentile_sfr = dc2[source_galaxy_tag + "percentile_sfr"]
-        percentile_sfr = np.random.uniform(size=Ngals)
+        percentile_sfr = dc2[source_galaxy_tag + "sfr_percentile"]
+        # percentile_sfr = np.random.uniform(size=Ngals)
         dc2["bulge_stellar_mass"] = dc2[bulge_frac] * np.power(10, dc2["logsm_obs"])
         dc2["blackHoleMass"] = monte_carlo_black_hole_mass(dc2["bulge_stellar_mass"])
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
@@ -1691,6 +1694,10 @@ def write_output_mock_to_disk(
     if synthetic_params and not synthetic_params["skip_synthetics"]:
         synthetic_halo_minimum_mass = synthetic_params["synthetic_halo_minimum_mass"]
         hdfFile["metaData"]["synthetic_halo_minimum_mass"] = synthetic_halo_minimum_mass
+    # save software versions
+    versions = infer_software_versions()
+    for k, v in versions.items():
+        hdfFile["metaData"][k] = v
 
     for k, v in output_mock.items():
         gGroup = hdfFile.create_group(k)

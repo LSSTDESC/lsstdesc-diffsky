@@ -51,6 +51,6 @@ fi
 fi
 fi
 
-qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 0 ${config_file}
-qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 1 ${config_file}
-qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} ./run_mpi_hpx_production.sh ${hpx_group} 2 ${config_file}
+qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} --attrs filesystems=home,eagle ./run_mpi_hpx_production.sh ${hpx_group} 0 ${config_file}
+qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} --attrs filesystems=home,eagle ./run_mpi_hpx_production.sh ${hpx_group} 1 ${config_file}
+qsub -n ${nodes} -t 4:00:00 -A LastJourney -M ${EMAIL} --attrs filesystems=home,eagle ./run_mpi_hpx_production.sh ${hpx_group} 2 ${config_file}

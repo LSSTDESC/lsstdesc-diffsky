@@ -42,15 +42,18 @@ def process_healpix(args, inputs, healpix_number,
     versionMinor = inputs['version']['versionMinor']
     versionMinorMinor = inputs['version']['versionMinorMinor']
 
-    name = inputs['name']
-
     healpix_cutout_dirname = os.path.join(input_master_dirname,
                                           inputs['file_dirs']['healpix_cutout_dirname'])
+    subdirname = inputs['output_mock_subdirname']
     output_mock_dirname = os.path.join(
         input_master_dirname,
         inputs['file_dirs']['output_mock_dirname'].format(versionMajor,
                                                           versionMinor, versionMinorMinor),
-        name)
+        subdirname)
+    # check output directory exists and create if not
+    if not os.path.isdir(output_mock_dirname):
+        os.makedirs(output_mock_dirname)
+        print("Created output directory {} for mock".format(output_mock_dirname))
     shape_dir = os.path.join(input_master_dirname, inputs['file_dirs']['shape_dirname'])
     pkldirname = os.path.join(input_master_dirname, inputs['file_dirs']['pkldirname'])
     healpix_fname_template = inputs['file_names']['healpix_fname']
@@ -121,7 +124,7 @@ def process_healpix(args, inputs, healpix_number,
 
             healpix_basename = os.path.basename(healpix_cutout_fname)
             output_mock_basename = '_'.join(
-                [inputs['file_dirs']['output_mock_dirname'].split('_')[0], zdir, healpix_basename])
+                [inputs['file_dirs']['output_mock_dirname'].split('_v')[0], zdir, healpix_basename])
             output_healpix_mock_fname = os.path.join(
                 output_mock_dirname, output_mock_basename)
             # if(args.verbose):
@@ -184,9 +187,6 @@ parser.add_argument("-production_dirname",
 parser.add_argument("-config_filename",
                     help="filename for production config yaml file (.yaml assumed)",
                     default='diffsky_config')
-parser.add_argument("-log_filename_template",
-                    help="filename for logfile",
-                    default='logfiles/cutout_{}_z_{}_{}_{}.log')
 parser.add_argument("-zrange_value",
                     help="z-range to run",
                     choices=['0', '1', '2', 'all'],
@@ -214,7 +214,7 @@ if not all(char.isdigit() for char in args.hpx):
     node_name = MPI.Get_processor_name()
     rank, nranks = comm.Get_rank(), comm.Get_size()
     # read hpx list and assign hpx number to rank
-    print(args.hpx)
+    print('Reading healpixels from {}'.format(args.hpx))
     with open(os.path.join(yaml_dir, args.hpx), 'r') as fh:
         hpx_list = fh.read()
     hpx_list = hpx_list.strip().split('\n')
@@ -223,9 +223,17 @@ if not all(char.isdigit() for char in args.hpx):
     assert len(hpx_indx)==1, "Multiple healpixels assigned to rank {}".format(rank)
     healpix_number = hpx_list[hpx_indx[0]]
     rank_node = '{}_{}'.format(rank, node_name)
-    log_filename = args.log_filename_template.format(healpix_number, args.zrange_value,
-                                                args.config_filename, rank_node)
-    with open(os.path.join(production_dir, log_filename), 'w') as f:
+    log_filename = inputs['file_names']['log_filename_template'].format(healpix_number,
+                                                                        args.zrange_value,
+                                                                        args.config_filename,
+                                                                        rank_node)
+    log_dirname = os.path.join(input_master_dirname, inputs['file_dirs']['logdirname'])
+    print('Writing logfiles to {}'.format(log_dirname))
+    # check logfile directory exists and create if not
+    if not os.path.isdir(log_dirname):
+        os.makedirs(log_dirname)
+        print("Created logfile directory {} for mock".format(log_dirname))
+    with open(os.path.join(log_dirname, log_filename), 'w') as f:
         with redirect_stdout(f):
             print("Parallel processing of {}th hpx {} on rank {} on node {}".format(
                 hpx_indx[0], healpix_number, rank, node_name))
