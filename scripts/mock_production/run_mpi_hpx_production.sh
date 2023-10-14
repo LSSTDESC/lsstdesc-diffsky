@@ -24,6 +24,7 @@ echo "config_file=${config_file}"
 production_dir="${config_file}_production"
 echo "production_dir=${production_dir}"
 xtra_args="-config_file ${config_file} -production_dir ${production_dir}"
+echo "xtra_args=${xtra_args}"
 else
 xtra_args=""
 fi
