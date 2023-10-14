@@ -80,29 +80,29 @@ def read_diffskypop_params(mock_name):
             Unbounded parameters controlling Fburst,
             which sets the fractional contribution of a recent burst
             to the smooth SFH of a galaxy. For typical values, see
-            diffsky.experimental.dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
+            dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
 
         burstshapepop_u_params : ndarray, shape (n_pars_burstshape_pop, )
             Unbounded parameters controlling the distribution of stellar ages
             of stars formed in a recent burst. For typical values, see
-            diffsky.experimental.dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
+            dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
 
         lgav_u_params : ndarray, shape (n_pars_lgav_pop, )
             Unbounded parameters controlling the distribution of dust parameter Av,
             the normalization of the attenuation curve at λ_V=5500 angstrom.
             For typical values, see
-            diffsky.experimental.dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
+            dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
 
         dust_delta_u_params : ndarray, shape (n_pars_dust_delta_pop, )
             Unbounded parameters controlling the distribution of dust parameter δ,
             which modifies the power-law slope of the attenuation curve.
             For typical values, see
-            diffsky.experimental.dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
+            dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
 
         fracuno_pop_u_params : ndarray, shape (n_pars_fracuno_pop, )
             Unbounded parameters controlling the fraction of sightlines
             unobscured by dust. For typical values,
-            see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
+            see dspspop.boris_dust.DEFAULT_U_PARAMS
 
         met_params : ndarray, shape (n_pars_met_pop, ), optional
             Parameters controlling the mass-metallicity scaling relation.

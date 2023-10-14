@@ -16,13 +16,6 @@ import psutil
 from astropy.cosmology import WMAP7, FlatLambdaCDM
 from astropy.table import Table, vstack
 from astropy.utils.misc import NumpyRNGContext
-from diffsky.experimental.dspspop.boris_dust import (
-    DEFAULT_U_PARAMS as DEFAULT_BORIS_U_PARAMS,
-)
-from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
-from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
-from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
-from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from diffstar.defaults import FB
 from diffstar.sfh import sfh_galpop
 
@@ -42,6 +35,11 @@ from .black_hole_modeling.black_hole_accretion_rate import monte_carlo_bh_acc_ra
 from .black_hole_modeling.black_hole_mass import monte_carlo_black_hole_mass
 from .defaults import CosmoParams
 from .diffstarpop.mc_diffstar import mc_diffstarpop
+from .dspspop.boris_dust import DEFAULT_U_PARAMS as DEFAULT_BORIS_U_PARAMS
+from .dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
+from .dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
+from .dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
+from .dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from .ellipticity_modeling.ellipticity_model import monte_carlo_ellipticity_bulge_disk
 
 # Halo shapes
