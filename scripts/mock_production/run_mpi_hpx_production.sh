@@ -6,7 +6,9 @@ echo "Run mpi processing of healpix file list (request ranks = total number)"
 echo "Usage: run_mpi_hpx_production hpx_list (0-17, image, test#) z_range (0-2)"
 echo "       filename for healpix list will be pixels_${1}.txt"
 echo "       optional 3rd parameter: name of yaml config file to use"
-echo "       default (diffsky_config) (.yaml is assumed)"
+echo "           default (diffsky_config) (.yaml is assumed)"
+echo "           dirname storing config file is supplied_config_filename_production"
+echo "           default (production)" 
 exit
 else
 hpx_list="${1}"
@@ -19,7 +21,9 @@ if [ "$#" -gt 2 ]
 then
 config_file=${3}
 echo "config_file=${config_file}"
-xtra_args="-config_file ${config_file}"
+production_dir="${config_file}_production"
+echo "production_dir=${production_dir}"
+xtra_args="-config_file ${config_file} -production_dir ${production_dir}"
 else
 xtra_args=""
 fi
