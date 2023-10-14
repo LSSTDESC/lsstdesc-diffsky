@@ -47,6 +47,9 @@ from .halo_information.get_fof_halo_shapes import get_halo_shapes, get_matched_s
 
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
+
+# metadata
+from .infer_diffcode_versions import infer_software_versions
 from .pecZ import pecZ
 from .photometry.get_SFH_from_params import (
     get_diff_params,
@@ -77,9 +80,6 @@ from .triaxial_satellite_distributions.axis_ratio_model import monte_carlo_halo_
 from .triaxial_satellite_distributions.monte_carlo_triaxial_profile import (
     generate_triaxial_satellite_distribution,
 )
-
-# metadata
-from .infer_diffcode_versions import infer_software_versions
 
 fof_halo_mass = "fof_halo_mass"
 # fof halo mass in healpix cutouts
@@ -1302,7 +1302,7 @@ def build_output_snapshot_mock(
 
     if SED_params["black_hole_model"]:
         percentile_sfr = dc2[source_galaxy_tag + "sfr_percentile"]
-        #percentile_sfr = np.random.uniform(size=Ngals)
+        # percentile_sfr = np.random.uniform(size=Ngals)
         dc2["bulge_stellar_mass"] = dc2[bulge_frac] * np.power(10, dc2["logsm_obs"])
         dc2["blackHoleMass"] = monte_carlo_black_hole_mass(dc2["bulge_stellar_mass"])
         eddington_ratio, bh_acc_rate = monte_carlo_bh_acc_rate(
