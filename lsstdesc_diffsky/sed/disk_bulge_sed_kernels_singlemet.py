@@ -2,15 +2,6 @@
 """
 import typing
 
-from diffsky.experimental.dspspop.boris_dust import _get_funo_from_u_params_singlegal
-from diffsky.experimental.dspspop.burstshapepop import (
-    _get_burstshape_galpop_from_params,
-)
-from diffsky.experimental.dspspop.dust_deltapop import (
-    _get_dust_delta_galpop_from_u_params,
-)
-from diffsky.experimental.dspspop.lgavpop import _get_lgav_galpop_from_u_params
-from diffsky.experimental.dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
 from diffstar import sfh_singlegal
 from dsps.constants import N_T_LGSM_INTEGRATION, T_BIRTH_MIN
 from dsps.cosmology.flat_wcdm import _age_at_z_kern, age_at_z0
@@ -35,6 +26,11 @@ from ..defaults import DEFAULT_COSMO_PARAMS
 from ..disk_bulge_modeling.disk_bulge_kernels import (
     _decompose_sfh_singlegal_into_bulge_disk_knots,
 )
+from ..dspspop.boris_dust import _get_funo_from_u_params_singlegal
+from ..dspspop.burstshapepop import _get_burstshape_galpop_from_params
+from ..dspspop.dust_deltapop import _get_dust_delta_galpop_from_u_params
+from ..dspspop.lgavpop import _get_lgav_galpop_from_u_params
+from ..dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
 from .sed_kernels_singlemet import _get_galprops_at_t_obs_singlegal
 
 _T = (None, None, 0)

@@ -1,14 +1,5 @@
 """
 """
-from diffsky.experimental.dspspop.boris_dust import _get_funo_from_u_params_singlegal
-from diffsky.experimental.dspspop.burstshapepop import (
-    _get_burstshape_galpop_from_params,
-)
-from diffsky.experimental.dspspop.dust_deltapop import (
-    _get_dust_delta_galpop_from_u_params,
-)
-from diffsky.experimental.dspspop.lgavpop import _get_lgav_galpop_from_u_params
-from diffsky.experimental.dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
 from diffstar import sfh_singlegal
 from dsps.constants import N_T_LGSM_INTEGRATION, T_BIRTH_MIN
 from dsps.cosmology.flat_wcdm import _age_at_z_kern, age_at_z0
@@ -29,6 +20,11 @@ from jax import numpy as jnp
 from jax import vmap
 
 from ..defaults import DEFAULT_COSMO_PARAMS
+from ..dspspop.boris_dust import _get_funo_from_u_params_singlegal
+from ..dspspop.burstshapepop import _get_burstshape_galpop_from_params
+from ..dspspop.dust_deltapop import _get_dust_delta_galpop_from_u_params
+from ..dspspop.lgavpop import _get_lgav_galpop_from_u_params
+from ..dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
 
 _T = (None, None, 0)
 _frac_transmission_from_k_lambda_age_vmap = jjit(
@@ -79,27 +75,27 @@ def calc_rest_sed_singlegal(
     lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
         Unbounded parameters controlling Fburst, which sets the fractional contribution
         of a recent burst to the smooth SFH of a galaxy. For typical values, see
-        diffsky.experimental.dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
+        dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
 
     burstshapepop_u_params : ndarray, shape (n_pars_burstshape_pop, )
         Unbounded parameters controlling the distribution of stellar ages
         of stars formed in a recent burst. For typical values, see
-        diffsky.experimental.dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
+        dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
 
     lgav_pop_u_params : ndarray, shape (n_pars_lgav_pop, )
         Unbounded parameters controlling the distribution of dust parameter Av,
         the normalization of the attenuation curve at λ_V=5500 angstrom.
         For typical values, see
-        diffsky.experimental.dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
+        dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
 
     dust_delta_pop_u_params : ndarray, shape (n_pars_dust_delta_pop, )
         Unbounded parameters controlling the distribution of dust parameter δ,
         which modifies the power-law slope of the attenuation curve. For typical values,
-        see diffsky.experimental.dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
+        see dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
 
     fracuno_pop_u_params : ndarray, shape (n_pars_fracuno_pop, )
         Unbounded parameters controlling the fraction of sightlines unobscured by dust.
-        For typical values, see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
+        For typical values, see dspspop.boris_dust.DEFAULT_U_PARAMS
 
     cosmo_params : optional, ndarray, shape (5, )
         cosmo_params = (Om0, w0, wa, h, fb)
@@ -263,27 +259,27 @@ def calc_rest_sed_galpop(
     lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
         Unbounded parameters controlling Fburst, which sets the fractional contribution
         of a recent burst to the smooth SFH of a galaxy. For typical values, see
-        diffsky.experimental.dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
+        dspspop.lgfburstpop.DEFAULT_LGFBURST_U_PARAMS
 
     burstshapepop_u_params : ndarray, shape (n_pars_burstshape_pop, )
         Unbounded parameters controlling the distribution of stellar ages
         of stars formed in a recent burst. For typical values, see
-        diffsky.experimental.dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
+        dspspop.burstshapepop.DEFAULT_BURSTSHAPE_U_PARAMS
 
     lgav_pop_u_params : ndarray, shape (n_pars_lgav_pop, )
         Unbounded parameters controlling the distribution of dust parameter Av,
         the normalization of the attenuation curve at λ_V=5500 angstrom.
         For typical values, see
-        diffsky.experimental.dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
+        dspspop.lgavpop.DEFAULT_LGAV_U_PARAMS
 
     dust_delta_pop_u_params : ndarray, shape (n_pars_dust_delta_pop, )
         Unbounded parameters controlling the distribution of dust parameter δ,
         which modifies the power-law slope of the attenuation curve. For typical values,
-        see diffsky.experimental.dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
+        see dspspop.dust_deltapop.DEFAULT_DUST_DELTA_U_PARAMS
 
     fracuno_pop_u_params : ndarray, shape (n_pars_fracuno_pop, )
         Unbounded parameters controlling the fraction of sightlines unobscured by dust.
-        For typical values, see diffsky.experimental.dspspop.boris_dust.DEFAULT_U_PARAMS
+        For typical values, see dspspop.boris_dust.DEFAULT_U_PARAMS
 
     cosmo_params : optional, ndarray, shape (5, )
         cosmo_params = (Om0, w0, wa, h, fb)
