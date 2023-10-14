@@ -5,7 +5,14 @@ from collections import OrderedDict
 
 import h5py
 
-from .defaults import DEFAULT_SSP_BNAME, DEFAULT_SSP_KEYS, SSPData, SSPDataSingleMet
+from .defaults import (
+    DEFAULT_SSP_BNAME,
+    DEFAULT_SSP_BNAME_SINGLEMET,
+    DEFAULT_SSP_KEYS,
+    SSP_KEYS_SINGLEMET,
+    SSPData,
+    SSPDataSingleMet,
+)
 from .retrieve_fake_fsps_data import load_fake_ssp_data
 
 
@@ -75,7 +82,11 @@ def load_ssp_templates(
 
 
 def load_ssp_templates_singlemet(
-    fn=None, drn=None, bn=DEFAULT_SSP_BNAME, ssp_keys=DEFAULT_SSP_KEYS, dummy=False
+    fn=None,
+    drn=None,
+    bn=DEFAULT_SSP_BNAME_SINGLEMET,
+    ssp_keys=SSP_KEYS_SINGLEMET,
+    dummy=False,
 ):
     """Load SSP templates from disk, defaulting to DSPS package data location
 
@@ -105,7 +116,7 @@ def load_ssp_templates_singlemet(
 
         ssp_wave : ndarray of shape (n_wave, )
 
-        ssp_flux : ndarray of shape (n_met, n_ages, n_wave)
+        ssp_flux : ndarray of shape (n_ages, n_wave)
             SED of the SSP in units of Lsun/Hz/Msun
 
     """

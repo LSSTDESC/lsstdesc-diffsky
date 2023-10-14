@@ -4,6 +4,7 @@ import typing
 import numpy as np
 
 DEFAULT_SSP_BNAME = "ssp_data_fsps_v3.2_lgmet_age.h5"
+DEFAULT_SSP_BNAME_SINGLEMET = "ssp_data_fsps_v3.2_age.h5"
 
 
 class SSPData(typing.NamedTuple):
@@ -48,6 +49,9 @@ class SSPDataSingleMet(typing.NamedTuple):
     ssp_lg_age_gyr: np.ndarray
     ssp_wave: np.ndarray
     ssp_flux: np.ndarray
+
+
+SSP_KEYS_SINGLEMET = SSPDataSingleMet._fields
 
 
 class TransmissionCurve(typing.NamedTuple):
