@@ -18,8 +18,7 @@ from dsps.experimental.diffburst import (
 from dsps.experimental.diffburst import (
     _get_params_from_u_params as _get_burst_params_from_u_params,
 )
-from dsps.metallicity.mzr import mzr_model
-from dsps.sed import calc_ssp_weights_sfh_table_lognormal_mdf
+from dsps.sed import calc_age_weights_from_sfh_table
 from dsps.sed.stellar_age_weights import _calc_logsm_table_from_sfh_table
 from jax import jit as jjit
 from jax import numpy as jnp
@@ -39,9 +38,9 @@ from ..photometry_interpolation import interpolate_ssp_photmag_table
 
 _linterp_vmap = jjit(vmap(jnp.interp, in_axes=(0, None, 0)))
 
-_g = (None, 0, 0, None, None, None, 0)
-calc_ssp_weights_sfh_table_lognormal_mdf_vmap = jjit(
-    vmap(calc_ssp_weights_sfh_table_lognormal_mdf, in_axes=_g)
+_g = (None, 0, None, 0)
+calc_age_weights_from_sfh_table_vmap = jjit(
+    vmap(calc_age_weights_from_sfh_table, in_axes=_g)
 )
 
 _b = (None, 0, None)
@@ -116,16 +115,13 @@ def get_diffsky_sed_info(
     ssp_z_table : ndarray, shape (n_z_table, )
         Table storing a grid in redshift at which SSP photometry have been precomputed
 
-    ssp_restmag_table : ndarray, shape (n_met, n_age, n_rest_filters)
+    ssp_restmag_table : ndarray, shape (n_age, n_rest_filters)
         Restframe AB magnitude of SSPs integrated across input transmission curves
         for n_rest_filters filters
 
-    ssp_obsmag_table : ndarray, shape (n_z_table, n_met, n_age, n_obs_filters)
+    ssp_obsmag_table : ndarray, shape (n_z_table, n_age, n_obs_filters)
         Apparent AB magnitude of SSPs observed on a redshift grid with n_z_table points
         for n_obs_filters filters
-
-    ssp_lgmet : ndarray, shape (n_met, )
-        Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
 
     ssp_lg_age_gyr : ndarray, shape (n_age, )
         Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
@@ -191,7 +187,7 @@ def get_diffsky_sed_info(
 
     Returns
     ----------
-    gal_weights : ndarray, shape (n_gals, n_met, n_age)
+    gal_weights : ndarray, shape (n_gals, n_age)
         Probability distribution P(Z, τ_age) for each galaxy
 
     gal_frac_trans_obs : ndarray, shape (n_gals, n_age, n_obs_filters)
@@ -255,20 +251,15 @@ def get_diffsky_sed_info(
     ssp_obsmag_table_pergal = _get_ssp_obsmag_table_pergal(
         gal_z_obs, ssp_z_table, ssp_obsmag_table, ssp_restmag_table, gal_sfr_table
     )
-    n_gals, n_met, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
+    n_gals, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
     n_rest_filters = ssp_restmag_table.shape[-1]
-
-    mzr_params, lgmet_scatter = (
-        diffskypop_params.lgmet_params[:-1],
-        diffskypop_params.lgmet_params[-1],
-    )
 
     # Compute various galaxy properties at z_obs
     _galprops = _get_galprops_at_t_obs(
-        gal_z_obs, gal_t_table, gal_sfr_table, mzr_params, cosmo_params
+        gal_z_obs, gal_t_table, gal_sfr_table, cosmo_params
     )
-    gal_t_obs, gal_logsm_t_obs, gal_logssfr_t_obs, gal_lgmet_t_obs = _galprops[:4]
-    gal_t10, gal_t90, gal_logsm0 = _galprops[4:]
+    gal_t_obs, gal_logsm_t_obs, gal_logssfr_t_obs = _galprops[:3]
+    gal_t10, gal_t90, gal_logsm0 = _galprops[3:]
 
     # Monte Carlo generate morphology parameters
     fbulge_key, knot_key = jran.split(ran_key, 2)
@@ -279,14 +270,10 @@ def get_diffsky_sed_info(
     args = (
         gal_t_table,
         gal_sfr_table,
-        gal_lgmet_t_obs,
-        lgmet_scatter,
-        ssp_data.ssp_lgmet,
         ssp_data.ssp_lg_age_gyr,
         gal_t_obs,
     )
-    _weights = calc_ssp_weights_sfh_table_lognormal_mdf_vmap(*args)
-    lgmet_weights, smooth_age_weights = _weights[1:]
+    smooth_age_weights = calc_age_weights_from_sfh_table_vmap(*args)
 
     # Compute burst fraction for every galaxy
     gal_lgf_burst = _get_lgfburst_galpop_from_u_params(
@@ -314,12 +301,11 @@ def get_diffsky_sed_info(
     gal_age_weights = _fb * burst_age_weights + (1 - _fb) * smooth_age_weights
 
     # Compute P(τ, Z) for each composite galaxy
-    _w_age = gal_age_weights.reshape((n_gals, 1, n_age))
-    _w_met = lgmet_weights.reshape((n_gals, n_met, 1))
-    _w = _w_age * _w_met
-    _norm = jnp.sum(_w, axis=(1, 2))
-    gal_weights = _w / _norm.reshape((n_gals, 1, 1))  # (n_gals, n_met, n_age)
-    gal_weights = gal_weights.reshape((n_gals, n_met, n_age, 1))
+    _w_age = gal_age_weights.reshape((n_gals, n_age))
+    _w = _w_age
+    _norm = jnp.sum(_w, axis=(1,))
+    gal_weights = _w / _norm.reshape((n_gals, 1))  # (n_gals, n_age)
+    gal_weights = gal_weights.reshape((n_gals, n_age, 1))
 
     # Compute observed stellar mass for each composite galaxy
     gal_mstar_obs = (10**gal_logsm_t_obs).reshape((n_gals, 1))
@@ -327,13 +313,13 @@ def get_diffsky_sed_info(
     # Compute apparent magnitude in each band for each composite galaxy neglecting dust
     ssp_obsflux_table_pergal = 10 ** (-0.4 * ssp_obsmag_table_pergal)
     prod_obs_nodust = gal_weights * ssp_obsflux_table_pergal
-    gal_obsflux_nodust = jnp.sum(prod_obs_nodust, axis=(1, 2)) * gal_mstar_obs
+    gal_obsflux_nodust = jnp.sum(prod_obs_nodust, axis=(1,)) * gal_mstar_obs
     gal_obsmags_nodust = -2.5 * jnp.log10(gal_obsflux_nodust)
 
     # Compute restframe magnitude in each band for each composite galaxy neglecting dust
     ssp_restflux_table = 10 ** (-0.4 * ssp_restmag_table)
     prod_rest = gal_weights * ssp_restflux_table
-    gal_restflux_nodust = jnp.sum(prod_rest, axis=(1, 2)) * gal_mstar_obs
+    gal_restflux_nodust = jnp.sum(prod_rest, axis=(1,)) * gal_mstar_obs
     gal_restmags_nodust = -2.5 * jnp.log10(gal_restflux_nodust)
 
     # Compute attenuation through each observed filter bandpass
@@ -355,9 +341,9 @@ def get_diffsky_sed_info(
     gal_att_curve_params, gal_frac_unobs = _dust_results_obs[1:]
 
     # Apply dust attenuation to the apparent magnitude in each band for each galaxy
-    ft_obs = gal_frac_trans_obs.reshape((n_gals, 1, n_age, n_obs_filters))
+    ft_obs = gal_frac_trans_obs.reshape((n_gals, n_age, n_obs_filters))
     prod_obs_dust = gal_weights * ssp_obsflux_table_pergal * ft_obs
-    gal_obsflux_dust = jnp.sum(prod_obs_dust, axis=(1, 2)) * gal_mstar_obs
+    gal_obsflux_dust = jnp.sum(prod_obs_dust, axis=(1,)) * gal_mstar_obs
     gal_obsmags_dust = -2.5 * jnp.log10(gal_obsflux_dust)
 
     # Compute attenuation through each restframe filter bandpass
@@ -377,9 +363,9 @@ def get_diffsky_sed_info(
     gal_frac_trans_rest = _dust_results_rest[0]  # (n_gals, n_age, n_filters)
 
     # Apply dust attenuation to the restframe magnitude in each band for each galaxy
-    ft_rest = gal_frac_trans_rest.reshape((n_gals, 1, n_age, n_rest_filters))
+    ft_rest = gal_frac_trans_rest.reshape((n_gals, n_age, n_rest_filters))
     prod_rest_dust = gal_weights * ssp_restflux_table * ft_rest
-    gal_restflux_dust = jnp.sum(prod_rest_dust, axis=(1, 2)) * gal_mstar_obs
+    gal_restflux_dust = jnp.sum(prod_rest_dust, axis=(1,)) * gal_mstar_obs
     gal_restmags_dust = -2.5 * jnp.log10(gal_restflux_dust)
 
     _res = _bulge_sfh_vmap(gal_t_table, gal_sfr_table, gal_fbulge_params)
@@ -388,7 +374,7 @@ def get_diffsky_sed_info(
     bulge_sfh = jnp.where(bulge_sfh < SFR_MIN, SFR_MIN, bulge_sfh)
     gal_frac_bulge_t_obs = _linterp_vmap(gal_t_obs, gal_t_table, bulge_to_total_history)
 
-    gal_ssp_weights = gal_weights.reshape((n_gals, n_met, n_age))
+    gal_ssp_weights = gal_weights.reshape((n_gals, n_age))
     sed_info = DiffskySEDinfo(
         gal_ssp_weights,
         gal_frac_trans_obs,
@@ -408,9 +394,7 @@ def get_diffsky_sed_info(
     return sed_info
 
 
-def _get_galprops_at_t_obs(
-    gal_z_obs, gal_t_table, gal_sfr_table, mzr_params, cosmo_params
-):
+def _get_galprops_at_t_obs(gal_z_obs, gal_t_table, gal_sfr_table, cosmo_params):
     Om0, w0, wa, h, fb = cosmo_params
     gal_t_obs = _age_at_z_vmap(gal_z_obs, Om0, w0, wa, h)
     lgt_obs = jnp.log10(gal_t_obs)
@@ -431,13 +415,10 @@ def _get_galprops_at_t_obs(
     gal_t90 = calc_tform_pop(gal_t_table, gal_smh_table, 0.9)
     gal_logsm0 = gal_smh_table[:, -1]
 
-    gal_lgmet_t_obs = mzr_model(gal_logsm_t_obs, gal_t_obs, *mzr_params)
-
     return (
         gal_t_obs,
         gal_logsm_t_obs,
         gal_logssfr_t_obs,
-        gal_lgmet_t_obs,
         gal_t10,
         gal_t90,
         gal_logsm0,
@@ -461,25 +442,18 @@ def _get_ssp_obsmag_table_pergal(
     ssp_obsmag_table_pergal = interpolate_ssp_photmag_table(
         gal_z_obs, ssp_z_table, ssp_obsmag_table
     )
-    n_gals, n_met, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
+    n_gals, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
 
     msg = "gal_sfr_table.shape[0]={0} must equal gal_z_obs.shape[0]={1}"
     _n_gals = gal_sfr_table.shape[0]
     assert n_gals == gal_sfr_table.shape[0], msg.format(n_gals, _n_gals)
 
-    msg = "ssp_lgmet.shape[0]={0} must equal ssp_obsmag_table_pergal.shape[1]={1}"
-    _n_met = ssp_obsmag_table_pergal.shape[1]
-    assert n_met == _n_met, msg.format(n_met, _n_met)
-
     msg = "ssp_lg_age_gyr.shape[0]={0} must equal ssp_obsmag_table_pergal.shape[2]={1}"
-    _n_age = ssp_obsmag_table_pergal.shape[2]
+    _n_age = ssp_obsmag_table_pergal.shape[1]
     assert n_age == _n_age, msg.format(n_age, _n_age)
 
-    n_met2, n_age2, n_rest_filters = ssp_restmag_table.shape
+    n_age2, n_rest_filters = ssp_restmag_table.shape
     msg = "ssp_obsmag_table.shape[1]={0} must equal ssp_restmag_table.shape[0]={1}"
-    assert n_met == n_met2, msg.format(n_met, n_met2)
-
-    msg = "ssp_obsmag_table.shape[2]={0} must equal ssp_restmag_table.shape[1]={1}"
     assert n_age == n_age2, msg.format(n_age, n_age2)
 
     return ssp_obsmag_table_pergal

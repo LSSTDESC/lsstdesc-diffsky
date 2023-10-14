@@ -12,7 +12,7 @@ from ... import read_diffskypop_params
 from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
 from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
-    load_fake_ssp_data,
+    load_fake_ssp_data_singlemet,
 )
 from ..photometry_lc_interp_singlemet import get_diffsky_sed_info
 
@@ -23,8 +23,7 @@ DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
 
 
 def test_get_diffsky_sed_info():
-    ssp_data = load_fake_ssp_data()
-    n_met = ssp_data.ssp_lgmet.shape[0]
+    ssp_data = load_fake_ssp_data_singlemet()
     n_age = ssp_data.ssp_lg_age_gyr.shape[0]
 
     n_t = 100
@@ -60,8 +59,8 @@ def test_get_diffsky_sed_info():
 
     n_z_table = 23
     ssp_z_table = np.linspace(0.001, 10, n_z_table)
-    ssp_restmag_table = np.random.uniform(size=(n_met, n_age, n_rest_filters))
-    ssp_obsmag_table = np.random.uniform(size=(n_z_table, n_met, n_age, n_obs_filters))
+    ssp_restmag_table = np.random.uniform(size=(n_age, n_rest_filters))
+    ssp_obsmag_table = np.random.uniform(size=(n_z_table, n_age, n_obs_filters))
 
     diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
@@ -104,7 +103,7 @@ def test_get_diffsky_sed_info():
         gal_obsmags_dust,
         gal_restmags_dust,
     ) = _res
-    assert weights.shape == (n_gals, n_met, n_age)
+    assert weights.shape == (n_gals, n_age)
     assert gal_frac_trans_obs.shape == (n_gals, n_age, n_obs_filters)
     assert gal_frac_trans_rest.shape == (n_gals, n_age, n_rest_filters)
     assert gal_att_curve_params.shape == (n_gals, 3)
