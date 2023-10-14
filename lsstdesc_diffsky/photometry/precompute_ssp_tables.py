@@ -1,6 +1,7 @@
 """
 """
 import numpy as np
+
 from . import photometry_interpolation_kernels as pik
 
 
@@ -43,6 +44,50 @@ def precompute_ssp_obsmags_on_z_table(
 
     """
     ssp_obsmag_table = pik._calc_obs_mag_vmap_f_ssp_z(
+        ssp_wave, ssp_fluxes, filter_waves, filter_trans, z_table, Om0, w0, wa, h
+    )
+    return ssp_obsmag_table
+
+
+def precompute_ssp_obsmags_on_z_table_singlemet(
+    ssp_wave,
+    ssp_fluxes,
+    filter_waves,
+    filter_trans,
+    z_table,
+    Om0,
+    w0,
+    wa,
+    h,
+):
+    """Precompute observed magnitudes of a collection of SEDs on a redshift grid
+
+    Parameters
+    ----------
+    ssp_wave : array of shape (n_spec, )
+
+    ssp_fluxes : array of shape (n_age, n_spec)
+
+    filter_waves : array of shape (n_filters, n_trans_curve)
+
+    filter_trans : array of shape (n_filters, n_trans_curve)
+
+    z_table : array of shape (n_redshift, )
+
+    Om0 : float
+
+    w0 : float
+
+    wa : float
+
+    h : float
+
+    Returns
+    -------
+    ssp_photmag_table : array of shape (n_redshift, n_age, n_filters)
+
+    """
+    ssp_obsmag_table = pik._calc_obs_mag_vmap_f_ssp_z_singlemet(
         ssp_wave, ssp_fluxes, filter_waves, filter_trans, z_table, Om0, w0, wa, h
     )
     return ssp_obsmag_table

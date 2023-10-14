@@ -66,6 +66,12 @@ _calc_obs_mag_vmap_f_ssp = jjit(
 )
 _calc_obs_mag_vmap_f_ssp_z = jjit(vmap(_calc_obs_mag_vmap_f_ssp, in_axes=_z))
 
+_calc_obs_mag_vmap_f_ssp_singlemet = jjit(vmap(_calc_obs_mag_vmap_f, in_axes=_ssp))
+_calc_obs_mag_vmap_f_ssp_z_singlemet = jjit(
+    vmap(_calc_obs_mag_vmap_f_ssp_singlemet, in_axes=_z)
+)
+
+
 _calc_rest_mag_vmap_f = jjit(vmap(calc_rest_mag, in_axes=[None, None, 0, 0]))
 _calc_rest_mag_vmap_f_ssp = jjit(
     vmap(
