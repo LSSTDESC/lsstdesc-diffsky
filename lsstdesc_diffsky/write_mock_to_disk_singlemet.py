@@ -18,9 +18,6 @@ from astropy.table import Table, vstack
 from astropy.utils.misc import NumpyRNGContext
 from diffstar.defaults import FB
 from diffstar.sfh import sfh_galpop
-
-# SED generation
-from dsps.data_loaders import load_ssp_templates
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from galsampler import crossmatch
 from galsampler.galmatch import galsample
@@ -47,6 +44,12 @@ from .halo_information.get_fof_halo_shapes import get_halo_shapes, get_matched_s
 
 # Synthetics
 from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
+
+# SED generation
+from .legacy.roman_rubin_2023.dsps.data_loaders.load_ssp_data import (
+    load_ssp_templates_singlemet,
+)
+from .param_data.param_reader import DiffskyPopParams
 from .pecZ import pecZ
 from .photometry.get_SFH_from_params import (
     get_diff_params,
@@ -54,10 +57,10 @@ from .photometry.get_SFH_from_params import (
     get_logsm_sfr_obs,
 )
 from .photometry.load_filter_data import assemble_filter_data, get_filter_wave_trans
-from .photometry.photometry_lc_interp import get_diffsky_sed_info
+from .photometry.photometry_lc_interp_singlemet import get_diffsky_sed_info_singlemet
 from .photometry.precompute_ssp_tables import (
-    precompute_ssp_obsmags_on_z_table,
-    precompute_ssp_restmags,
+    precompute_ssp_obsmags_on_z_table_singlemet,
+    precompute_ssp_restmags_singlemet,
 )
 
 # Additional catalog properties
@@ -210,7 +213,7 @@ def write_umachine_healpix_mock_to_disk(
 
     """
 
-    from .constants import SED_params
+    from .constants import SED_params_singlemet as SED_params
 
     output_mock = {}
     gen = zip(umachine_mstar_ssfr_mock_fname_list, redshift_list, snapshots)
@@ -307,10 +310,14 @@ def write_umachine_healpix_mock_to_disk(
 
     dsps_data_DRN = SED_params["dsps_data_dirname"]
     dsps_data_fn = SED_params["dsps_data_filename"]
-    # get ssp_wave, ssp_flux, lg_met, lg_age_gyr
-    ssp_data = load_ssp_templates(os.path.join(dsps_data_DRN, dsps_data_fn))
-    ssp_wave = ssp_data.ssp_wave
-    ssp_flux = ssp_data.ssp_flux
+    # get ssp_wave, ssp_flux, lg_age_gyr
+    ssp_data_singlemet = load_ssp_templates_singlemet(
+        os.path.join(dsps_data_DRN, dsps_data_fn)
+    )
+    # enforce that single-metallicity SSPs were in fact loaded
+    assert "ssp_lgmet" not in ssp_data_singlemet._fields
+    ssp_wave = ssp_data_singlemet.ssp_wave
+    ssp_flux = ssp_data_singlemet.ssp_flux
     filter_data = assemble_filter_data(dsps_data_DRN, SED_params["filters"])
     filter_waves, filter_trans, filter_keys = get_filter_wave_trans(filter_data)
     print(
@@ -330,10 +337,10 @@ def write_umachine_healpix_mock_to_disk(
     ssp_z_table = np.linspace(z_min, z_max, n_z_table)
     msg = "\nComputing ssp tables for {} z values: {:.2f} < z < {:.2f} (dz={:.2f})\n"
     print(msg.format(n_z_table, z_min, z_max, dz))
-    ssp_restmag_table = precompute_ssp_restmags(
+    ssp_restmag_table = precompute_ssp_restmags_singlemet(
         ssp_wave, ssp_flux, filter_waves, filter_trans
     )
-    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table(
+    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table_singlemet(
         ssp_wave,
         ssp_flux,
         filter_waves,
@@ -347,8 +354,7 @@ def write_umachine_healpix_mock_to_disk(
 
     # save in SED_params for passing to other modules
     SED_params["ssp_z_table"] = ssp_z_table
-    SED_params["ssp_lgmet"] = ssp_data.ssp_lgmet
-    SED_params["ssp_lg_age_gyr"] = ssp_data.ssp_lg_age_gyr
+    SED_params["ssp_lg_age_gyr"] = ssp_data_singlemet.ssp_lg_age_gyr
     SED_params["ssp_restmag_table"] = ssp_restmag_table
     SED_params["ssp_obsmag_table"] = ssp_obsmag_table
     SED_params["filter_keys"] = filter_keys
@@ -573,6 +579,7 @@ def write_umachine_healpix_mock_to_disk(
 
         print("\n...Building output snapshot mock for snapshot {}".format(snapshot))
         output_mock[snapshot] = build_output_snapshot_mock(
+            ssp_data_singlemet,
             float(redshift),
             mock,
             target_halos,
@@ -844,6 +851,7 @@ def add_low_mass_synthetic_galaxies(
 
 
 def build_output_snapshot_mock(
+    ssp_data_singlemet,
     snapshot_redshift,
     umachine,
     target_halos,
@@ -1160,6 +1168,7 @@ def build_output_snapshot_mock(
 
     # generate mags
     dc2 = generate_SEDs(
+        ssp_data_singlemet,
         dc2,
         SED_params,
         cosmology,
@@ -1339,6 +1348,7 @@ def build_output_snapshot_mock(
 
 
 def generate_SEDs(
+    ssp_data_singlemet,
     dc2,
     SED_params,
     cosmology,
@@ -1406,7 +1416,16 @@ def generate_SEDs(
 
     # compute SEDs
     ran_key = jran.PRNGKey(seed)
-    _res = get_diffsky_sed_info(
+    diffskypop_params = DiffskyPopParams(
+        np.array(list(SED_params["lgfburst_pop_u_params"].values())),
+        np.array(list(SED_params["burstshapepop_u_params"].values())),
+        np.array(list(SED_params["lgav_dust_u_params"].values())),
+        np.array(list(SED_params["delta_dust_u_params"].values())),
+        np.array(list(SED_params["fracuno_pop_u_params"].values())),
+        np.array(list(SED_params["lgmet_params"].values())),
+    )
+
+    _res = get_diffsky_sed_info_singlemet(
         ran_key,
         dc2["redshift"],
         mah_params,
@@ -1415,19 +1434,13 @@ def generate_SEDs(
         SED_params["ssp_z_table"],
         SED_params["ssp_restmag_table"],
         SED_params["ssp_obsmag_table"],
-        SED_params["ssp_lgmet"],
-        SED_params["ssp_lg_age_gyr"],
+        ssp_data_singlemet,
         SED_params["t_table"],
         SED_params["filter_waves"],
         SED_params["filter_trans"],
         SED_params["filter_waves"],
         SED_params["filter_trans"],
-        np.array(list(SED_params["lgfburst_pop_u_params"].values())),
-        np.array(list(SED_params["burstshapepop_u_params"].values())),
-        np.array(list(SED_params["lgav_dust_u_params"].values())),
-        np.array(list(SED_params["delta_dust_u_params"].values())),
-        np.array(list(SED_params["fracuno_pop_u_params"].values())),
-        np.array(list(SED_params["lgmet_params"].values())),
+        diffskypop_params,
         cosmo_params,
     )
 
@@ -1446,7 +1459,6 @@ def validate_SED_params(
         "ssp_z_table",
         "ssp_restmag_table",
         "ssp_obsmag_table",
-        "ssp_lgmet",
         "ssp_lg_age_gyr",
         "t_table",
         "filter_waves",
