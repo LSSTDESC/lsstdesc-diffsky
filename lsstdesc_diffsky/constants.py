@@ -1,4 +1,6 @@
 """This module stores globals used throughout the repository."""
+from copy import deepcopy
+
 from .disk_bulge_modeling.disk_bulge_kernels import DEFAULT_FBULGE_PDICT
 
 MAH_PNAMES = [
@@ -42,3 +44,8 @@ SED_params = {
         "filter_trans",
     ],
 }
+
+SED_params_singlemet = deepcopy(SED_params)
+xkeys = deepcopy(SED_params_singlemet["xkeys"])
+xkeys.pop(xkeys.index("ssp_lgmet"))
+SED_params_singlemet["xkeys"] = xkeys
