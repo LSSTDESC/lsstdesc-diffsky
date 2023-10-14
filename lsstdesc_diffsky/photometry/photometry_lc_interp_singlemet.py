@@ -73,7 +73,7 @@ class DiffskySEDinfo(typing.NamedTuple):
     gal_restmags_dust: jnp.ndarray
 
 
-def get_diffsky_sed_info(
+def get_diffsky_sed_info_singlemet(
     ran_key,
     gal_z_obs,
     mah_params,

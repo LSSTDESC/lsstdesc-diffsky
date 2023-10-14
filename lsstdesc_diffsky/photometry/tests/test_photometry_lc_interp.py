@@ -8,19 +8,13 @@ from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARA
 from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
 from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
 from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
-from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.experimental.diffburst import DLGAGE_MIN, LGAGE_MAX, LGYR_PEAK_MIN
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
-from jax import jit as jjit
 from jax import random as jran
-from jax import vmap
 
 from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
 from ..photometry_lc_interp import get_diffsky_sed_info
-
-_B = (0, None)
-_integrate_sfr_vmap = jjit(vmap(_integrate_sfr, in_axes=_B))
 
 DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
 
@@ -49,9 +43,6 @@ def test_get_diffsky_sed_info():
 
     Om0, w0, wa, h, fb = 0.3, -1, 0.0, 0.7, 0.16
     cosmo_params = np.array((Om0, w0, wa, h, fb))
-
-    # n_wave_seds = 300
-    # ssp_rest_seds = np.random.uniform(size=(n_met, n_age, n_wave_seds))
 
     n_rest_filters, n_obs_filters = 2, 3
     n_trans_wave = 40
@@ -109,7 +100,6 @@ def test_get_diffsky_sed_info():
         gal_frac_bulge_t_obs,
         gal_fbulge_params,
         gal_fknot,
-        # gal_rest_seds,
         gal_obsmags_nodust,
         gal_restmags_nodust,
         gal_obsmags_dust,
@@ -138,8 +128,6 @@ def test_get_diffsky_sed_info():
     assert gal_fknot.shape == (n_gals,)
     assert np.all(gal_fknot > 0)
     assert np.all(gal_fknot < FKNOT_MAX)
-
-    # assert gal_rest_seds.shape == (n_gals, n_wave_seds)
 
     assert gal_obsmags_nodust.shape == (n_gals, n_obs_filters)
     assert gal_restmags_nodust.shape == (n_gals, n_rest_filters)
