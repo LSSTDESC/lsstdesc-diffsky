@@ -11,18 +11,17 @@ The latest release of lsstdesc-diffsky is available for installation with pip or
 
     $ conda install -c conda-forge lsstdesc-diffsky
 
+You can alternatively install with pip. 
+To do so starting from a base environment of jax managed by conda-forge::
+
+    $ conda create -c conda-forge -n diffsky_env python=3.9 numpy jax pytest ipython jupyter matplotlib scipy h5py 
+    $ conda activate diffsky_env
+    $ pip install lsstdesc-diffsky
 
 To install lsstdesc-diffsky into your environment from the source code::
 
     $ cd /path/to/root/lsstdesc-diffsky
     $ pip install .
-
-
-Conda environment
-~~~~~~~~~~~~~~~~~
-For a typical development environment in conda::
-
-    $ conda create -c conda-forge -n diffstuff python=3.9 numpy jax pytest ipython jupyter matplotlib scipy h5py diffmah diffstar dsps diffsky lsstdesc-diffsky
 
 
 Documentation

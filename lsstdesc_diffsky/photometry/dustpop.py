@@ -1,18 +1,18 @@
 """JAX-based implementation of the dust population model in Nagaraj+22.
 See https://arxiv.org/abs/2202.05102 for details."""
-from jax import random as jran
-from jax import numpy as jnp
+from collections import OrderedDict
+
 import numpy as np
 from jax import jit as jjit
-from collections import OrderedDict
-from diffsky.experimental.dspspop.nagaraj22_dust import (
+from jax import numpy as jnp
+from jax import random as jran
+
+from ..dspspop.nagaraj22_dust import (
+    DELTA_PDICT,
     TAU_BOUNDS_PDICT,
     TAU_PDICT,
-    DELTA_PDICT
-    )
-from diffsky.experimental.dspspop.nagaraj22_dust import (
-    _get_median_dust_params_kern
-    )
+    _get_median_dust_params_kern,
+)
 
 
 def mc_generate_dust_params(ran_key, logsm, logssfr, redshift, **kwargs):
