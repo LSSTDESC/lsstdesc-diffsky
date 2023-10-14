@@ -80,6 +80,10 @@ _calc_rest_mag_vmap_f_ssp = jjit(
     )
 )
 
+_calc_rest_mag_vmap_f_ssp_singlemet = jjit(
+    vmap(_calc_rest_mag_vmap_f, in_axes=[None, 0, None, None]),
+)
+
 
 @jjit
 def _get_filter_effective_wavelength_rest(filter_wave, filter_trans):

@@ -117,6 +117,30 @@ def precompute_ssp_restmags(ssp_wave, ssp_fluxes, filter_waves, filter_trans):
     return ssp_restmag_table
 
 
+def precompute_ssp_restmags_singlemet(ssp_wave, ssp_fluxes, filter_waves, filter_trans):
+    """Precompute restframe magnitudes of a collection of SEDs
+
+    Parameters
+    ----------
+    ssp_wave : array of shape (n_spec, )
+
+    ssp_fluxes : array of shape (n_age, n_spec)
+
+    filter_waves : array of shape (n_filters, n_trans_curve)
+
+    filter_trans : array of shape (n_filters, n_trans_curve)
+
+    Returns
+    -------
+    ssp_photmag_table : array of shape (n_age, n_filters)
+
+    """
+    ssp_restmag_table = pik._calc_rest_mag_vmap_f_ssp_singlemet(
+        ssp_wave, ssp_fluxes, filter_waves, filter_trans
+    )
+    return ssp_restmag_table
+
+
 def precompute_dust_attenuation(filter_waves, filter_trans, redshift, dust_params):
     """Precompute the attenuation of each galaxy in each band
 
