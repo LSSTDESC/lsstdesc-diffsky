@@ -1,13 +1,14 @@
 """
 
 """
-from astropy.cosmology import WMAP7 as cosmo
 import astropy.constants as const
-from numpy.core import umath_tests as npm
 import numpy as np
-import warnings
+from astropy.cosmology import WMAP7 as cosmo
+from jax import jit as jjit
+from jax import numpy as jnp
+from jax import vmap
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+dot_vmap = jjit(vmap(jnp.dot, in_axes=(0, 0)))
 
 
 def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
@@ -28,7 +29,7 @@ def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
     :param obs: The coordinates of the observer, in form [x, y, z]
     Returns
     -------
-             - the peculair z_hubb in each object in form of param redshift
+             - the peculiar z_hubb in each object in form of param redshift
              - the total observed z_hubb (cosmological+peculiar)
              - the peculiar velocity of each object, in the form of param vx,
                where negative velocities are toward the observer, in comoving km/s
@@ -45,7 +46,7 @@ def pecZ(x, y, z, vx, vy, vz, z_hubb, obs=np.zeros(3)):
 
     # dot velocity vectors with relative position unit vector to get peculiar velocity
     v = np.array([vx, vy, vz]).T
-    v_pec = npm.inner1d(v, r_rel_hat)
+    v_pec = dot_vmap(v, r_rel_hat)
 
     # find total and peculiar z_hubb (full relativistic expression)
     c = const.c.value / 1000
