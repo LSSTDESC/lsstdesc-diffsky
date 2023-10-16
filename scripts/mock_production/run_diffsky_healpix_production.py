@@ -18,7 +18,6 @@ import subprocess
 from mpi4py import MPI
 from contextlib import redirect_stdout
 from lsstdesc_diffsky.halo_information.get_healpix_cutout_info import get_healpix_cutout_info
-from lsstdesc_diffsky.write_mock_to_disk import write_umachine_healpix_mock_to_disk
 
 
 def retrieve_commit_hash(path_to_repo):
@@ -59,7 +58,14 @@ def process_healpix(args, inputs, healpix_number,
     healpix_fname_template = inputs['file_names']['healpix_fname']
     print('Setting master directory to {}'.format(input_master_dirname))
     print('Reading inputs from {}'.format(healpix_cutout_dirname))
-    print('Writing outputs to {}'.format(output_mock_dirname))
+    print('Writing outputs to {}\n'.format(output_mock_dirname))
+
+    if 'single_met' in inputs.keys() and inputs['single_met']:
+        from lsstdesc_diffsky.write_mock_to_disk_singlemet import write_umachine_healpix_mock_to_disk
+        print('Importing from write_mock_to_disk_singlemet\n')
+    else:
+        print('Importing from write_mock_to_disk\n')
+        from lsstdesc_diffsky.write_mock_to_disk import write_umachine_healpix_mock_to_disk
 
     SED_pars = {}
 
