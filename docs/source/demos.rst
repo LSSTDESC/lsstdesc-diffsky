@@ -7,3 +7,4 @@ The notebooks below provide worked examples of some common calculations on diffs
    :maxdepth: 1
    
    demo_roman_rubin_2023_seds.ipynb
+   demo_roman_rubin_2023_seds_singlemet.ipynb
