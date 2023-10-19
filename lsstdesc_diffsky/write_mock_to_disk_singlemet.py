@@ -1259,12 +1259,6 @@ def build_output_snapshot_mock(
         ellip_disk = (1.0 - disk_axis_ratio) / (1.0 + disk_axis_ratio)
         ellip_spheroid = (1.0 - spheroid_axis_ratio) / (1.0 + spheroid_axis_ratio)
         dc2["spheroidAxisRatio"] = np.array(spheroid_axis_ratio, dtype="f4")
-        dc2["spheroidMajorAxisArcsec"] = np.array(
-            dc2["spheroidHalfLightRadiusArcsec"].value, dtype="f4"
-        )
-        dc2["spheroidMinorAxisArcsec"] = np.array(
-            dc2["spheroidHalfLightRadiusArcsec"].value * spheroid_axis_ratio, dtype="f4"
-        )
         dc2["spheroidEllipticity"] = np.array(ellip_spheroid, dtype="f4")
         dc2["spheroidEllipticity1"] = np.array(
             np.cos(2.0 * pos_angle) * ellip_spheroid, dtype="f4"
@@ -1273,12 +1267,6 @@ def build_output_snapshot_mock(
             np.sin(2.0 * pos_angle) * ellip_spheroid, dtype="f4"
         )
         dc2["diskAxisRatio"] = np.array(disk_axis_ratio, dtype="f4")
-        dc2["diskMajorAxisArcsec"] = np.array(
-            dc2["diskHalfLightRadiusArcsec"].value, dtype="f4"
-        )
-        dc2["diskMinorAxisArcsec"] = np.array(
-            dc2["diskHalfLightRadiusArcsec"].value * disk_axis_ratio, dtype="f4"
-        )
         dc2["diskEllipticity"] = np.array(ellip_disk, dtype="f4")
         dc2["diskEllipticity1"] = np.array(
             np.cos(2.0 * pos_angle) * ellip_disk, dtype="f4"
