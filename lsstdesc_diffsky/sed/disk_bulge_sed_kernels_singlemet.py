@@ -148,7 +148,7 @@ def calc_rest_sed_disk_bulge_knot_singlegal(
     dust_Av = 10**lgav
     dust_Eb = _get_eb_from_delta(dust_delta)
     k_lambda = sbl18_k_lambda(
-        ssp_wave_micron, UV_BUMP_W0, UV_BUMP_DW, dust_Eb, dust_delta
+        ssp_wave_micron, dust_Eb, dust_delta, UV_BUMP_W0, UV_BUMP_DW
     )
     frac_dust_trans = _frac_transmission_from_k_lambda_age_vmap(
         k_lambda, dust_Av, frac_unobscured
