@@ -1,9 +1,12 @@
+"""
+"""
 import numpy as np
 from ..photometry.get_SFH_from_params import get_log_safe_ssfr
 
 Ngals = 100
 Mstar = 1e10
 SFR = 1e11
+
 
 def test_get_log_safe_ssfr():
     # setup arrays
