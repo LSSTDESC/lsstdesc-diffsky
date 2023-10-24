@@ -1399,7 +1399,7 @@ def generate_SEDs(
     logsm_obs, sfr_obs = get_logsm_sfr_obs(sfh_table, t_obs, SED_params["t_table"])
     dc2["logsm_obs"] = logsm_obs
     dc2["sfr"] = sfr_obs
-    log_ssfr = get_log_safe_ssfr(logsm_obs, sfr_obs)
+    log_ssfr = get_log_safe_ssfr(np.power(10, logsm_obs), sfr_obs)
     dc2["log_ssfr"] = log_ssfr
 
     fb = cosmology.Ob0 / cosmology.Om0
