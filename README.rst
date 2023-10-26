@@ -44,8 +44,7 @@ To build html of test coverage::
     
 Available Catalogs
 ------------------
-A prototype catalalog is available at NERSC and is called
-skysim_v3.1.0
+A mock catalalog is available at NERSC and is called roman_rubin_2023_v1.0.1
 
 
 Working at NERSC

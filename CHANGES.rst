@@ -1,3 +1,7 @@
+1.0.0 (2023-10-26)
+-------------------
+- Implement single-metallicity SED and photometry kernels
+
 0.1.5 (2023-10-13)
 -------------------
 - Modify default behavior of load_diffsky_healpixel
