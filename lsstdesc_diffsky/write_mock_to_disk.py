@@ -576,6 +576,7 @@ def write_umachine_healpix_mock_to_disk(
 
         print("\n...Building output snapshot mock for snapshot {}".format(snapshot))
         output_mock[snapshot] = build_output_snapshot_mock(
+            ssp_data,
             float(redshift),
             mock,
             target_halos,
@@ -847,6 +848,7 @@ def add_low_mass_synthetic_galaxies(
 
 
 def build_output_snapshot_mock(
+    ssp_data,
     snapshot_redshift,
     umachine,
     target_halos,
@@ -1164,6 +1166,7 @@ def build_output_snapshot_mock(
 
     # generate mags
     dc2 = generate_SEDs(
+        ssp_data,
         dc2,
         SED_params,
         cosmology,
@@ -1330,6 +1333,7 @@ def build_output_snapshot_mock(
 
 
 def generate_SEDs(
+    ssp_data,
     dc2,
     SED_params,
     cosmology,
@@ -1406,8 +1410,7 @@ def generate_SEDs(
         SED_params["ssp_z_table"],
         SED_params["ssp_restmag_table"],
         SED_params["ssp_obsmag_table"],
-        SED_params["ssp_lgmet"],
-        SED_params["ssp_lg_age_gyr"],
+        ssp_data,
         SED_params["t_table"],
         SED_params["filter_waves"],
         SED_params["filter_trans"],

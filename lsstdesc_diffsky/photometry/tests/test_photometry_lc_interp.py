@@ -8,6 +8,7 @@ from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARA
 from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
 from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
 from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
+from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
 from dsps.experimental.diffburst import DLGAGE_MIN, LGAGE_MAX, LGYR_PEAK_MIN
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from jax import random as jran
@@ -20,7 +21,8 @@ DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
 
 
 def test_get_diffsky_sed_info():
-    n_met, n_age = 12, 40
+    ssp_data = load_fake_ssp_data()
+    n_met, n_age = ssp_data.ssp_flux.shape[:2]
 
     ssp_lgmet = np.linspace(-3, -1, n_met)
     ssp_lg_age_gyr = np.linspace(5, 10.25, n_age) - 9.0
@@ -71,8 +73,7 @@ def test_get_diffsky_sed_info():
         ssp_z_table,
         ssp_restmag_table,
         ssp_obsmag_table,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
+        ssp_data,
         gal_t_table,
         rest_filter_waves,
         rest_filter_trans,

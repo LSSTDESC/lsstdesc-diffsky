@@ -83,8 +83,7 @@ def get_diffsky_sed_info(
     ssp_z_table,
     ssp_restmag_table,
     ssp_obsmag_table,
-    ssp_lgmet,
-    ssp_lg_age_gyr,
+    ssp_data,
     gal_t_table,
     rest_filter_waves,
     rest_filter_trans,
@@ -284,8 +283,8 @@ def get_diffsky_sed_info(
         gal_sfr_table,
         gal_lgmet_t_obs,
         lgmet_scatter,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
+        ssp_data.ssp_lgmet,
+        ssp_data.ssp_lg_age_gyr,
         gal_t_obs,
     )
     _weights = calc_ssp_weights_sfh_table_lognormal_mdf_vmap(*args)
@@ -302,7 +301,7 @@ def get_diffsky_sed_info(
         gal_logsm_t_obs, gal_logssfr_t_obs, burstshapepop_u_params
     )
     burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
-    ssp_lg_age_yr = ssp_lg_age_gyr + 9
+    ssp_lg_age_yr = ssp_data.ssp_lg_age_gyr + 9
     burst_age_weights = _burst_age_weights_from_u_params_vmap(
         ssp_lg_age_yr, burstshape_u_params
     )
@@ -347,7 +346,7 @@ def get_diffsky_sed_info(
         gal_logsm_t_obs,
         gal_logssfr_t_obs,
         gal_lgf_burst,
-        ssp_lg_age_gyr,
+        ssp_data.ssp_lg_age_gyr,
         obs_filter_waves,
         obs_filter_trans,
         lgav_u_params,
@@ -370,7 +369,7 @@ def get_diffsky_sed_info(
         gal_logsm_t_obs,
         gal_logssfr_t_obs,
         gal_lgf_burst,
-        ssp_lg_age_gyr,
+        ssp_data.ssp_lg_age_gyr,
         rest_filter_waves,
         rest_filter_trans,
         lgav_u_params,
