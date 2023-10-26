@@ -5,6 +5,8 @@ from jax import jit as jjit
 from jax import vmap
 
 from ..defaults import DEFAULT_COSMO_PARAMS
+from ..legacy.roman_rubin_2023.dsps.data_loaders import SSPData
+from ..param_data.param_reader import DiffskyPopParams
 from ..sed import calc_rest_sed_singlegal
 
 _F = (*[None] * 2, 0, 0, *[None] * 5)
@@ -37,21 +39,23 @@ def calc_photometry_singlegal(
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the photometry of an individual diffsky galaxy"""
-    _res = calc_rest_sed_singlegal(
-        z_obs,
-        mah_params,
-        ms_params,
-        q_params,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
-        ssp_wave_ang,
-        ssp_flux,
+    ssp_data = SSPData(ssp_lgmet, ssp_lg_age_gyr, ssp_wave_ang, ssp_flux)
+    diffskypop_params = DiffskyPopParams(
         lgfburst_pop_u_params,
         burstshapepop_u_params,
         lgav_pop_u_params,
         dust_delta_pop_u_params,
         fracuno_pop_u_params,
         met_params,
+    )
+
+    _res = calc_rest_sed_singlegal(
+        z_obs,
+        mah_params,
+        ms_params,
+        q_params,
+        ssp_data,
+        diffskypop_params,
         cosmo_params=cosmo_params,
     )
     rest_sed, rest_sed_nodust = _res[:2]

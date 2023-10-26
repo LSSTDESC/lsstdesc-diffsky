@@ -27,11 +27,8 @@ def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
         q_params,
         DEFAULT_FBULGE_PARAMS,
         fknot,
-        ssp_data.ssp_lgmet,
-        ssp_data.ssp_lg_age_gyr,
-        ssp_data.ssp_wave,
-        ssp_data.ssp_flux,
-        *all_params,
+        ssp_data,
+        all_params,
     )
     for x in _res:
         assert np.all(np.isfinite(x))
@@ -70,11 +67,8 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
         q_params_galpop,
         fbulge_params_galpop,
         fknot_galpop,
-        ssp_data.ssp_lgmet,
-        ssp_data.ssp_lg_age_gyr,
-        ssp_data.ssp_wave,
-        ssp_data.ssp_flux,
-        *all_mock_params,
+        ssp_data,
+        all_mock_params,
     )
     for x in _res:
         assert np.all(np.isfinite(x))
