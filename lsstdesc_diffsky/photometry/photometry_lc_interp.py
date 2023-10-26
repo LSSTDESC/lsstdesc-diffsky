@@ -83,19 +83,13 @@ def get_diffsky_sed_info(
     ssp_z_table,
     ssp_restmag_table,
     ssp_obsmag_table,
-    ssp_lgmet,
-    ssp_lg_age_gyr,
+    ssp_data,
     gal_t_table,
     rest_filter_waves,
     rest_filter_trans,
     obs_filter_waves,
     obs_filter_trans,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_u_params,
-    dust_delta_u_params,
-    fracuno_pop_u_params,
-    met_params,
+    diffskypop_params,
     cosmo_params,
 ):
     """Compute SED and photometry for population of Diffsky galaxies
@@ -264,7 +258,8 @@ def get_diffsky_sed_info(
     n_gals, n_met, n_age, n_obs_filters = ssp_obsmag_table_pergal.shape
     n_rest_filters = ssp_restmag_table.shape[-1]
 
-    mzr_params, lgmet_scatter = met_params[:-1], met_params[-1]
+    mzr_params = diffskypop_params.lgmet_params[:-1]
+    lgmet_scatter = diffskypop_params.lgmet_params[-1]
 
     # Compute various galaxy properties at z_obs
     _galprops = _get_galprops_at_t_obs(
@@ -284,8 +279,8 @@ def get_diffsky_sed_info(
         gal_sfr_table,
         gal_lgmet_t_obs,
         lgmet_scatter,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
+        ssp_data.ssp_lgmet,
+        ssp_data.ssp_lg_age_gyr,
         gal_t_obs,
     )
     _weights = calc_ssp_weights_sfh_table_lognormal_mdf_vmap(*args)
@@ -293,16 +288,16 @@ def get_diffsky_sed_info(
 
     # Compute burst fraction for every galaxy
     gal_lgf_burst = _get_lgfburst_galpop_from_u_params(
-        gal_logsm_t_obs, gal_logssfr_t_obs, lgfburst_pop_u_params
+        gal_logsm_t_obs, gal_logssfr_t_obs, diffskypop_params.lgfburst_u_params
     )
     gal_fburst = 10**gal_lgf_burst
 
     # Compute P(τ) for each bursting population
     gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_params(
-        gal_logsm_t_obs, gal_logssfr_t_obs, burstshapepop_u_params
+        gal_logsm_t_obs, gal_logssfr_t_obs, diffskypop_params.burstshape_u_params
     )
     burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
-    ssp_lg_age_yr = ssp_lg_age_gyr + 9
+    ssp_lg_age_yr = ssp_data.ssp_lg_age_gyr + 9
     burst_age_weights = _burst_age_weights_from_u_params_vmap(
         ssp_lg_age_yr, burstshape_u_params
     )
@@ -347,12 +342,12 @@ def get_diffsky_sed_info(
         gal_logsm_t_obs,
         gal_logssfr_t_obs,
         gal_lgf_burst,
-        ssp_lg_age_gyr,
+        ssp_data.ssp_lg_age_gyr,
         obs_filter_waves,
         obs_filter_trans,
-        lgav_u_params,
-        dust_delta_u_params,
-        fracuno_pop_u_params,
+        diffskypop_params.lgav_dust_u_params,
+        diffskypop_params.delta_dust_u_params,
+        diffskypop_params.funo_dust_u_params,
     )
     gal_frac_trans_obs = _dust_results_obs[0]  # (n_gals, n_age, n_filters)
     gal_att_curve_params, gal_frac_unobs = _dust_results_obs[1:]
@@ -370,12 +365,12 @@ def get_diffsky_sed_info(
         gal_logsm_t_obs,
         gal_logssfr_t_obs,
         gal_lgf_burst,
-        ssp_lg_age_gyr,
+        ssp_data.ssp_lg_age_gyr,
         rest_filter_waves,
         rest_filter_trans,
-        lgav_u_params,
-        dust_delta_u_params,
-        fracuno_pop_u_params,
+        diffskypop_params.lgav_dust_u_params,
+        diffskypop_params.delta_dust_u_params,
+        diffskypop_params.funo_dust_u_params,
     )
     gal_frac_trans_rest = _dust_results_rest[0]  # (n_gals, n_age, n_filters)
 

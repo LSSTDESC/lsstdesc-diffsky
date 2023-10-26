@@ -40,16 +40,8 @@ def calc_rest_sed_singlegal(
     diffmah_params,
     diffstar_ms_params,
     diffstar_q_params,
-    ssp_lgmet,
-    ssp_lg_age_gyr,
-    ssp_wave_ang,
-    ssp_flux,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_pop_u_params,
-    dust_delta_pop_u_params,
-    fracuno_pop_u_params,
-    met_params,
+    ssp_data,
+    diffskypop_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of an individual diffsky galaxy
@@ -146,29 +138,31 @@ def calc_rest_sed_singlegal(
         fb=fb,
     )
 
-    mzr_params, lgmet_scatter = met_params[:-1], met_params[-1]
+    mzr_params = diffskypop_params.lgmet_params[:-1]
+    lgmet_scatter = diffskypop_params.lgmet_params[-1]
+
     _galprops_at_t_obs = _get_galprops_at_t_obs_singlegal(
-        t_obs, t_table, sfh_table, mzr_params, ssp_lg_age_gyr
+        t_obs, t_table, sfh_table, mzr_params, ssp_data.ssp_lg_age_gyr
     )
     logsm_t_obs, logssfr_t_obs, lgmet_t_obs, smooth_age_weights = _galprops_at_t_obs[:4]
     mstar_t_obs = 10**logsm_t_obs
 
     lgmet_weights = calc_lgmet_weights_from_lognormal_mdf(
-        lgmet_t_obs, lgmet_scatter, ssp_lgmet
+        lgmet_t_obs, lgmet_scatter, ssp_data.ssp_lgmet
     )
 
     # Compute burst fraction for every galaxy
     lgfburst = _get_lgfburst_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, lgfburst_pop_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.lgfburst_u_params
     )
     fburst = 10**lgfburst
 
     # Compute P(τ) for each bursting population
     gal_u_lgyr_peak, gal_u_lgyr_max = _get_burstshape_galpop_from_params(
-        logsm_t_obs, logssfr_t_obs, burstshapepop_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.burstshape_u_params
     )
     burstshape_u_params = jnp.array((gal_u_lgyr_peak, gal_u_lgyr_max)).T
-    ssp_lg_age_yr = ssp_lg_age_gyr + 9
+    ssp_lg_age_yr = ssp_data.ssp_lg_age_gyr + 9
     burst_age_weights = _burst_age_weights_from_u_params(
         ssp_lg_age_yr, burstshape_u_params
     )
@@ -176,19 +170,25 @@ def calc_rest_sed_singlegal(
     # Compute P(τ) for each composite galaxy
     age_weights = fburst * burst_age_weights + (1 - fburst) * smooth_age_weights
 
-    n_met, n_age, n_wave = ssp_flux.shape
+    n_met, n_age, n_wave = ssp_data.ssp_flux.shape
     weights = lgmet_weights.reshape((n_met, 1, 1)) * age_weights.reshape((1, n_age, 1))
-    rest_sed_nodust = jnp.sum(weights * ssp_flux, axis=(0, 1)) * mstar_t_obs
+    rest_sed_nodust = jnp.sum(weights * ssp_data.ssp_flux, axis=(0, 1)) * mstar_t_obs
 
-    lgav = _get_lgav_galpop_from_u_params(logsm_t_obs, logssfr_t_obs, lgav_pop_u_params)
+    lgav = _get_lgav_galpop_from_u_params(
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.lgav_dust_u_params
+    )
     dust_delta = _get_dust_delta_galpop_from_u_params(
-        logsm_t_obs, logssfr_t_obs, dust_delta_pop_u_params
+        logsm_t_obs, logssfr_t_obs, diffskypop_params.delta_dust_u_params
     )
     frac_unobscured = _get_funo_from_u_params_singlegal(
-        logsm_t_obs, lgfburst, logssfr_t_obs, ssp_lg_age_gyr, fracuno_pop_u_params
+        logsm_t_obs,
+        lgfburst,
+        logssfr_t_obs,
+        ssp_data.ssp_lg_age_gyr,
+        diffskypop_params.funo_dust_u_params,
     )
 
-    ssp_wave_micron = ssp_wave_ang / 1e4
+    ssp_wave_micron = ssp_data.ssp_wave / 1e4
     dust_Av = 10**lgav
     dust_Eb = _get_eb_from_delta(dust_delta)
     k_lambda = sbl18_k_lambda(
@@ -198,7 +198,10 @@ def calc_rest_sed_singlegal(
         k_lambda, dust_Av, frac_unobscured
     )
     frac_dust_trans = frac_dust_trans.reshape((1, n_age, n_wave))
-    rest_sed = jnp.sum(weights * ssp_flux * frac_dust_trans, axis=(0, 1)) * mstar_t_obs
+    rest_sed = (
+        jnp.sum(weights * ssp_data.ssp_flux * frac_dust_trans, axis=(0, 1))
+        * mstar_t_obs
+    )
 
     return (rest_sed, rest_sed_nodust, logsm_t_obs, lgmet_t_obs)
 
@@ -233,7 +236,7 @@ def _get_galprops_at_t_obs_singlegal(
     )
 
 
-_G = (0, *[0] * 3, *[None] * 11)
+_G = (0, *[0] * 3, *[None] * 3)
 _calc_rest_sed_vmap = jjit(vmap(calc_rest_sed_singlegal, in_axes=_G))
 
 
@@ -243,16 +246,8 @@ def calc_rest_sed_galpop(
     diffmah_params,
     diffstar_ms_params,
     diffstar_q_params,
-    ssp_lgmet,
-    ssp_lg_age_gyr,
-    ssp_wave_ang,
-    ssp_flux,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_pop_u_params,
-    dust_delta_pop_u_params,
-    fracuno_pop_u_params,
-    met_params,
+    ssp_data,
+    diffskypop_params,
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the restframe SED of a population of diffsky galaxies
@@ -273,17 +268,20 @@ def calc_rest_sed_galpop(
     diffstar_q_params : ndarray, shape (n_gals, 4)
         Diffstar quenching params, (lg_qt, qlglgdt, lg_drop, lg_rejuv)
 
-    ssp_lgmet : ndarray, shape (n_met, )
-        Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
+    ssp_data : namedtuple, shape (3, )
+        NamedTuple with the following three entries:
 
-    ssp_lg_age_gyr : ndarray, shape (n_age, )
-        Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
+        ssp_lgmet : ndarray, shape (n_met, )
+            Grid in metallicity Z at which the SSPs are computed, stored as log10(Z)
 
-    ssp_wave_ang : ndarray, shape (n_wave, )
-        Array of wavelengths in angstroms at which the SSP SEDs are tabulated
+        ssp_lg_age_gyr : ndarray, shape (n_age, )
+            Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
 
-    ssp_flux : ndarray, shape (n_met, n_age, n_wave)
-        Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
+        ssp_wave_ang : ndarray, shape (n_wave, )
+            Array of wavelengths in angstroms at which the SSP SEDs are tabulated
+
+        ssp_flux : ndarray, shape (n_age, n_wave)
+            Tabulation of the SSP SEDs at the input wavelength in Lsun/Hz/Msun
 
     lgfburst_pop_u_params : ndarray, shape (n_pars_lgfburst_pop, )
         Unbounded parameters controlling Fburst, which sets the fractional contribution
@@ -340,15 +338,7 @@ def calc_rest_sed_galpop(
         diffmah_params,
         diffstar_ms_params,
         diffstar_q_params,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
-        ssp_wave_ang,
-        ssp_flux,
-        lgfburst_pop_u_params,
-        burstshapepop_u_params,
-        lgav_pop_u_params,
-        dust_delta_pop_u_params,
-        fracuno_pop_u_params,
-        met_params,
+        ssp_data,
+        diffskypop_params,
         cosmo_params,
     )
