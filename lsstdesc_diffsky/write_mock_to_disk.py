@@ -50,6 +50,7 @@ from .halo_information.get_healpix_cutout_info import get_snap_redshift_min
 
 # metadata
 from .infer_diffcode_versions import infer_software_versions
+from .param_data.param_reader import DiffskyPopParams
 from .pecZ import pecZ
 from .photometry.get_SFH_from_params import (
     get_diff_params,
@@ -1399,6 +1400,15 @@ def generate_SEDs(
     fb = cosmology.Ob0 / cosmology.Om0
     cosmo_params = CosmoParams(cosmology.Om0, w0, wa, cosmology.H0.value / 100, fb)
 
+    diffskypop_params = DiffskyPopParams(
+        np.array(list(SED_params["lgfburst_pop_u_params"].values())),
+        np.array(list(SED_params["burstshapepop_u_params"].values())),
+        np.array(list(SED_params["lgav_dust_u_params"].values())),
+        np.array(list(SED_params["delta_dust_u_params"].values())),
+        np.array(list(SED_params["fracuno_pop_u_params"].values())),
+        np.array(list(SED_params["lgmet_params"].values())),
+    )
+
     # compute SEDs
     ran_key = jran.PRNGKey(seed)
     _res = get_diffsky_sed_info(
@@ -1416,12 +1426,7 @@ def generate_SEDs(
         SED_params["filter_trans"],
         SED_params["filter_waves"],
         SED_params["filter_trans"],
-        np.array(list(SED_params["lgfburst_pop_u_params"].values())),
-        np.array(list(SED_params["burstshapepop_u_params"].values())),
-        np.array(list(SED_params["lgav_dust_u_params"].values())),
-        np.array(list(SED_params["delta_dust_u_params"].values())),
-        np.array(list(SED_params["fracuno_pop_u_params"].values())),
-        np.array(list(SED_params["lgmet_params"].values())),
+        diffskypop_params,
         cosmo_params,
     )
 

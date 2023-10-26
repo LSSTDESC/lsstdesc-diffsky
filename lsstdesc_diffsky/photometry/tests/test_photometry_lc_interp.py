@@ -15,6 +15,7 @@ from jax import random as jran
 
 from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
+from ...param_data.param_reader import DiffskyPopParams
 from ..photometry_lc_interp import get_diffsky_sed_info
 
 DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
@@ -23,9 +24,6 @@ DEFAULT_MET_PARAMS = np.array(list(DEFAULT_MET_PDICT.values()))
 def test_get_diffsky_sed_info():
     ssp_data = load_fake_ssp_data()
     n_met, n_age = ssp_data.ssp_flux.shape[:2]
-
-    ssp_lgmet = np.linspace(-3, -1, n_met)
-    ssp_lg_age_gyr = np.linspace(5, 10.25, n_age) - 9.0
 
     n_t = 100
     gal_t_table = np.linspace(0.1, 13.8, n_t)
@@ -63,6 +61,14 @@ def test_get_diffsky_sed_info():
     ssp_restmag_table = np.random.uniform(size=(n_met, n_age, n_rest_filters))
     ssp_obsmag_table = np.random.uniform(size=(n_z_table, n_met, n_age, n_obs_filters))
 
+    diffskypop_params = DiffskyPopParams(
+        DEFAULT_LGFBURST_U_PARAMS,
+        DEFAULT_BURSTSHAPE_U_PARAMS,
+        DEFAULT_LGAV_U_PARAMS,
+        DEFAULT_DUST_DELTA_U_PARAMS,
+        DEFAULT_FUNO_U_PARAMS,
+        DEFAULT_MET_PARAMS,
+    )
     ran_key = jran.PRNGKey(0)
     _res = get_diffsky_sed_info(
         ran_key,
@@ -79,12 +85,7 @@ def test_get_diffsky_sed_info():
         rest_filter_trans,
         obs_filter_waves,
         obs_filter_trans,
-        DEFAULT_LGFBURST_U_PARAMS,
-        DEFAULT_BURSTSHAPE_U_PARAMS,
-        DEFAULT_LGAV_U_PARAMS,
-        DEFAULT_DUST_DELTA_U_PARAMS,
-        DEFAULT_FUNO_U_PARAMS,
-        DEFAULT_MET_PARAMS,
+        diffskypop_params,
         cosmo_params,
     )
     for x in _res:

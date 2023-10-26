@@ -198,12 +198,7 @@ def test_get_diffsky_sed_info_singlemet_agrees_with_multimet():
         rest_filter_trans,
         obs_filter_waves,
         obs_filter_trans,
-        diffskypop_params.lgfburst_u_params,
-        diffskypop_params.burstshape_u_params,
-        diffskypop_params.lgav_dust_u_params,
-        diffskypop_params.delta_dust_u_params,
-        diffskypop_params.funo_dust_u_params,
-        diffskypop_params.lgmet_params,
+        diffskypop_params,
         cosmo_params,
     )
     for x in _res:

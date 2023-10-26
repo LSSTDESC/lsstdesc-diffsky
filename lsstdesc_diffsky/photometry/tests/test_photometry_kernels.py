@@ -105,7 +105,7 @@ def test_precompute_and_exact_photometry_agree():
         rest_filter_trans,
         obs_filter_waves,
         obs_filter_trans,
-        *diffskypop_params,
+        diffskypop_params,
         OUTER_RIM_COSMO_PARAMS,
     )
     sed_info = get_diffsky_sed_info(*args)
@@ -183,7 +183,7 @@ def test_precompute_photometry_correctly_handles_fb():
         rest_filter_trans,
         obs_filter_waves,
         obs_filter_trans,
-        *diffskypop_params,
+        diffskypop_params,
         OUTER_RIM_COSMO_PARAMS,
     )
     sed_info = get_diffsky_sed_info(*args)
@@ -204,7 +204,7 @@ def test_precompute_photometry_correctly_handles_fb():
         rest_filter_trans,
         obs_filter_waves,
         obs_filter_trans,
-        *diffskypop_params,
+        diffskypop_params,
         cosmo_pars2,
     )
     sed_info2 = get_diffsky_sed_info(*args)
