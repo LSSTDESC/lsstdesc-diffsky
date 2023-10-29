@@ -3,6 +3,7 @@
 import numpy as np
 import os
 import re
+import galsim.roman as roman
 from jax import numpy as jnp
 from dsps.data_loaders import load_transmission_curve
 from dsps.data_loaders.defaults import TransmissionCurve
@@ -25,7 +26,7 @@ def assemble_filter_data(drn, filters):
             "hsc_bv": "filters/suprimecam_{}_transmission.h5",
             "sdss": "SDSS/{}_SDSS.res",
             "uvista": "COSMOS/COSMOS_UVISTA_{}.h5",
-            "roman": "roman-wfi/roman_{}.dat",
+            "roman": "import",
         },
         "bands": {
             "lsst": ("u", "g", "r", "i", "z", "y"),
@@ -34,7 +35,7 @@ def assemble_filter_data(drn, filters):
             "hsc_bv": ("b", "g", "r", "i", "v", "z"),
             "sdss": ("u", "g", "r", "i", "z"),
             "uvista": ("Y", "H", "J", "Ks"),
-            "roman": ("f062", "f087", "f106", "f129", "f146", "f158", "f184", "f213"),
+            "roman": ("R062", "Z087", "Y106", "J129", "W146", "H158", "F184", "K213"),
         },
     }
 
@@ -48,6 +49,14 @@ def assemble_filter_data(drn, filters):
                 load_transmission_curve(os.path.join(drn, fwpat.format(band)))
                 for band in filter_dict["bands"][f]
             ]
+        elif "import" in fwpat:
+            if 'roman' in f:
+                rbps = roman.getBandpasses()
+                filter_spec = [TransmissionCurve(
+                    rbps[band].wave_list,
+                    rbps[band](rbps[band].wave_list)) 
+                    for band in filter_dict["bands"][f]
+                ]
         else:
             filter_spec = [
                 np.loadtxt(

@@ -36,7 +36,7 @@ cosmology:
 nside: 32
 
 SEDs:
-    filters: ['lsst', 'sdss', 'roman']
+    filters: ['lsst_imsim', 'sdss', 'roman']
     frames: ['rest', 'obs']
     dz: .02
     t_table_0: .05 
