@@ -54,7 +54,7 @@ def assemble_filter_data(drn, filters):
                 rbps = roman.getBandpasses()
                 filter_spec = [TransmissionCurve(
                     rbps[band].wave_list,
-                    rbps[band](rbps[band].wave_list)) 
+                    rbps[band](rbps[band].wave_list))
                     for band in filter_dict["bands"][f]
                 ]
         else:
