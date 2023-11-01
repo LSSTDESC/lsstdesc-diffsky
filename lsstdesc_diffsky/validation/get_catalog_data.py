@@ -56,11 +56,11 @@ def check_colnames(fh_list, colnames):
         print('Checking {}'.format(fh))
         keys = [k for k in list(fh.keys()) if 'meta' not in k]
         for k in keys:
-            if len(fh[k]) == 0: #check for filled snap
+            if len(fh[k]) == 0:  
                 continue
             cols = list(fh[k].keys())
             if len(cols) != len(colnames):
-                 print('Length mismatch for step {}'.format(k))
+                print('Length mismatch for step {}'.format(k))
             extra = [c for c in cols if c not in colnames]
             if extra:
                 print('Extra columns: {}'.format(', '.join(extra)))
