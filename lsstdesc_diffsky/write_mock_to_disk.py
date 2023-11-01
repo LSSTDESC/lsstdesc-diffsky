@@ -1561,7 +1561,7 @@ def save_sed_info(dc2, _res, SED_params):
         for fr, vals in zip(["rest", "obs"], results):
             for k in SED_params["filter_keys"]:
                 filt = k.split("_")[0]
-                band = k.split("_")[1]
+                band = k.split("_")[-1]
                 band = band.upper() if fr == "rest" else band
                 colname = "{}_{}_{}{}".format(filt, fr, band, dustlabel)
                 column = SED_params["filter_keys"].index(k)
