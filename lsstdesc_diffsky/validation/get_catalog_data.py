@@ -5,10 +5,9 @@ import os
 import pickle
 from os.path import expanduser
 from astropy.table import Table
-input_dir = '/lus/eagle/projects/LastJourney/kovacs/SkySim5000/OR_5000/'
-catdir = 'skysim_v3.0.1_test'
-fname = 'skysim_z_*_cutout_{}.hdf5'
-cutout = '9554'
+input_dir = '/lus/eagle/projects/LastJourney/kovacs/Catalog_5000/OR_5000/'
+catdir = 'roman_rubin_2023_v1.0.1'
+fname = 'roman_rubin_2023_z_*_cutout_{}.hdf5'
 
 
 def get_fhlist(input_dir, fname, cutout='*'):
@@ -30,6 +29,8 @@ def get_table(fh_list, col_list, verbose=False):
             for k in fh.keys():
                 if 'meta' in k:
                     continue
+                if len(fh[k]) == 0:
+                    continue
                 if len(fh[k][col].shape) > 1:
                     if len(array) == 0:
                         array = fh[k][col]
@@ -48,6 +49,27 @@ def get_table(fh_list, col_list, verbose=False):
 def get_colnames(fh):
     keys = list(fh.keys())
     return fh[keys[0]].keys()
+
+
+def check_colnames(fh_list, colnames):
+    for fh in fh_list:
+        print('Checking {}'.format(fh))
+        keys = [k for k in list(fh.keys()) if 'meta' not in k]
+        for k in keys:
+            if len(fh[k]) == 0: #check for filled snap
+                continue
+            cols = list(fh[k].keys())
+            if len(cols) != len(colnames):
+                 print('Length mismatch for step {}'.format(k))
+            extra = [c for c in cols if c not in colnames]
+            if extra:
+                print('Extra columns: {}'.format(', '.join(extra)))
+            missing = [c for c in colnames if c not in cols]
+            if missing:
+                print('Missing columns: {}'.format(', '.join(missing)))
+
+    print("Done")
+    return
 
 
 def get_catalog(input_dir, cutout, xtra_cols=['redshift', 'target_halo_mass']):
