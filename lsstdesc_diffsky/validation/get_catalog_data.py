@@ -56,7 +56,7 @@ def check_colnames(fh_list, colnames):
         print('Checking {}'.format(fh))
         keys = [k for k in list(fh.keys()) if 'meta' not in k]
         for k in keys:
-            if len(fh[k]) == 0:  
+            if len(fh[k]) == 0:
                 continue
             cols = list(fh[k].keys())
             if len(cols) != len(colnames):
