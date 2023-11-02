@@ -4,6 +4,7 @@ import typing
 from collections import OrderedDict
 
 import h5py
+import healpy as hp
 import numpy as np
 
 from ..constants import (
@@ -13,6 +14,7 @@ from ..constants import (
     MS_PNAMES,
     Q_PNAMES,
 )
+from ..defaults import ROMAN_RUBIN_2023_HPIX_PAT, ROMAN_RUBIN_2023_NSIDE
 
 ALL_DIFFSKY_PNAMES = []
 ALL_DIFFSKY_PNAMES.extend(MAH_PNAMES)
@@ -33,6 +35,50 @@ class DiffskyParams(typing.NamedTuple):
     burstshape_params: np.float32
     fbulge_params: np.float32
     fknot: np.float32
+
+
+def get_healpixel_bname_from_ra_dec_z(
+    ra, dec, z, nside=ROMAN_RUBIN_2023_NSIDE, hpix_pat=ROMAN_RUBIN_2023_HPIX_PAT
+):
+    """Retrieve the healpixel filename that contains the input sky coordinates.
+
+    Parameters
+    ----------
+    ra : float
+        ra coordinate of the galaxy of interest
+
+    dec : float
+        dec coordinate of the galaxy of interest
+
+    z : float
+        redshift of the galaxy of interest
+
+    nside : int, optional
+        Number of healpixel divisions.
+        Default is defaults.ROMAN_RUBIN_2023_NSIDE
+
+    hpix_pat : string, optional
+        Filename pattern of the roman_rubin_2023 mock.
+        Default is defaults.ROMAN_RUBIN_2023_HPIX_PAT
+
+    Returns
+    -------
+    basename : string
+        Basename of the healpixel file storing the galaxy of interest
+
+    """
+    if z < 1:
+        zlo, zhi = 0, 1
+    elif 1 <= z < 2:
+        zlo, zhi = 1, 2
+    elif 2 <= z < 3:
+        zlo, zhi = 2, 3
+    else:
+        raise ValueError("Input redshift z={0} must be in the range 0 < z < 3")
+
+    pix = hp.ang2pix(nside, ra, dec, lonlat=True)
+    bname = hpix_pat.format(zlo, zhi, pix)
+    return bname
 
 
 def load_healpixel(fn, patlist=None):
