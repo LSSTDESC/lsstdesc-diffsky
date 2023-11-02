@@ -40,12 +40,12 @@ def test_get_healpixel_bname_from_ra_dec_z():
 
     redshift = 0.5
     bname = get_healpixel_bname_from_ra_dec_z(ra, dec, redshift)
-    assert bname == "roman_rubin_2023_z_0_1_cutout_10777.hdf5"
+    assert bname == "roman_rubin_2023_z_0_1_cutout_10307.hdf5"
 
     redshift = 1.5
     bname = get_healpixel_bname_from_ra_dec_z(ra, dec, redshift)
-    assert bname == "roman_rubin_2023_z_1_2_cutout_10777.hdf5"
+    assert bname == "roman_rubin_2023_z_1_2_cutout_10307.hdf5"
 
     redshift = 2.5
     bname = get_healpixel_bname_from_ra_dec_z(ra, dec, redshift)
-    assert bname == "roman_rubin_2023_z_2_3_cutout_10777.hdf5"
+    assert bname == "roman_rubin_2023_z_2_3_cutout_10307.hdf5"
