@@ -18,3 +18,4 @@ dependencies:
   - diffstar
   - dsps
   - h5py
+  - healpy
