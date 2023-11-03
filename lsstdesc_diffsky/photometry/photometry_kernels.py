@@ -5,8 +5,6 @@ from jax import jit as jjit
 from jax import vmap
 
 from ..defaults import DEFAULT_COSMO_PARAMS
-from ..legacy.roman_rubin_2023.dsps.data_loaders import SSPData
-from ..param_data.param_reader import DiffskyPopParams
 from ..sed import calc_rest_sed_singlegal
 
 _F = (*[None] * 2, 0, 0, *[None] * 5)
@@ -22,16 +20,8 @@ def calc_photometry_singlegal(
     mah_params,
     ms_params,
     q_params,
-    ssp_lgmet,
-    ssp_lg_age_gyr,
-    ssp_wave_ang,
-    ssp_flux,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_pop_u_params,
-    dust_delta_pop_u_params,
-    fracuno_pop_u_params,
-    met_params,
+    ssp_data,
+    diffskypop_params,
     rest_filter_waves,
     rest_filter_trans,
     obs_filter_waves,
@@ -39,15 +29,6 @@ def calc_photometry_singlegal(
     cosmo_params=DEFAULT_COSMO_PARAMS,
 ):
     """Calculate the photometry of an individual diffsky galaxy"""
-    ssp_data = SSPData(ssp_lgmet, ssp_lg_age_gyr, ssp_wave_ang, ssp_flux)
-    diffskypop_params = DiffskyPopParams(
-        lgfburst_pop_u_params,
-        burstshapepop_u_params,
-        lgav_pop_u_params,
-        dust_delta_pop_u_params,
-        fracuno_pop_u_params,
-        met_params,
-    )
 
     _res = calc_rest_sed_singlegal(
         z_obs,
@@ -62,7 +43,7 @@ def calc_photometry_singlegal(
 
     # Calculate mags including dust attenuation
     obs_mags = calc_obs_mag_vmap(
-        ssp_wave_ang,
+        ssp_data.ssp_wave,
         rest_sed,
         obs_filter_waves,
         obs_filter_trans,
@@ -71,12 +52,12 @@ def calc_photometry_singlegal(
     )
 
     rest_mags = calc_rest_mag(
-        ssp_wave_ang, rest_sed, rest_filter_waves, rest_filter_trans
+        ssp_data.ssp_wave, rest_sed, rest_filter_waves, rest_filter_trans
     )
 
     # Calculate mags excluding dust attenuation
     obs_mags_nodust = calc_obs_mag_vmap(
-        ssp_wave_ang,
+        ssp_data.ssp_wave,
         rest_sed_nodust,
         obs_filter_waves,
         obs_filter_trans,
@@ -85,13 +66,13 @@ def calc_photometry_singlegal(
     )
 
     rest_mags_nodust = calc_rest_mag(
-        ssp_wave_ang, rest_sed_nodust, rest_filter_waves, rest_filter_trans
+        ssp_data.ssp_wave, rest_sed_nodust, rest_filter_waves, rest_filter_trans
     )
 
     return rest_mags, obs_mags, rest_mags_nodust, obs_mags_nodust
 
 
-_P = (*[0] * 4, *[None] * 15)
+_P = (*[0] * 4, *[None] * 7)
 _calc_photometry_galpop_kern = jjit(vmap(calc_photometry_singlegal, in_axes=_P))
 
 
@@ -101,16 +82,8 @@ def calc_photometry_galpop(
     mah_params,
     ms_params,
     q_params,
-    ssp_lgmet,
-    ssp_lg_age_gyr,
-    ssp_wave_ang,
-    ssp_flux,
-    lgfburst_pop_u_params,
-    burstshapepop_u_params,
-    lgav_pop_u_params,
-    dust_delta_pop_u_params,
-    fracuno_pop_u_params,
-    met_params,
+    ssp_data,
+    diffskypop_params,
     rest_filter_waves,
     rest_filter_trans,
     obs_filter_waves,
@@ -217,16 +190,8 @@ def calc_photometry_galpop(
         mah_params,
         ms_params,
         q_params,
-        ssp_lgmet,
-        ssp_lg_age_gyr,
-        ssp_wave_ang,
-        ssp_flux,
-        lgfburst_pop_u_params,
-        burstshapepop_u_params,
-        lgav_pop_u_params,
-        dust_delta_pop_u_params,
-        fracuno_pop_u_params,
-        met_params,
+        ssp_data,
+        diffskypop_params,
         rest_filter_waves,
         rest_filter_trans,
         obs_filter_waves,
