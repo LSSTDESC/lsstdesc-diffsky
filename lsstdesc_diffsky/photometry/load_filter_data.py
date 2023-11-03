@@ -3,6 +3,7 @@
 import numpy as np
 import os
 import re
+import galsim.roman as roman
 from jax import numpy as jnp
 from dsps.data_loaders import load_transmission_curve
 from dsps.data_loaders.defaults import TransmissionCurve
@@ -19,23 +20,33 @@ def assemble_filter_data(drn, filters):
     """
     filter_dict = {
         "locs": {
-            "lsst": "filters/lsst_{}_transmission.h5",
-            "lsst_imsim": "LSST_Imsim/total_{}.dat",
+            "lsstdsps": "filters/lsst_{}_transmission.h5",
+            "lsst": "LSST_Imsim/total_{}.dat",
             "hsc": "HSC/{}_HSC.txt",
-            "hsc_bv": "filters/suprimecam_{}_transmission.h5",
+            "hscbv": "filters/suprimecam_{}_transmission.h5",
             "sdss": "SDSS/{}_SDSS.res",
             "uvista": "COSMOS/COSMOS_UVISTA_{}.h5",
-            "roman": "roman-wfi/roman_{}.dat",
+            "roman": "import",
         },
         "bands": {
+            "lsstdsps": ("u", "g", "r", "i", "z", "y"),
             "lsst": ("u", "g", "r", "i", "z", "y"),
-            "lsst_imsim": ("u", "g", "r", "i", "z", "y"),
             "hsc": ("g", "r", "i", "z", "y"),
-            "hsc_bv": ("b", "g", "r", "i", "v", "z"),
+            "hscbv": ("b", "g", "r", "i", "v", "z"),
             "sdss": ("u", "g", "r", "i", "z"),
             "uvista": ("Y", "H", "J", "Ks"),
-            "roman": ("f062", "f087", "f106", "f129", "f146", "f158", "f184", "f213"),
+            "roman": ("R062", "Z087", "Y106", "J129", "W146", "H158", "F184", "K213"),
         },
+        "conversion_to_AA": {
+            "lsstdsps": 1.0,
+            "lsst": 10.0,
+            "hsc": 1.0,
+            "hscbv": 1.0,
+            "sdss": 1.0,
+            "uvista": 1.0,
+            "roman": 10.0,
+        },
+
     }
 
     # Interpolate the filters so that they all have the same length
@@ -48,6 +59,20 @@ def assemble_filter_data(drn, filters):
                 load_transmission_curve(os.path.join(drn, fwpat.format(band)))
                 for band in filter_dict["bands"][f]
             ]
+            if filter_dict["conversion_to_AA"][f] != 1:
+                filter_spec = [
+                    TransmissionCurve(ff.wave*filter_dict["conversion_to_AA"][f],
+                                      ff.transmission)
+                    for ff in filter_spec
+                ]
+        elif "import" in fwpat:
+            if 'roman' in f:
+                rbps = roman.getBandpasses()
+                filter_spec = [TransmissionCurve(
+                    rbps[band].wave_list*filter_dict["conversion_to_AA"][f],
+                    rbps[band](rbps[band].wave_list))
+                    for band in filter_dict["bands"][f]
+                ]
         else:
             filter_spec = [
                 np.loadtxt(
@@ -57,8 +82,9 @@ def assemble_filter_data(drn, filters):
                 )
                 for band in filter_dict["bands"][f]
             ]
-            filter_spec = [TransmissionCurve(f["wave"],
-                                             f["transmission"]) for f in filter_spec]
+            filter_spec = [
+                TransmissionCurve(ff["wave"]*filter_dict["conversion_to_AA"][f],
+                                  ff["transmission"]) for ff in filter_spec]
 
         filter_size = max(filter_size, np.max([f.wave.shape[0] for f in filter_spec]))
         filter_specs.append(filter_spec)

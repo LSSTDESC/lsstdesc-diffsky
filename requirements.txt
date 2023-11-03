@@ -12,3 +12,4 @@ psutil
 diffmah
 diffstar
 dsps
+galsim
