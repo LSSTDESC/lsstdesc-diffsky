@@ -1,8 +1,10 @@
-import numpy as np
 import time
+
+import numpy as np
 from astropy.table import Table
-from diffsky.experimental.photometry_interpolation import get_interpolated_photometry
 from dsps.cosmology import flat_wcdm
+
+from ..photometry_interpolation import get_interpolated_photometry
 
 
 def add_colors(mags, minmax=True):
@@ -33,23 +35,26 @@ def add_colors(mags, minmax=True):
 
 
 def get_mag_sed_pars(
-        SED_params,
-        gal_z_obs,
-        gal_log_sm,
-        gal_sfr_table,
-        gal_lg_met_mean,
-        gal_lg_met_scatt,
-        cosmology, w0, wa,
-        dust_trans_factors_obs=1.0,
-        dust_trans_factors_rest=1.0,
-        skip_mags=False):
-
+    SED_params,
+    gal_z_obs,
+    gal_log_sm,
+    gal_sfr_table,
+    gal_lg_met_mean,
+    gal_lg_met_scatt,
+    cosmology,
+    w0,
+    wa,
+    dust_trans_factors_obs=1.0,
+    dust_trans_factors_rest=1.0,
+    skip_mags=False,
+):
     # setup arguments for computing magnitudes
     mags = Table()
     mags_nodust = Table()
 
-    cosmo_params = flat_wcdm.CosmoParams(cosmology.Om0, w0, wa,
-                                         cosmology.H0.value/100)
+    cosmo_params = flat_wcdm.CosmoParams(
+        cosmology.Om0, w0, wa, cosmology.H0.value / 100
+    )
     print(
         ".....Evaluating mags & colors for {:.4f} <= z <= {:.4f}".format(
             np.min(gal_z_obs), np.max(gal_z_obs)
@@ -81,9 +86,10 @@ def get_mag_sed_pars(
         gal_obsmags, gal_restmags, gal_obsmags_nodust, gal_restmags_nodust = _res
 
         # add values to tables
-        for table, results in zip([mags, mags_nodust],
-                                  [[gal_restmags, gal_obsmags],
-                                   [gal_restmags_nodust, gal_obsmags_nodust]]):
+        for table, results in zip(
+            [mags, mags_nodust],
+            [[gal_restmags, gal_obsmags], [gal_restmags_nodust, gal_obsmags_nodust]],
+        ):
             for fr, vals in zip(["rest", "obs"], results):
                 for k in SED_params["filter_keys"]:
                     filt = k.split("_")[0]

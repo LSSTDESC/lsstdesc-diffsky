@@ -7,7 +7,7 @@ h5py
 astropy
 healpy
 halotools
-lsstdesc-galsampler
+galsampler
 psutil
 diffmah
 diffstar

@@ -1,13 +1,6 @@
 """
 """
 import numpy as np
-from diffsky.experimental.dspspop.boris_dust import (
-    DEFAULT_U_PARAMS as DEFAULT_FUNO_U_PARAMS,
-)
-from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
-from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
-from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
-from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
 from dsps.experimental.diffburst import DLGAGE_MIN, LGAGE_MAX, LGYR_PEAK_MIN
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
@@ -15,6 +8,11 @@ from jax import random as jran
 
 from ...defaults import DEFAULT_DIFFGAL_PARAMS
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
+from ...dspspop.boris_dust import DEFAULT_U_PARAMS as DEFAULT_FUNO_U_PARAMS
+from ...dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
+from ...dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
+from ...dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
+from ...dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
 from ...param_data.param_reader import DiffskyPopParams
 from ..photometry_lc_interp import get_diffsky_sed_info
 
