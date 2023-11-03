@@ -19,3 +19,4 @@ dependencies:
   - dsps
   - h5py
   - healpy
+  - mpi4py
