@@ -1,13 +1,13 @@
 """
 """
 import numpy as np
-from diffsky.experimental.dspspop.boris_dust import DEFAULT_PDICT as DEFAULT_FUNO_PDICT
-from diffsky.experimental.dspspop.burstshapepop import DEFAULT_BURSTSHAPE_PDICT
-from diffsky.experimental.dspspop.dust_deltapop import DEFAULT_DUST_DELTA_PDICT
-from diffsky.experimental.dspspop.lgavpop import DEFAULT_LGAV_PDICT
-from diffsky.experimental.dspspop.lgfburstpop import DEFAULT_LGFBURST_PDICT
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 
+from ...dspspop.boris_dust import DEFAULT_PDICT as DEFAULT_FUNO_PDICT
+from ...dspspop.burstshapepop import DEFAULT_BURSTSHAPE_PDICT
+from ...dspspop.dust_deltapop import DEFAULT_DUST_DELTA_PDICT
+from ...dspspop.lgavpop import DEFAULT_LGAV_PDICT
+from ...dspspop.lgfburstpop import DEFAULT_LGFBURST_PDICT
 from ..param_reader import read_diffskypop_params, read_mock_param_dictionaries
 
 
