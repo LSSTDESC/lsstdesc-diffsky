@@ -5,7 +5,7 @@ from jax import jit as jjit
 from jax import vmap
 
 from ..defaults import DEFAULT_COSMO_PARAMS
-from ..sed import calc_rest_sed_singlegal
+from ..sed.sed_kernels_singlemet import calc_rest_sed_singlegal
 
 _F = (*[None] * 2, 0, 0, *[None] * 5)
 calc_obs_mag_vmap = jjit(vmap(calc_obs_mag, in_axes=_F))

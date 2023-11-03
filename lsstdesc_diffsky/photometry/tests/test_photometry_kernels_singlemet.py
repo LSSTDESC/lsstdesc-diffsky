@@ -15,8 +15,8 @@ from ...defaults import DEFAULT_DIFFGAL_PARAMS, OUTER_RIM_COSMO_PARAMS
 from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
     load_fake_ssp_data_singlemet,
 )
-from ..photometry_kernels import calc_photometry_galpop
-from ..photometry_lc_interp import get_diffsky_sed_info
+from ..photometry_kernels_singlemet import calc_photometry_galpop
+from ..photometry_lc_interp_singlemet import get_diffsky_sed_info_singlemet
 from ..precompute_ssp_tables import (
     precompute_ssp_obsmags_on_z_table,
     precompute_ssp_obsmags_on_z_table_singlemet,
@@ -43,8 +43,8 @@ def test_precompute_and_exact_photometry_agree():
     q_params_galpop = np.tile(DEFAULT_Q_PARAMS, n_gals)
     q_params_galpop = q_params_galpop.reshape((n_gals, -1))
 
-    ssp_data = load_fake_ssp_data()
-    n_met, n_age, n_wave = ssp_data.ssp_flux.shape
+    ssp_data = load_fake_ssp_data_singlemet()
+    n_age, n_wave = ssp_data.ssp_flux.shape
 
     diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
@@ -75,10 +75,10 @@ def test_precompute_and_exact_photometry_agree():
 
     ssp_z_table = np.linspace(z_obs_galpop.min() / 2, z_obs_galpop.max() + 0.1, 51)
 
-    ssp_restmag_table = precompute_ssp_restmags(
+    ssp_restmag_table = precompute_ssp_restmags_singlemet(
         ssp_data.ssp_wave, ssp_data.ssp_flux, rest_filter_waves, rest_filter_trans
     )
-    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table(
+    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table_singlemet(
         ssp_data.ssp_wave,
         ssp_data.ssp_flux,
         obs_filter_waves,
@@ -108,7 +108,7 @@ def test_precompute_and_exact_photometry_agree():
         diffskypop_params,
         OUTER_RIM_COSMO_PARAMS,
     )
-    sed_info = get_diffsky_sed_info(*args)
+    sed_info = get_diffsky_sed_info_singlemet(*args)
 
     atol = 0.1
     assert np.allclose(sed_info.gal_obsmags_dust, obs_mags, atol=atol)
@@ -140,8 +140,7 @@ def test_precompute_photometry_correctly_handles_fb():
     q_params_galpop = np.tile(DEFAULT_Q_PARAMS, n_gals)
     q_params_galpop = q_params_galpop.reshape((n_gals, -1))
 
-    ssp_data = load_fake_ssp_data()
-    n_met, n_age, n_wave = ssp_data.ssp_flux.shape
+    ssp_data = load_fake_ssp_data_singlemet()
 
     diffskypop_params = read_diffskypop_params("roman_rubin_2023")
 
@@ -153,10 +152,10 @@ def test_precompute_photometry_correctly_handles_fb():
 
     ssp_z_table = np.linspace(z_obs_galpop.min() / 2, z_obs_galpop.max() + 0.1, 51)
 
-    ssp_restmag_table = precompute_ssp_restmags(
+    ssp_restmag_table = precompute_ssp_restmags_singlemet(
         ssp_data.ssp_wave, ssp_data.ssp_flux, rest_filter_waves, rest_filter_trans
     )
-    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table(
+    ssp_obsmag_table = precompute_ssp_obsmags_on_z_table_singlemet(
         ssp_data.ssp_wave,
         ssp_data.ssp_flux,
         obs_filter_waves,
@@ -186,7 +185,7 @@ def test_precompute_photometry_correctly_handles_fb():
         diffskypop_params,
         OUTER_RIM_COSMO_PARAMS,
     )
-    sed_info = get_diffsky_sed_info(*args)
+    sed_info = get_diffsky_sed_info_singlemet(*args)
 
     cosmo_pars2 = (*OUTER_RIM_COSMO_PARAMS[:-1], 0.1)
     args = (
@@ -207,7 +206,7 @@ def test_precompute_photometry_correctly_handles_fb():
         diffskypop_params,
         cosmo_pars2,
     )
-    sed_info2 = get_diffsky_sed_info(*args)
+    sed_info2 = get_diffsky_sed_info_singlemet(*args)
 
     # fb2 < fb so there galaxies should be fainter in cosmo2
     assert np.all(sed_info.gal_restmags_dust < sed_info2.gal_restmags_dust)
