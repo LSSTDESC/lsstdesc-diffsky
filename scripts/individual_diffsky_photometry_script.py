@@ -14,6 +14,9 @@ from lsstdesc_diffsky.io_utils.load_diffsky_healpixel import (
     load_diffsky_params,
     load_healpixel,
 )
+from lsstdesc_diffsky.legacy.roman_rubin_2023.dsps.data_loaders.load_ssp_data import (
+    load_ssp_templates_singlemet,
+)
 from lsstdesc_diffsky.photometry.photometry_kernels_singlemet import (
     calc_photometry_singlegal,
 )
@@ -28,6 +31,11 @@ if __name__ == "__main__":
     parser.add_argument("dec", help="dec coordinate of diffsky galaxy")
     parser.add_argument("z", help="redshift of diffsky galaxy")
     parser.add_argument("galid", help="ID of diffsky galaxy")
+    parser.add_argument(
+        "-dsps_data_drn",
+        help="Directory where dsps data are stored. Default is os.environ['DSPS_DRN']",
+        default=None,
+    )
     args = parser.parse_args()
 
     drn = args.drn
@@ -35,9 +43,12 @@ if __name__ == "__main__":
     dec = args.dec
     z = args.z
     galid = args.galid
+    dsps_data_drn = args.dsps_data_drn
 
     bname = get_healpixel_bname_from_ra_dec_z(ra, dec, z)
     fname = os.path.join(drn, bname)
+
+    ssp_data = load_ssp_templates_singlemet(drn=dsps_data_drn)
 
     mock, metadata = load_healpixel(fname)
     msk = mock["galaxy_id"] == galid
