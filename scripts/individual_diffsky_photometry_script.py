@@ -4,6 +4,9 @@ import argparse
 import os
 
 import numpy as np
+from dsps.data_loaders import load_transmission_curve
+from dsps.data_loaders.defaults import TransmissionCurve
+from galsim import roman
 
 from lsstdesc_diffsky import read_diffskypop_params
 from lsstdesc_diffsky.io_utils.load_diffsky_healpixel import (
@@ -13,6 +16,9 @@ from lsstdesc_diffsky.io_utils.load_diffsky_healpixel import (
 )
 from lsstdesc_diffsky.photometry.photometry_kernels_singlemet import (
     calc_photometry_singlegal,
+)
+from lsstdesc_diffsky.photometry.precompute_ssp_tables import (
+    interpolate_filter_trans_curves,
 )
 
 if __name__ == "__main__":
@@ -59,6 +65,17 @@ if __name__ == "__main__":
     assert np.allclose(dec_galid, dec, dec_msg, atol=0.01)
 
     diffskypop_params = read_diffskypop_params("roman_rubin_2023")
+
+    roman_filter_list = ("R062", "Z087", "Y106", "J129", "W146", "H158", "F184", "K213")
+    rbps = roman.getBandpasses()
+
+    roman_tcurves = [
+        TransmissionCurve(
+            rbps[band].wave_list * 10,
+            rbps[band](rbps[band].wave_list),
+        )
+        for band in roman_filter_list
+    ]
 
     calc_photometry_singlegal(
         z_obs,
