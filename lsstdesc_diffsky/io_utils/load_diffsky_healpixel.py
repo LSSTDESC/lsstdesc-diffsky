@@ -193,9 +193,11 @@ def collect_healpixel_data(fn, patlist):
 
         _snaplist = [key for key in hdf.keys() if key != "metaData"]
         snapnums = sorted([int(key) for key in _snaplist])[::-1]
-        snapkey0 = str(snapnums[0])
-        dataset = hdf[snapkey0]
-        all_keys = list(dataset.keys())
+        for snapnum in snapnums:
+            dataset = hdf[str(snapnum)]
+            if len(dataset) > 0:
+                all_keys = list(dataset.keys())
+                break
         extra_colnames = _get_extra_colnames(all_keys, patlist)
         desired_dataset_colnames = ALL_DIFFSKY_PNAMES.copy()
         desired_dataset_colnames.extend(extra_colnames)
@@ -206,10 +208,11 @@ def collect_healpixel_data(fn, patlist):
             dataset = hdf[snapkey]
             d = OrderedDict()
 
-            for key in desired_dataset_colnames:
-                d[key] = dataset[key][...]
+            if len(dataset) > 0:
+                for key in desired_dataset_colnames:
+                    d[key] = dataset[key][...]
 
-            data_collection[snapkey] = d
+                data_collection[snapkey] = d
 
     return data_collection, metadata
 
