@@ -206,10 +206,11 @@ def collect_healpixel_data(fn, patlist):
             dataset = hdf[snapkey]
             d = OrderedDict()
 
-            for key in desired_dataset_colnames:
-                d[key] = dataset[key][...]
+            if len(dataset) > 0:
+                for key in desired_dataset_colnames:
+                    d[key] = dataset[key][...]
 
-            data_collection[snapkey] = d
+                data_collection[snapkey] = d
 
     return data_collection, metadata
 
