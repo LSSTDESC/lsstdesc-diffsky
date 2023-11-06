@@ -44,7 +44,7 @@ To build html of test coverage::
     
 Available Catalogs
 ------------------
-A mock catalalog is available at NERSC and is called roman_rubin_2023_v1.0.1
+A mock catalalog is available at NERSC and is called roman_rubin_2023_v1.1.0.
 
 
 Working at NERSC

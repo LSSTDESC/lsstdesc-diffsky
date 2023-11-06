@@ -1,6 +1,12 @@
+1.1.0 (2023-11-06)
+-------------------
+- Update filter transmission curves via new galsim dependency
+
+
 1.0.0 (2023-10-26)
 -------------------
 - Implement single-metallicity SED and photometry kernels
+
 
 0.1.5 (2023-10-13)
 -------------------
