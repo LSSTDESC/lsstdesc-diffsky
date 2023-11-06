@@ -37,6 +37,11 @@ if __name__ == "__main__":
         help="Directory where dsps data are stored. Default is os.environ['DSPS_DRN']",
         default=None,
     )
+    parser.add_argument(
+        "-filter_data_drn",
+        help="Directory with LSST transmission curve data. Default is dsps_data_drn",
+        default=None,
+    )
     args = parser.parse_args()
 
     drn = args.drn
@@ -45,6 +50,9 @@ if __name__ == "__main__":
     z = args.z
     galid = args.galid
     dsps_data_drn = args.dsps_data_drn
+    filter_data_drn = args.filter_data_drn
+    if filter_data_drn is None:
+        filter_data_drn = dsps_data_drn
 
     bname = get_healpixel_bname_from_ra_dec_z(ra, dec, z)
     fname = os.path.join(drn, bname)
@@ -89,8 +97,17 @@ if __name__ == "__main__":
         for band in roman_filter_list
     ]
 
-    a = [x.wave for x in roman_tcurves]
-    b = [x.transmission for x in roman_tcurves]
+    _x = "u", "g", "r", "i", "z", "y"
+    lsst_filter_list = ["lsst_{0}*".format(x) for x in _x]
+    lsst_tcurves = [
+        load_transmission_curve(drn=filter_data_drn, bn_pat=f) for f in lsst_filter_list
+    ]
+
+    tcurves = roman_tcurves.copy()
+    tcurves.extend(lsst_tcurves)
+
+    a = [x.wave for x in tcurves]
+    b = [x.transmission for x in tcurves]
     rest_filter_waves, rest_filter_trans = interpolate_filter_trans_curves(a, b)
     obs_filter_waves = rest_filter_waves
     obs_filter_trans = rest_filter_trans
