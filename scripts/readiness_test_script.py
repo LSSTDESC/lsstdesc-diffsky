@@ -5,6 +5,7 @@ import os
 from glob import glob
 
 import numpy as np
+
 from lsstdesc_diffsky.io_utils.load_diffsky_healpixel import load_healpixel
 
 HPIX_BNAME_PAT = "roman_rubin_2023_*.hdf5"
@@ -43,7 +44,7 @@ if __name__ == "__main__":
                 line_out_pat = "{0}  {1}  {2:.2f}  {3:.2f}\n"
                 line_out = line_out_pat.format(key, all_finite, xmin, xmax)
                 fout.write(line_out)
-                if all_finite is False:
+                if not all_finite:
                     nan_collector.append(key)
 
         if len(nan_collector) > 0:
