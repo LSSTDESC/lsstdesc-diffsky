@@ -4,6 +4,7 @@ taken from Zhang & Yang (2017), arXiv:1707.04979.
 import numpy as np
 from astropy.utils.misc import NumpyRNGContext
 
+MAX_SIZE = 100.0  # kpc
 
 __all__ = (
     "median_size_vs_luminosity_late_type",
@@ -77,7 +78,9 @@ def median_size_vs_luminosity(magr, redshift, gamma, alpha, beta, mzero):
     luminosity = 10 ** (-0.4 * (magr - mzero))
     z0_size = gamma * (luminosity**alpha) * ((1.0 + luminosity) ** (beta - alpha))
     shrinking_factor = redshift_shrinking_factor(redshift)
-    return z0_size / shrinking_factor
+    size = z0_size / shrinking_factor
+    size = np.where(size > MAX_SIZE, MAX_SIZE, size)
+    return size
 
 
 def median_size_vs_luminosity_early_type(
