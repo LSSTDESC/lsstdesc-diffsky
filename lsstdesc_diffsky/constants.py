@@ -1,6 +1,8 @@
 """This module stores globals used throughout the repository."""
 from copy import deepcopy
 
+from dsps.constants import T_TABLE_MIN
+
 from .disk_bulge_modeling.disk_bulge_kernels import DEFAULT_FBULGE_PDICT
 
 MAH_PNAMES = [
@@ -31,7 +33,7 @@ SED_params = {
     "q_keys": Q_PNAMES,
     "sfh_keys": ["mstar", "sfr", "fstar", "dmhdt", "log_mah"],
     "z0": 0.0,
-    "t_start": 0.05,
+    "t_start": T_TABLE_MIN,
     "N_t": 100,
     "xkeys": [
         "ssp_z_table",
