@@ -50,7 +50,7 @@ def test_SED_params_contents():
         "q_keys": constants.Q_PNAMES,
         "sfh_keys": ["mstar", "sfr", "fstar", "dmhdt", "log_mah"],
         "z0": 0.0,
-        "t_start": 0.05,
+        "t_start": 0.01,
         "N_t": 100,
         "xkeys": [
             "ssp_z_table",
