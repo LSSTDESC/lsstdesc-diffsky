@@ -233,7 +233,9 @@ def mc_size_vs_luminosity_early_type(
     """
     loc = np.log10(median_size_vs_luminosity(magr, redshift, gamma, alpha, beta, mzero))
     with NumpyRNGContext(seed):
-        return 10 ** np.random.normal(loc=loc, scale=scatter)
+        size = 10 ** np.random.normal(loc=loc, scale=scatter)
+    size = np.where(size > MAX_SIZE, MAX_SIZE, size)
+    return size
 
 
 def mc_size_vs_luminosity_late_type(
@@ -291,4 +293,6 @@ def mc_size_vs_luminosity_late_type(
     """
     loc = np.log10(median_size_vs_luminosity(magr, redshift, gamma, alpha, beta, mzero))
     with NumpyRNGContext(seed):
-        return 10 ** np.random.normal(loc=loc, scale=scatter)
+        size = 10 ** np.random.normal(loc=loc, scale=scatter)
+    size = np.where(size > MAX_SIZE, MAX_SIZE, size)
+    return size

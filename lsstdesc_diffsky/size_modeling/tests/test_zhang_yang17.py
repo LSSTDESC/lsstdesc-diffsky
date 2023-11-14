@@ -8,7 +8,7 @@ from ..zhang_yang17 import (
 )
 
 NGALS_TEST = int(1e7)
-SIZE_MAX = 1000.0  # kpc
+SIZE_MAX = 101.0  # kpc
 
 
 def test_mc_size_vs_luminosity_early_type():
