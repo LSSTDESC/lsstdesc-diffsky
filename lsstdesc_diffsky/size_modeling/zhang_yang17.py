@@ -20,14 +20,14 @@ alpha_disk = 0.32
 beta_disk = 1.75
 gamma_disk = 12.63
 mzero_disk = -24.8
-scatter_disk = 0.2
+scatter_disk = 0.1
 
 #  Bulge parameters (see B/T > 0.5 row of Table 1 of 1707.04979)
 alpha_bulge = 0.33
 beta_bulge = 1.0
 gamma_bulge = 3.25
 mzero_bulge = -22.5
-scatter_bulge = 0.15
+scatter_bulge = 0.1
 
 #  Redshift-dependence parameters
 default_z_table = (0.25, 0.75, 1.25, 2)
@@ -233,7 +233,9 @@ def mc_size_vs_luminosity_early_type(
     """
     loc = np.log10(median_size_vs_luminosity(magr, redshift, gamma, alpha, beta, mzero))
     with NumpyRNGContext(seed):
-        return 10 ** np.random.normal(loc=loc, scale=scatter)
+        size = 10 ** np.random.normal(loc=loc, scale=scatter)
+    size = np.where(size > MAX_SIZE, MAX_SIZE, size)
+    return size
 
 
 def mc_size_vs_luminosity_late_type(
@@ -291,4 +293,6 @@ def mc_size_vs_luminosity_late_type(
     """
     loc = np.log10(median_size_vs_luminosity(magr, redshift, gamma, alpha, beta, mzero))
     with NumpyRNGContext(seed):
-        return 10 ** np.random.normal(loc=loc, scale=scatter)
+        size = 10 ** np.random.normal(loc=loc, scale=scatter)
+    size = np.where(size > MAX_SIZE, MAX_SIZE, size)
+    return size

@@ -1,3 +1,8 @@
+1.1.1 (2023-11-14)
+-------------------
+- Fix bug in Monte Carlo generator of galaxy sizes (https://github.com/LSSTDESC/lsstdesc-diffsky/pull/95)
+
+
 1.1.0 (2023-11-06)
 -------------------
 - Update filter transmission curves via new galsim dependency
