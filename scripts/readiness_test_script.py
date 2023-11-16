@@ -8,12 +8,12 @@ import numpy as np
 
 from lsstdesc_diffsky.io_utils.load_diffsky_healpixel import load_healpixel
 
-HPIX_BNAME_PAT = "roman_rubin_2023_*.hdf5"
+HPIX_BNAME_PAT = "*.hdf5"
 LCRC_DRN = "/lcrc/project/galsampler/Catalog_5000/OR_5000/diffsky_v1.0.1/"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-drn", help="input directory", default=LCRC_DRN)
+    parser.add_argument("drn", help="input directory", default=LCRC_DRN)
     parser.add_argument("-bpat", help="basename pattern", default=HPIX_BNAME_PAT)
     args = parser.parse_args()
 
