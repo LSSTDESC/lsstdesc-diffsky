@@ -10,9 +10,6 @@ from dsps.dust.att_curves import (
     _get_eb_from_delta,
     sbl18_k_lambda,
 )
-from dsps.experimental.diffburst import (
-    _age_weights_from_u_params as _burst_age_weights_from_u_params,
-)
 from dsps.metallicity.mzr import mzr_model
 from dsps.sed.metallicity_weights import calc_lgmet_weights_from_lognormal_mdf
 from dsps.sed.stellar_age_weights import _calc_age_weights_from_logsm_table
@@ -27,6 +24,9 @@ from ..dspspop.burstshapepop import _get_burstshape_galpop_from_params
 from ..dspspop.dust_deltapop import _get_dust_delta_galpop_from_u_params
 from ..dspspop.lgavpop import _get_lgav_galpop_from_u_params
 from ..dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_u_params as _burst_age_weights_from_u_params,
+)
 
 _T = (None, None, 0)
 _frac_transmission_from_k_lambda_age_vmap = jjit(

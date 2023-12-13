@@ -12,12 +12,6 @@ from dsps.dust.att_curves import (
     _get_eb_from_delta,
     sbl18_k_lambda,
 )
-from dsps.experimental.diffburst import (
-    _age_weights_from_params as _burst_age_weights_from_params,
-)
-from dsps.experimental.diffburst import (
-    _get_params_from_u_params as _get_diffburst_params_from_u_params,
-)
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
@@ -31,6 +25,12 @@ from ..dspspop.burstshapepop import _get_burstshape_galpop_from_params
 from ..dspspop.dust_deltapop import _get_dust_delta_galpop_from_u_params
 from ..dspspop.lgavpop import _get_lgav_galpop_from_u_params
 from ..dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_params as _burst_age_weights_from_params,
+)
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _get_params_from_u_params as _get_diffburst_params_from_u_params,
+)
 from .sed_kernels_singlemet import _get_galprops_at_t_obs_singlegal
 
 _T = (None, None, 0)

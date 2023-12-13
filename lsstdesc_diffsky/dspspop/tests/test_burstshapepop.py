@@ -1,14 +1,20 @@
 """
 """
 import numpy as np
-from ..burstshapepop import _get_burstshape_galpop_from_params
-from ..burstshapepop import _get_burstshape_galpop_from_u_params
-from ..burstshapepop import DEFAULT_BURSTSHAPE_PARAMS, DEFAULT_BURSTSHAPE_U_PARAMS
-from ..burstshapepop import _get_bounded_burstshape_params
-from ..burstshapepop import _get_unbounded_burstshape_params
-from dsps.experimental.diffburst import _age_weights_from_u_params
-from jax import vmap
 from jax import jit as jjit
+from jax import vmap
+
+from ...legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_u_params,
+)
+from ..burstshapepop import (
+    DEFAULT_BURSTSHAPE_PARAMS,
+    DEFAULT_BURSTSHAPE_U_PARAMS,
+    _get_bounded_burstshape_params,
+    _get_burstshape_galpop_from_params,
+    _get_burstshape_galpop_from_u_params,
+    _get_unbounded_burstshape_params,
+)
 
 _B = (None, 0)
 _age_weights_from_u_params_vmap = jjit(vmap(_age_weights_from_u_params, in_axes=_B))

@@ -12,12 +12,6 @@ import typing
 from diffstar import sfh_galpop
 from diffstar.defaults import SFR_MIN
 from dsps.cosmology.flat_wcdm import _age_at_z_vmap, age_at_z0
-from dsps.experimental.diffburst import (
-    _age_weights_from_u_params as _burst_age_weights_from_u_params,
-)
-from dsps.experimental.diffburst import (
-    _get_params_from_u_params as _get_burst_params_from_u_params,
-)
 from dsps.sed import calc_age_weights_from_sfh_table
 from dsps.sed.stellar_age_weights import _calc_logsm_table_from_sfh_table
 from jax import jit as jjit
@@ -34,6 +28,12 @@ from ..dspspop.dustpop import (
     _frac_dust_transmission_singlez_kernel,
 )
 from ..dspspop.lgfburstpop import _get_lgfburst_galpop_from_u_params
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_u_params as _burst_age_weights_from_u_params,
+)
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _get_params_from_u_params as _get_burst_params_from_u_params,
+)
 from ..photometry_interpolation import interpolate_ssp_photmag_table
 
 _linterp_vmap = jjit(vmap(jnp.interp, in_axes=(0, None, 0)))
