@@ -2,7 +2,6 @@
 """
 from dsps.constants import SFR_MIN
 from dsps.cosmology.flat_wcdm import _age_at_z_kern
-from dsps.experimental.diffburst import _age_weights_from_u_params
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT, mzr_model
 from dsps.sed import calc_ssp_weights_sfh_table_lognormal_mdf
 from dsps.sed.stellar_age_weights import _calc_logsm_table_from_sfh_table
@@ -11,6 +10,9 @@ from jax import numpy as jnp
 from jax import random as jran
 from jax import vmap
 
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_u_params,
+)
 from .burstshapepop import _get_burstshape_galpop_from_params
 from .dustpop import _frac_dust_transmission_singlez_kernel
 from .lgfburstpop import _get_lgfburst_galpop_from_u_params

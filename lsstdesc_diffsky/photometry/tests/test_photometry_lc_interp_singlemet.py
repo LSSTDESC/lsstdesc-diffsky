@@ -2,7 +2,6 @@
 """
 import numpy as np
 from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
-from dsps.experimental.diffburst import DLGAGE_MIN, LGAGE_MAX, LGYR_PEAK_MIN
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from jax import random as jran
 
@@ -12,6 +11,11 @@ from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
 from ...legacy.roman_rubin_2023.dsps.data_loaders.retrieve_fake_fsps_data import (
     SSPDataSingleMet,
     load_fake_ssp_data_singlemet,
+)
+from ...legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    DLGAGE_MIN,
+    LGAGE_MAX,
+    LGYR_PEAK_MIN,
 )
 from ..photometry_lc_interp import get_diffsky_sed_info
 from ..photometry_lc_interp_singlemet import get_diffsky_sed_info_singlemet

@@ -1,15 +1,17 @@
 """
 """
 import numpy as np
-from dsps.experimental.diffburst import DEFAULT_PARAMS as DEFAULT_BURST_PARAMS
-from dsps.experimental.diffburst import (
-    _age_weights_from_params as _burst_age_weights_from_params,
-)
 from dsps.utils import _jax_get_dt_array
 from jax import random as jran
 
 from ...disk_bulge_modeling.disk_knots import FKNOT_MAX
 from ...disk_bulge_modeling.mc_disk_bulge import mc_disk_bulge
+from ...legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    DEFAULT_PARAMS as DEFAULT_BURST_PARAMS,
+)
+from ...legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_params as _burst_age_weights_from_params,
+)
 from ..disk_bulge_kernels import (
     DEFAULT_FBULGE_PARAMS,
     DEFAULT_T10,

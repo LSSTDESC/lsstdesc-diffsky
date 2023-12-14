@@ -1,9 +1,12 @@
 """
 """
 import numpy as np
-from dsps.experimental.diffburst import DEFAULT_PARAMS, _age_weights_from_params
 from jax import random as jran
 
+from ...legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    DEFAULT_PARAMS,
+    _age_weights_from_params,
+)
 from ..disk_knots import _disk_knot_kern, _disk_knot_vmap
 
 

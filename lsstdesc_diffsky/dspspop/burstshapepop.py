@@ -3,9 +3,12 @@
 from collections import OrderedDict
 
 import numpy as np
-from dsps.experimental.diffburst import DEFAULT_U_PARAMS as DEFAULT_FLEXBURST_U_PARAMS
 from jax import jit as jjit
 from jax import lax, vmap
+
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    DEFAULT_U_PARAMS as DEFAULT_FLEXBURST_U_PARAMS,
+)
 
 LGSM_K = 5.0
 LGSSFR_K = 5.0

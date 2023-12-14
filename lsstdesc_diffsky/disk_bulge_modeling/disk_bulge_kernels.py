@@ -5,9 +5,6 @@ from collections import OrderedDict
 import numpy as np
 from diffstar.fitting_helpers.fitting_kernels import _integrate_sfr
 from dsps.constants import SFR_MIN
-from dsps.experimental.diffburst import (
-    _age_weights_from_params as _burst_age_weights_from_params,
-)
 from dsps.sed.stellar_age_weights import calc_age_weights_from_sfh_table
 from dsps.utils import _jax_get_dt_array
 from jax import jit as jjit
@@ -15,6 +12,9 @@ from jax import lax
 from jax import numpy as jnp
 from jax import vmap
 
+from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    _age_weights_from_params as _burst_age_weights_from_params,
+)
 from .disk_knots import _disk_knot_kern, _disk_knot_vmap
 
 FBULGE_MIN = 0.05

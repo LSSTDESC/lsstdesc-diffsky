@@ -2,7 +2,6 @@
 """
 import numpy as np
 from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
-from dsps.experimental.diffburst import DLGAGE_MIN, LGAGE_MAX, LGYR_PEAK_MIN
 from dsps.metallicity.mzr import DEFAULT_MET_PDICT
 from jax import random as jran
 
@@ -13,6 +12,11 @@ from ...dspspop.burstshapepop import DEFAULT_BURSTSHAPE_U_PARAMS
 from ...dspspop.dust_deltapop import DEFAULT_DUST_DELTA_U_PARAMS
 from ...dspspop.lgavpop import DEFAULT_LGAV_U_PARAMS
 from ...dspspop.lgfburstpop import DEFAULT_LGFBURST_U_PARAMS
+from ...legacy.roman_rubin_2023.dsps.experimental.diffburst import (
+    DLGAGE_MIN,
+    LGAGE_MAX,
+    LGYR_PEAK_MIN,
+)
 from ...param_data.param_reader import DiffskyPopParams
 from ..photometry_lc_interp import get_diffsky_sed_info
 
