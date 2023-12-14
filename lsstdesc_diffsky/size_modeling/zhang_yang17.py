@@ -4,7 +4,7 @@ taken from Zhang & Yang (2017), arXiv:1707.04979.
 import numpy as np
 from astropy.utils.misc import NumpyRNGContext
 
-MAX_SIZE = 100.0  # kpc
+MAX_SIZE = 60.0  # kpc
 
 __all__ = (
     "median_size_vs_luminosity_late_type",
