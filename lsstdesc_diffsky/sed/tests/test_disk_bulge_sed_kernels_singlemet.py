@@ -1,5 +1,7 @@
 """
 """
+import os
+
 import numpy as np
 
 from ... import read_diffskypop_params
@@ -11,6 +13,9 @@ from ..disk_bulge_sed_kernels_singlemet import (
     calc_rest_sed_disk_bulge_knot_galpop,
     calc_rest_sed_disk_bulge_knot_singlegal,
 )
+
+_THIS_DRNAME = os.path.dirname(os.path.abspath(__file__))
+TESTING_DATA_DRN = os.path.join(_THIS_DRNAME, "testing_data")
 
 
 def test_calc_rest_sed_evaluates_with_roman_rubin_2023_params():
@@ -74,3 +79,37 @@ def test_calc_rest_sed_disk_bulge_knot_galpop():
     )
     for x in _res:
         assert np.all(np.isfinite(x))
+
+
+def test_calc_rest_sed_has_frozen_behavior_on_defaults():
+    diffskypop_params = read_diffskypop_params("roman_rubin_2023")
+
+    z_obs = 0.1
+
+    ssp_data = load_fake_ssp_data_singlemet()
+    mah_params, ms_params, q_params = DEFAULT_DIFFGAL_PARAMS
+
+    fknot = 0.05
+    _res = calc_rest_sed_disk_bulge_knot_singlegal(
+        z_obs,
+        mah_params,
+        ms_params,
+        q_params,
+        DEFAULT_FBULGE_PARAMS,
+        fknot,
+        ssp_data,
+        diffskypop_params,
+    )
+    rest_sed_bulge, rest_sed_dd, rest_sed_knot = _res[:3]
+
+    fn = os.path.join(TESTING_DATA_DRN, "rest_sed_bulge_singlemet_default_params.txt")
+    rest_sed_bulge_frozen = np.loadtxt(fn)
+    assert np.allclose(rest_sed_bulge, rest_sed_bulge_frozen, rtol=1e-4)
+
+    fn = os.path.join(TESTING_DATA_DRN, "rest_sed_dd_singlemet_default_params.txt")
+    rest_sed_dd_frozen = np.loadtxt(fn)
+    assert np.allclose(rest_sed_dd, rest_sed_dd_frozen, rtol=1e-4)
+
+    fn = os.path.join(TESTING_DATA_DRN, "rest_sed_knot_singlemet_default_params.txt")
+    rest_sed_knot_frozen = np.loadtxt(fn)
+    assert np.allclose(rest_sed_knot, rest_sed_knot_frozen, rtol=1e-4)
