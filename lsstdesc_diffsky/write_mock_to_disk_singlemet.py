@@ -1510,11 +1510,12 @@ def substitute_SFH_fit_failures(
             failed_mask = ~has_fit
             txt = "" if use_diffmah_pop else "/diffstar"
             print(".......{}".format(msg.format(nfail, txt)))
-        
+
         logmh = np.array(np.log10(dc2["target_halo_mass"][failed_mask]))
         # identify satellites without fits and use UM mp value as proxy for subhalo mass
         sat_mask = dc2[source_galaxy_tag + "upid"][failed_mask] != -1
-        logmh[sat_mask] = np.array(np.log10(dc2[source_galaxy_tag + 'mp'][failed_mask])[sat_mask])
+        logmh[sat_mask] = np.array(
+            np.log10(dc2[source_galaxy_tag + 'mp'][failed_mask])[sat_mask])
         print('.......replaced {} satellite halo masses with UM mp values'.format(
             np.count_nonzero(sat_mask)))
 
