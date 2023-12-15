@@ -13,7 +13,7 @@ write_to_template = "__version__ = '{version}'\n"
 [tool.setuptools]
 include-package-data = true
 packages = {find = {exclude=["tests*", "scripts*", "docs*", "notebooks*"]}}
-package-data = {lsstdesc_diffsky = ["tests/testing_data/*.dat", "param_data/*/*.txt"]}
+package-data = {lsstdesc_diffsky = ["tests/testing_data/*.dat", "*/tests/testing_data/*.txt", "param_data/*/*.txt"]}
 package-dir = {lsstdesc_diffsky = "lsstdesc_diffsky"}
 
 [project.urls]
