@@ -3,7 +3,7 @@ description: 'Config file for producing diffsky mock catalog'
 version:
     versionMajor: 1
     versionMinor: 1
-    versionMinorMinor: 1
+    versionMinorMinor: 2
 
 file_dirs:  #relative to input_master_dirname, which is a supplied argument to production script
     healpix_cutout_dirname: 'healpix_cutouts'
