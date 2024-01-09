@@ -1,5 +1,7 @@
 """
 """
+import os
+
 import numpy as np
 from diffmah.defaults import DEFAULT_MAH_PARAMS
 from diffstar.defaults import DEFAULT_MS_PARAMS, DEFAULT_Q_PARAMS
@@ -7,6 +9,9 @@ from dsps.data_loaders.retrieve_fake_fsps_data import load_fake_ssp_data
 
 from ... import read_diffskypop_params
 from ..sed_kernels import calc_rest_sed_galpop, calc_rest_sed_singlegal
+
+_THIS_DRNAME = os.path.dirname(os.path.abspath(__file__))
+TESTING_DATA_DRN = os.path.join(_THIS_DRNAME, "testing_data")
 
 
 def test_calc_rest_sed_evaluates_with_default_params():
@@ -113,3 +118,21 @@ def test_calc_rest_sed_galpop():
 
     assert np.all(lgmet_t_obs_galpop > -4)
     assert np.all(lgmet_t_obs_galpop < 1)
+
+
+def test_calc_rest_sed_has_frozen_behavior_on_default_params():
+    z_obs = 0.1
+    ssp_data = load_fake_ssp_data()
+    diffskypop_data = read_diffskypop_params("roman_rubin_2023")
+    rest_sed = calc_rest_sed_singlegal(
+        z_obs,
+        DEFAULT_MAH_PARAMS,
+        DEFAULT_MS_PARAMS,
+        DEFAULT_Q_PARAMS,
+        ssp_data,
+        diffskypop_data,
+    )[0]
+
+    fn = os.path.join(TESTING_DATA_DRN, "rest_sed_default_params.txt")
+    rest_sed_frozen = np.loadtxt(fn)
+    assert np.allclose(rest_sed, rest_sed_frozen, rtol=1e-4)

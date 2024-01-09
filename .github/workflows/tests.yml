@@ -27,7 +27,8 @@ jobs:
           use-mamba: true
 
       - name: configure conda and install code
-      # Test against latest releases of all diff+ dependencies
+      # Test against latest conda-forge release of all diff+ dependencies
+      # For DSPS use the latest release on pip
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
@@ -43,6 +44,8 @@ jobs:
             setuptools \
             "setuptools_scm>=7,<8" \
             python-build
+          pip uninstall dsps --yes
+          pip install --no-deps dsps
           python -m pip install --no-build-isolation --no-deps -e .
 
 
