@@ -1,6 +1,10 @@
 name: tests
 
 on:
+  workflow_dispatch: null
+  schedule:
+    # Runs every month at 3am Central
+    - cron: '0 0 9 * *'
   push:
     branches:
       - main
@@ -27,8 +31,7 @@ jobs:
           use-mamba: true
 
       - name: configure conda and install code
-      # Test against latest conda-forge release of all diff+ dependencies
-      # For DSPS use the latest release on pip
+      # Test against pinned versions of diffmah, diffstar, and dsps
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes
