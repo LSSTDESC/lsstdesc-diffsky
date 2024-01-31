@@ -9,7 +9,7 @@ healpy
 halotools
 galsampler
 psutil
-diffmah
-diffstar
-dsps
+diffmah==v0.4.3
+diffstar==v0.2.2
+dsps==v0.3.6
 galsim
