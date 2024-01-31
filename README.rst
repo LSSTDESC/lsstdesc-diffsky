@@ -8,19 +8,13 @@ for producing mock catalogs tailored to LSST DESC science requirements.
 Installation
 ------------
 The latest release of lsstdesc-diffsky is available for installation with pip. 
-To do so, we recommend starting from a base environment of jax managed by conda-forge::
+It is important to use consistent versions of the Diff+ libraries, particularly
+diffmah, diffstar, and dsps. To do so, we recommend starting from a base environment 
+of jax managed by conda-forge using `/path/to/lsstdesc-diffsky/requirements.txt`
+as follows::
 
-    $ conda create -c conda-forge -n diffsky_env python=3.9 numpy jax pytest ipython jupyter matplotlib scipy h5py 
+    $ conda create -c conda-forge -n diffsky_env python=3.9 --file=requirements.txt
     $ conda activate diffsky_env
-
-To install the latest release::
-
-    $ pip install lsstdesc-diffsky
-
-To install the current tip of the main branch, you will need to clone and install the source code::
-
-    $ cd /path/to/root/lsstdesc-diffsky
-    $ pip install .
 
 
 Documentation
