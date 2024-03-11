@@ -1,5 +1,6 @@
 """
 """
+
 from dsps.photometry.photometry_kernels import calc_obs_mag, calc_rest_mag
 from jax import jit as jjit
 from jax import vmap
@@ -51,7 +52,7 @@ def calc_photometry_singlegal(
         *cosmo_params[:-1],
     )
 
-    rest_mags = calc_rest_mag(
+    rest_mags = calc_rest_mag_vmap(
         ssp_data.ssp_wave, rest_sed, rest_filter_waves, rest_filter_trans
     )
 
@@ -65,7 +66,7 @@ def calc_photometry_singlegal(
         *cosmo_params[:-1],
     )
 
-    rest_mags_nodust = calc_rest_mag(
+    rest_mags_nodust = calc_rest_mag_vmap(
         ssp_data.ssp_wave, rest_sed_nodust, rest_filter_waves, rest_filter_trans
     )
 
