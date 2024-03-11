@@ -1,5 +1,6 @@
 """
 """
+
 import numpy as np
 from diffstar import sfh_galpop
 from diffstar.defaults import FB, LGT0, MS_PARAM_BOUNDS_PDICT, Q_PARAM_BOUNDS_PDICT
@@ -35,7 +36,7 @@ def test_mc_diffstar_has_correct_shape2():
         ran_key = jran.PRNGKey(itest)
         mh_key, t_obs_key = jran.split(ran_key, 2)
         logmh = np.array(jran.uniform(mh_key, minval=5, maxval=16, shape=(n_halos,)))
-        t_obs = float(jran.uniform(t_obs_key, minval=1, maxval=13.7, shape=(1,)))
+        t_obs = float(jran.uniform(t_obs_key, minval=1, maxval=13.7, shape=()))
         try:
             galpop = mc_diffstarpop(ran_key, t_obs, logmh=logmh)
         except AssertionError:
