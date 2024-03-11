@@ -1,4 +1,4 @@
-name: tests
+name: Test for Warnings
 
 on:
   workflow_dispatch: null
@@ -12,7 +12,7 @@ on:
 
 jobs:
   tests:
-    name: tests
+    name: Test for Warnings
     runs-on: "ubuntu-latest"
 
     steps:
@@ -51,7 +51,8 @@ jobs:
           pip install --no-deps dsps
           python -m pip install --no-build-isolation --no-deps -e .
 
-      - name: test that no warnings are raised
+
+      - name: test
         shell: bash -l {0}
         run: |
           export PYTHONWARNINGS=error
