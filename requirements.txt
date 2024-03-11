@@ -1,5 +1,5 @@
 numpy
-jax==0.4.20
+jax==0.4.13
 numba
 mpi4py
 scipy
