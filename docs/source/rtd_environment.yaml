@@ -14,7 +14,7 @@ dependencies:
   - numpy
   - scipy==1.10.1
   - jax==0.4.13
-  - jaxlib==0.4.13
+  - jaxlib
   - diffmah==0.4.3
   - diffstar==0.2.2
   - dsps==0.3.6
