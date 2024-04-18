@@ -30,7 +30,6 @@ jobs:
           python -m pip install --no-deps -e .
           mamba install -y -q \
             sphinx
-	  pip install --no-deps jaxlib==0.4.13
 
       - name: readthedocs
         run: |
