@@ -47,7 +47,7 @@ jobs:
             setuptools \
             "setuptools_scm>=7,<8" \
             python-build
-	  pip install --no-deps jaxlib==0.4.13
+	  pip install jaxlib==0.4.13
           pip uninstall dsps --yes
           pip install --no-deps dsps
           python -m pip install --no-build-isolation --no-deps -e .
