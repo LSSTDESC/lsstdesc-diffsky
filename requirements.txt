@@ -1,8 +1,8 @@
 numpy
-jax
+jax==0.4.13
 numba
 mpi4py
-scipy
+scipy==1.10.1
 h5py
 astropy
 healpy
@@ -11,5 +11,5 @@ galsampler
 psutil
 diffmah==0.4.3
 diffstar==0.2.2
-dsps==0.3.7
+dsps==0.3.6
 galsim
