@@ -89,9 +89,9 @@ def test_mc_diffstar_is_consistent_between_logmh_and_mah_params_inputs():
     mah_params2, msk_is_quenched2, ms_params2, q_params2 = galpop
 
     assert np.allclose(mah_params, mah_params2, rtol=1e-4)
-    assert np.allclose(msk_is_quenched, msk_is_quenched, rtol=1e-4)
-    assert np.allclose(ms_params, ms_params, rtol=1e-4)
-    assert np.allclose(q_params, q_params, rtol=1e-4)
+    assert np.allclose(msk_is_quenched, msk_is_quenched2, rtol=1e-4)
+    assert np.allclose(ms_params, ms_params2, rtol=1e-4)
+    assert np.allclose(q_params, q_params2, rtol=1e-4)
 
     n_t = 50
     tarr = np.linspace(1, 13.7, n_t)
