@@ -17,7 +17,7 @@ dependencies:
   - jaxlib
   - diffmah==0.4.3
   - diffstar==0.2.2
-  - dsps==0.3.6
+  - dsps==0.3.7
   - h5py
   - healpy
   - mpi4py
