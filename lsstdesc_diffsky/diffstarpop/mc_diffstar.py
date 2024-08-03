@@ -1,5 +1,6 @@
 """Monte Carlo generator of Diffstar parameters
 """
+
 from collections import OrderedDict, namedtuple
 
 import numpy as np
@@ -9,6 +10,7 @@ from diffstar.fitting_helpers.param_clippers import ms_param_clipper, q_param_cl
 from diffstar.kernels.main_sequence_kernels import _get_bounded_sfr_params_vmap
 from diffstar.kernels.quenching_kernels import _get_bounded_q_params_vmap
 from diffstar.sfh import _get_unbounded_sfr_params
+from jax import config
 from jax import random as jran
 
 from .pdf_mainseq import get_smah_means_and_covs_mainseq
@@ -31,6 +33,8 @@ UH = DEFAULT_UNBOUND_SFR_PARAMS_DICT["indx_hi"]
 
 DEFAULT_UNBOUND_Q_PARAMS_MAIN_SEQ = DEFAULT_UNBOUND_Q_PARAMS.copy()
 DEFAULT_UNBOUND_Q_PARAMS_MAIN_SEQ[0] = 1.9
+
+config.update("jax_enable_x64", True)
 
 
 def mc_diffstarpop(
@@ -158,4 +162,5 @@ def mc_diffstarpop(
 
     ret = mah_params, msk_is_quenched, ms_params, q_params
 
+    return _SFHParams(*ret)
     return _SFHParams(*ret)
