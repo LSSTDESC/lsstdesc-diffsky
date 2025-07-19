@@ -6,6 +6,11 @@ from dsps.photometry.photometry_kernels import calc_obs_mag, calc_rest_mag
 from jax import jit as jjit
 from jax import numpy as jnp
 from jax import vmap
+try:
+    # jax>=0.4.16
+    from jax.scipy.integrate import trapezoid as jnp_trapz
+except ImportError:
+    from jnp import trapz as jnp_trapz
 
 _interp_vmap = jjit(vmap(jnp.interp, in_axes=[0, None, 0]))
 
@@ -87,8 +92,8 @@ _calc_rest_mag_vmap_f_ssp_singlemet = jjit(
 
 @jjit
 def _get_filter_effective_wavelength_rest(filter_wave, filter_trans):
-    norm = jnp.trapz(filter_trans, x=filter_wave)
-    lambda_eff = jnp.trapz(filter_trans * filter_wave, x=filter_wave) / norm
+    norm = jnp_trapz(filter_trans, x=filter_wave)
+    lambda_eff = jnp_trapz(filter_trans * filter_wave, x=filter_wave) / norm
     return lambda_eff
 
 
