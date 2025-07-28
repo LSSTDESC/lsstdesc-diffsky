@@ -1,9 +1,6 @@
 name: linting
 
 on:
-  schedule:
-    # Runs "weekly at minute 01 before midnight Friday"
-    - cron: '53 23 * * 5'
   push:
     branches:
       - main
@@ -15,25 +12,25 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: 3.9
+          python-version: 3.11
           channels: conda-forge,defaults
           channel-priority: strict
           show-channel-urls: true
           miniforge-version: latest
-          miniforge-variant: Mambaforge
 
       - name: configure conda and install code
         shell: bash -l {0}
         run: |
-          mamba install --quiet \
+          conda install --quiet \
             --file=requirements.txt
           python -m pip install --no-deps -e .
-          mamba install -y -q \
-            flake8
+          conda install -y -q \
+            flake8 \
+            flake8-pyproject
 
       - name: lint
         shell: bash -l {0}

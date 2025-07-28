@@ -1,8 +1,8 @@
 [build-system]
 requires = [
     "setuptools>=45",
-    "setuptools_scm>=7", 
-    "tomli>=1.0.0; python_version < '3.11'",
+    "setuptools_scm>=7",
+    "tomli>=1.0.0; python_version >= '3.11'",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -27,7 +27,7 @@ authors = [
 ]
 description = "Library for differentiable generation of synthetic skies for LSST DESC"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = {file = "LICENSE.rst"}
 classifiers = [
     "Programming Language :: Python :: 3",
