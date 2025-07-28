@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.11
   - pip
   - pandoc>=3.1,<4.0
   - nbsphinx
@@ -12,12 +12,10 @@ dependencies:
   - sphinx=7.2.4
   - sphinx-copybutton
   - numpy
-  - scipy==1.10.1
-  - jax==0.4.13
+  - jax
   - jaxlib
-  - diffmah==0.4.3
-  - diffstar==0.2.2
-  - dsps==0.3.6
+  - diffmah>=0.7.2
+  - diffstar>=0.3.4
+  - dsps>=0.4.5
+  - diffstarpop>=0.0.2
   - h5py
-  - healpy
-  - mpi4py
