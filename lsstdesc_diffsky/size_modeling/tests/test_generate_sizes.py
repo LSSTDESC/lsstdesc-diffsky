@@ -70,7 +70,7 @@ def test_generate_sizes(
 
     # test or save median values
     if read:
-        for k in header[len(variables) :]:
+        for k in header[len(variables):]:
             test = np.isclose(results[k], test_data[k], rtol=rtol)
             assert np.all(test)
     else:
