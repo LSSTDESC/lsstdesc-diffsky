@@ -59,5 +59,4 @@ you will also need to install a python kernel as follows::
     $ python -m ipykernel install --user --name=my_kernel_name
 
 `demo_load_catalog <https://github.com/LSSTDESC/lsstdesc-diffsky/tree/main/notebooks/demo_load_catalog.ipynb>`_
-is a demo notebook showing how to load the catalog from a notebook running at NERSC
-and perform some basic operations.
+is a demo notebook showing how to load the catalog from a notebook running at NERSC.
