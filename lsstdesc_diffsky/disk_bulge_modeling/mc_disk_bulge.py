@@ -33,11 +33,14 @@ DEFAULT_FBULGE_PDICT = OrderedDict(
     tcrit_logssfr0_k=0.5,
     tcrit_logsm0_k=0.8,
 )
-FbulgeParams = namedtuple("FbulgeParams", DEFAULT_FBULGE_PDICT.keys())
-DEFAULT_FBULGEPARAMS = FbulgeParams(**DEFAULT_FBULGE_PDICT)
+Fbulge2dParams = namedtuple("Fbulge2dParams", DEFAULT_FBULGE_PDICT.keys())
+DEFAULT_FBULGE_2dSIGMOID_PARAMS = Fbulge2dParams(**DEFAULT_FBULGE_PDICT)
 
 
-def mc_disk_bulge(ran_key, tarr, sfh_pop, FbulgeFixedParams=DEFAULT_FBULGEPARAMS, new_model=True):
+def mc_disk_bulge(
+    ran_key, tarr, sfh_pop, Fbulge2dParams=DEFAULT_FBULGE_2dSIGMOID_PARAMS,
+    new_model=True
+):
     """Decompose input SFHs into disk and bulge contributions
 
     Parameters
@@ -47,6 +50,10 @@ def mc_disk_bulge(ran_key, tarr, sfh_pop, FbulgeFixedParams=DEFAULT_FBULGEPARAMS
     tarr : ndarray, shape (n_t, )
 
     sfh_pop : ndarray, shape (n_gals, n_t)
+
+    Fbulge2dParams : named tuple of parameters for 2d-sigmoid
+
+    new_model : boolean flag to switch between new and old model
 
     Returns
     -------
@@ -81,7 +88,7 @@ def mc_disk_bulge(ran_key, tarr, sfh_pop, FbulgeFixedParams=DEFAULT_FBULGEPARAMS
         ssfr = jnp.divide(sfh_pop, smh_pop)
         logssfr0 = jnp.log10(ssfr[:, -1])
         fbulge_params = generate_fbulge_parameters_2d_sigmoid(
-            ran_key, logsm0, logssfr0, t10, t90, FbulgeFixedParams
+            ran_key, logsm0, logssfr0, t10, t90, Fbulge2dParams
         )
     else:
         fbulge_params = generate_fbulge_params(ran_key, t10, t90, logsm0)
@@ -131,12 +138,16 @@ def generate_fbulge_params(
     mc_u_late = jran.normal(late_key, shape=(n,)) * scale_u_late + mu_u_late_pop
 
     u_params = np.array((mc_u_tcrit, mc_u_early, mc_u_late)).T
-    fbulge_tcrit, fbulge_early, fbulge_late = _get_params_from_u_params_vmap(u_params, t10, t90)
+    fbulge_tcrit, fbulge_early, fbulge_late = _get_params_from_u_params_vmap(
+        u_params, t10, t90
+    )
     fbulge_params = np.array((fbulge_tcrit, fbulge_early, fbulge_late)).T
     return fbulge_params
 
 
-def generate_fbulge_parameters_2d_sigmoid(ran_key, logsm0, logssfr0, t10, t90, FbulgeParams):
+def generate_fbulge_parameters_2d_sigmoid(
+    ran_key, logsm0, logssfr0, t10, t90, FbulgeParams
+):
     fbulge_early = _sigmoid_2d(
         logssfr0,
         FbulgeParams.early_logssfr0_x0,

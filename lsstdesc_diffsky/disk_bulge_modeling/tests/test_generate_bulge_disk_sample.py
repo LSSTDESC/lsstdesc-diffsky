@@ -2,7 +2,10 @@ import jax.numpy as jnp
 import numpy as np
 from jax import random as jran
 
-from ..generate_bulge_disk_sample import get_bulge_disk_decomposition, get_bulge_disk_test_sample
+from ..generate_bulge_disk_sample import (
+    get_bulge_disk_decomposition,
+    get_bulge_disk_test_sample,
+)
 from ..mc_disk_bulge import mc_disk_bulge
 
 
@@ -12,7 +15,9 @@ def test_bulge_disk_test_sample():
     lgmp_min = 11.0
     redshift = 0.05
     Lbox = 50.0
-    diffstar_cens = get_bulge_disk_test_sample(ran_key, lgmp_min=lgmp_min, redshift=redshift, Lbox=Lbox)
+    diffstar_cens = get_bulge_disk_test_sample(
+        ran_key, lgmp_min=lgmp_min, redshift=redshift, Lbox=Lbox
+    )
     keys = list(diffstar_cens.keys())
     assert "t_table" in keys, "t_table not returned"
     n_t = len(diffstar_cens["t_table"])
@@ -28,7 +33,9 @@ def test_get_bulge_disk_decomposition():
     lgmp_min = 11.0
     redshift = 0.05
     Lbox = 50.0
-    diffstar_cens = get_bulge_disk_test_sample(ran_key, lgmp_min=lgmp_min, redshift=redshift, Lbox=Lbox)
+    diffstar_cens = get_bulge_disk_test_sample(
+        ran_key, lgmp_min=lgmp_min, redshift=redshift, Lbox=Lbox
+    )
 
     disk_bulge_key, ran_key = jran.split(ran_key, 2)
     _res = mc_disk_bulge(ran_key, diffstar_cens["t_table"], diffstar_cens["sfh"])

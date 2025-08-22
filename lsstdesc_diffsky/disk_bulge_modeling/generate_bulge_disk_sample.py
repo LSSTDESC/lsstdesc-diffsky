@@ -5,7 +5,10 @@ from dsps.cosmology.defaults import DEFAULT_COSMOLOGY
 from dsps.cosmology.flat_wcdm import age_at_z
 from jax import random as jran
 
-from .mc_disk_bulge import DEFAULT_FBULGEPARAMS, mc_disk_bulge
+from .mc_disk_bulge import (
+    DEFAULT_FBULGE_2dSIGMOID_PARAMS,
+    mc_disk_bulge,
+)
 
 ran_key = jran.key(0)
 halo_key, ran_key = jran.split(ran_key, 2)
@@ -13,14 +16,18 @@ halo_key, ran_key = jran.split(ran_key, 2)
 # Invert t_table for redshifts
 
 
-def get_redshifts_from_times(t_table, cosmo_params, zmin=0.001, zmax=50, Ngrid=200, zcheck=3):
+def get_redshifts_from_times(
+    t_table, cosmo_params, zmin=0.001, zmax=50, Ngrid=200, zcheck=3
+):
     zgrid = np.logspace(np.log10(zmax), np.log10(zmin), Ngrid)
     age_grid = age_at_z(zgrid, *cosmo_params)
     redshifts = np.interp(t_table, age_grid, zgrid)
     mask = redshifts <= zcheck
     t_interp = age_at_z(redshifts, *cosmo_params)
     check = np.isclose(t_interp, t_table, atol=1e-3, rtol=1e-3)
-    print(f"Check times calculated from redshifts are within 1e-3 for z< {zcheck}: {np.all(check[mask])}")
+    print(
+        f"Check times calculated from redshifts are within 1e-3 for z< {zcheck}: {np.all(check[mask])}"
+    )
     return redshifts
 
 
@@ -54,12 +61,15 @@ def get_bulge_disk_test_sample(
     return diffstar
 
 
-def get_bulge_disk_decomposition(ran_key, diffstar, FbulgeFixedParams=DEFAULT_FBULGEPARAMS, new_model=True):
+def get_bulge_disk_decomposition(
+    ran_key, diffstar, Fbulge2dParams=DEFAULT_FBULGE_2dSIGMOID_PARAMS,
+    new_model=True
+):
     _res = mc_disk_bulge(
         ran_key,
         diffstar["t_table"],
         diffstar["sfh"],
-        FbulgeFixedParams=FbulgeFixedParams,
+        Fbulge2dParams=Fbulge2dParams,
         new_model=new_model,
     )
     fbulge_params, smh, eff_bulge, sfh_bulge, smh_bulge, bth = _res

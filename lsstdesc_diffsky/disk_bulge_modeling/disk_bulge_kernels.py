@@ -11,8 +11,8 @@ from jax import jit as jjit
 from jax import lax, vmap
 from jax import numpy as jnp
 
-from ..legacy.roman_rubin_2023.dsps.experimental.diffburst import (
-    _age_weights_from_params as _burst_age_weights_from_params,
+from dsps.sfh.diffburst import (
+    _pureburst_age_weights_from_params as _burst_age_weights_from_params,
 )
 from .disk_knots import _disk_knot_kern, _disk_knot_vmap
 
@@ -32,13 +32,15 @@ DEFAULT_FBULGE_PARAMS = np.array(list(DEFAULT_FBULGE_PDICT.values()))
 
 _linterp_vmap = jjit(vmap(jnp.interp, in_axes=(0, None, 0)))
 
-_A = (None, 0)
+_A = (None, 0, 0)
 _burst_age_weights_from_params_vmap = jjit(
-    vmap(_burst_age_weights_from_params, in_axes=_A))
+    vmap(_burst_age_weights_from_params, in_axes=_A)
+)
 
 _D = (None, 0, None, 0)
 calc_age_weights_from_sfh_table_vmap = jjit(
-    vmap(calc_age_weights_from_sfh_table, in_axes=_D))
+    vmap(calc_age_weights_from_sfh_table, in_axes=_D)
+)
 
 
 @jjit
@@ -95,11 +97,13 @@ def _get_u_params_from_params(params, t10, t90):
 
     x0 = (FBULGE_MIN + FBULGE_MAX) / 2
     u_fbulge_early = _inverse_sigmoid(
-        fbulge_early, x0, BOUNDING_K, FBULGE_MIN, FBULGE_MAX)
+        fbulge_early, x0, BOUNDING_K, FBULGE_MIN, FBULGE_MAX
+    )
 
     x0_late = (fbulge_early + FBULGE_MIN) / 2
     u_fbulge_late = _inverse_sigmoid(
-        fbulge_late, x0_late, BOUNDING_K, fbulge_early, FBULGE_MIN)
+        fbulge_late, x0_late, BOUNDING_K, fbulge_early, FBULGE_MIN
+    )
 
     u_params = u_fbulge_tcrit, u_fbulge_early, u_fbulge_late
     return u_params
@@ -242,10 +246,11 @@ def decompose_sfhpop_into_bulge_disk_knots(
     gal_fburst : ndarray, shape (n_gals, )
         Fraction of stellar mass in the burst population of each galaxy
 
-    gal_burstshape_params : ndarray, shape (n_gals, 2)
+    gal_burstshape_params : ndarray, shape (n_gals, 3)
         Parameters controlling P(τ) for burst population in each galaxy
-        lgyr_peak = gal_burstshape_params[:, 0]
-        lgyr_max = gal_burstshape_params[:, 1]
+        lgfburst = gal_burstshape_params[:, 0]
+        lgyr_peak = gal_burstshape_params[:, 1]
+        lgyr_max = gal_burstshape_params[:, 2]
 
     ssp_lg_age_gyr : ndarray, shape (n_age, )
         Grid in age τ at which the SSPs are computed, stored as log10(τ/Gyr)
@@ -281,8 +286,11 @@ def decompose_sfhpop_into_bulge_disk_knots(
 
     """
     ssp_lg_age_yr = ssp_lg_age_gyr + 9.0
+    lgyr_peak = gal_burstshape_params[:, 1]
+    lgyr_max = gal_burstshape_params[:, 2]
     gal_burst_age_weights = _burst_age_weights_from_params_vmap(
-        ssp_lg_age_yr, gal_burstshape_params)
+        ssp_lg_age_yr, lgyr_peak, lgyr_max,
+    )
     return _decompose_sfhpop_into_bulge_disk_knots(
         gal_fbulge_params,
         gal_fknot,
@@ -313,7 +321,8 @@ def _decompose_sfh_singlegal_into_bulge_disk_knots(
     frac_bulge_t_obs = jnp.interp(t_obs, t_table, bulge_to_total_history)
 
     bulge_age_weights = calc_age_weights_from_sfh_table(
-        t_table, bulge_sfh, ssp_lg_age_gyr, t_obs)
+        t_table, bulge_sfh, ssp_lg_age_gyr, t_obs
+    )
     disk_sfh = sfh_table - bulge_sfh
     disk_sfh = jnp.where(disk_sfh < SFR_MIN, SFR_MIN, disk_sfh)
 
@@ -382,6 +391,7 @@ def _decompose_sfhpop_into_bulge_disk_knots(
 
 
 DEFAULT_FBULGE_U_PARAMS = _get_u_params_from_params(
-    DEFAULT_FBULGE_PARAMS, DEFAULT_T10, DEFAULT_T90)
+    DEFAULT_FBULGE_PARAMS, DEFAULT_T10, DEFAULT_T90
+)
 _A = (0, 0, 0)
 _get_params_from_u_params_vmap = jjit(vmap(_get_params_from_u_params, in_axes=_A))

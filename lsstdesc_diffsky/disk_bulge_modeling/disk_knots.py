@@ -12,7 +12,9 @@ FKNOT_MAX = 0.2
 
 
 @jjit
-def _disk_knot_kern(tarr, tobs, sfh, sfh_disk, fburst, fknot, age_weights_burst, ssp_lg_age_gyr):
+def _disk_knot_kern(
+    tarr, tobs, sfh, sfh_disk, fburst, fknot, age_weights_burst, ssp_lg_age_gyr
+):
     sfh = jnp.where(sfh < SFR_MIN, SFR_MIN, sfh)
     sfh_disk = jnp.where(sfh_disk < SFR_MIN, SFR_MIN, sfh_disk)
 
@@ -23,7 +25,9 @@ def _disk_knot_kern(tarr, tobs, sfh, sfh_disk, fburst, fknot, age_weights_burst,
     smh_knot = cumulative_mstar_formed(tarr, sfh_knot)
     smh_diffuse_disk = cumulative_mstar_formed(tarr, sfh_diffuse_disk)
 
-    age_weights_dd = calc_age_weights_from_sfh_table(tarr, sfh_diffuse_disk, ssp_lg_age_gyr, tobs)
+    age_weights_dd = calc_age_weights_from_sfh_table(
+        tarr, sfh_diffuse_disk, ssp_lg_age_gyr, tobs
+    )
 
     lgt_table = jnp.log10(tarr)
     mstar_tot = 10 ** jnp.interp(jnp.log10(tobs), lgt_table, jnp.log10(smh))
@@ -32,13 +36,19 @@ def _disk_knot_kern(tarr, tobs, sfh, sfh_disk, fburst, fknot, age_weights_burst,
     mburst = fburst * mstar_tot
 
     mburst_by_mknot = mburst / mknot
-    burst_knot_age_weights = mburst_by_mknot * age_weights_burst + (1 - mburst_by_mknot) * age_weights_dd
-    age_weights_knot = jnp.where(mburst_by_mknot > 1, age_weights_burst, burst_knot_age_weights)
+    burst_knot_age_weights = (
+        mburst_by_mknot * age_weights_burst + (1 - mburst_by_mknot) * age_weights_dd
+    )
+    age_weights_knot = jnp.where(
+        mburst_by_mknot > 1, age_weights_burst, burst_knot_age_weights
+    )
 
     mburst_dd = jnp.where(mburst_by_mknot > 1, mburst - mknot, 0.0)
 
     mdd_tot = mdd + mburst_dd
-    age_weights_dd = (mdd / mdd_tot) * age_weights_dd + (mburst_dd / mdd_tot) * age_weights_burst
+    age_weights_dd = (mdd / mdd_tot) * age_weights_dd + (
+        mburst_dd / mdd_tot
+    ) * age_weights_burst
 
     return mstar_tot, mburst, mdd, mknot, age_weights_dd, age_weights_knot
 
